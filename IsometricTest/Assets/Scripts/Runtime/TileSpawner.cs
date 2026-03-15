@@ -29,7 +29,12 @@ namespace Runtime
             if (reachableTiles == null || reachableTiles.Count == 0)
                 return;
 
-            reachableTiles.RemoveAll(t => t == null || t.IsOccupied);
+            reachableTiles.RemoveAll(t => t.IsOccupied);
+        }
+        
+        public Tile GetTileAtPosition(Vector2Int position)
+        {
+            return Tiles.Find(t => t.Position == position);
         }
 
         private List<Tile> GetTilesFromPositions(List<Vector2Int> reachablePositions)
@@ -131,7 +136,15 @@ namespace Runtime
                 tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.None);
             }
         }
-
+        
+        public void ResetOccupiedTiles()
+        {
+            foreach (var tile in Tiles)
+            {
+                tile.SetOccupied(false);
+            }
+        }
+        
         private void Awake()
         {
             SpawnGrid();

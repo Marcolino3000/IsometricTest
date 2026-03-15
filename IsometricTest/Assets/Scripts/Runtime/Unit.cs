@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Runtime
@@ -11,13 +9,27 @@ namespace Runtime
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
 
-        public void Init(TileSpawner tileSpawner, UnitSpawner unitSpawner, Vector2Int position)
+        public void Init(TileSpawner tileSpawner, UnitSpawner unitSpawner)
         {
             currentState = blueprint.DefaultState;
-            currentState.Position = position;
             
             this.tileSpawner = tileSpawner;
             this.unitSpawner = unitSpawner;
+        }
+        
+        public bool TryPlaceAtTile(Tile selectedTile)
+        {
+            if (selectedTile == null)
+            {
+                Debug.LogWarning("Selected tile is null");
+                return false;
+            }
+
+            if (selectedTile.IsOccupied)
+                return false;
+            
+            PlaceOnTile(selectedTile);
+            return true;
         }
         
         public bool TryMoveToTile(Tile selectedTile)
@@ -34,22 +46,21 @@ namespace Runtime
             if(!reachableTiles.Contains(selectedTile))
                 return false;
             
-            MoveToTile(selectedTile);
+            PlaceOnTile(selectedTile);
             return true;
         }
 
-        private void MoveToTile(Tile selectedTile)
+        private void PlaceOnTile(Tile selectedTile)
         {
-            if (selectedTile == null)
-            {
-                Debug.LogWarning("Selected tile is null");
-                return;
-            }
+            var currentTile = tileSpawner.GetTileAtPosition(currentState.Position);
+            currentTile.SetOccupied(false);
 
             currentState.Position = selectedTile.Position;
             transform.position = unitSpawner.GridToWorldPosition(selectedTile.Position);
             
-            TileSpawner.ResetHighlightedTiles();
+            selectedTile.SetOccupied(true);
+            
+            // TileSpawner.ResetHighlightedTiles();
         }
 
         public void HighlightMoveableTiles()

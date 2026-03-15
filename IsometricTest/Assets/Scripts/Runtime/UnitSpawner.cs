@@ -18,6 +18,7 @@ namespace Runtime
         [ContextMenu("Spawn Units")]
         private void SpawnUnits()
         {
+            tileSpawner.ResetOccupiedTiles();
             ClearUnits();
             SpawnUnitsForTeam(Team.Player);
             SpawnUnitsForTeam(Team.Opponent);
@@ -26,25 +27,37 @@ namespace Runtime
         {
             for(int i = 0; i < settings.Amount; i++)
             {
-                var gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);
-                var position = tileSpawner.GridIndexToWorldPosition(gridPosition) + settings.PositionOffset;
-                var rotation = Quaternion.Euler(settings.RotationOffset);
-                
-                var unit = Instantiate(settings.Prefab, position, rotation, transform);
-                unit.transform.localScale = settings.Scale;
+                var instance = Instantiate(settings.Prefab, transform);
+                instance.transform.localScale = settings.Scale;
 
-                unit.GetComponent<SpriteRenderer>().sortingOrder = settings.OrderInLayer;
-                unit.layer = 7;
-                unit.GetComponent<Unit>().Init(tileSpawner, this, gridPosition);
+                instance.GetComponent<SpriteRenderer>().sortingOrder = settings.OrderInLayer;
+                instance.layer = 7;
                 
+                var unit = instance.GetComponent<Unit>();
+                unit.Init(tileSpawner, this);
+                
+                PlaceUnit(unit, team);
+                
+
                 if(team == Team.Opponent)
                 {
-                    unit.GetComponent<SpriteRenderer>().flipX = true;
-                    unit.GetComponent<SpriteRenderer>().color = Color.red;
+                    instance.GetComponent<SpriteRenderer>().flipX = true;
+                    instance.GetComponent<SpriteRenderer>().color = Color.gray;
                 }
                 
-                units.Add(unit);
+                units.Add(instance);
             }
+        }
+        
+        private void PlaceUnit(Unit unit, Team team)
+        {
+            var gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);
+            
+            while(!unit.TryPlaceAtTile(tileSpawner.GetTileAtPosition(gridPosition)))
+                gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);
+            
+            unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition) + settings.PositionOffset;
+            unit.transform.rotation = Quaternion.Euler(settings.RotationOffset);
         }
 
         public Vector3 GridToWorldPosition(Vector2Int gridPosition)
