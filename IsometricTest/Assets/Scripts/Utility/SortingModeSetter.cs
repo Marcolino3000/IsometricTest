@@ -1,32 +1,34 @@
-using System;
 using UnityEngine;
 
-public class SortingModeSetter : MonoBehaviour
+namespace Utility
 {
-    [SerializeField] private Camera cam;
-    [SerializeField] private TransparencySortMode sortMode;
-    [SerializeField] private Vector3 sortAxis = Vector3.forward;
+    public class SortingModeSetter : MonoBehaviour
+    {
+        [SerializeField] private Camera cam;
+        [SerializeField] private TransparencySortMode sortMode;
+        [SerializeField] private Vector3 sortAxis = Vector3.forward;
     
-    private void SetSortMode()
-    {
-        cam.transparencySortMode = sortMode;
+        private void SetSortMode()
+        {
+            cam.transparencySortMode = sortMode;
 
-        sortAxis = sortAxis.normalized;
-        cam.transparencySortAxis = sortAxis;
-    }
+            sortAxis = sortAxis.normalized;
+            cam.transparencySortAxis = sortAxis;
+        }
 
-    private void OnValidate()
-    {
-        SetSortMode();
-    }
+        private void OnValidate()
+        {
+            SetSortMode();
+        }
 
-    private void Awake()
-    {
-        SetSortMode();
-    }
+        private void Awake()
+        {
+            SetSortMode();
+        }
 
-    private void Reset()
-    {
-        cam = GetComponent<Camera>();
+        private void Reset()
+        {
+            cam = GetComponent<Camera>();
+        }
     }
 }

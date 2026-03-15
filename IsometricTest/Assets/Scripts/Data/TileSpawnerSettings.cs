@@ -7,10 +7,10 @@ namespace Data
     public class TileSpawnerSettings : ScriptableObject
     {
         [Header("Tile Settings")]
+        public GameObject TilePrefab;
         public float TileSize;
         public float HalfTileOffsetX;
         public float HalfTileOffsetY;
-        public GameObject TilePrefab;
 
         [Header("Grid Settings")] 
         public Vector3 StartPosition;

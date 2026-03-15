@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1c599704cdf42c1a1466a89341ea0b3, type: 3}
+  m_Name: DefaultUnitSpawnerSettings
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 4048790538827275665, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+  PositionOffset: {x: 0, y: 0.8, z: 0}
+  RotationOffset: {x: 15, y: 45, z: 15}
+  Scale: {x: 4, y: 4, z: 4}
+  Amount: 2
+  OrderInLayer: 2
