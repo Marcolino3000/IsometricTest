@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Data;
 using TMPro;
 using UnityEngine;
@@ -9,9 +8,95 @@ namespace Runtime
     public class TileSpawner : MonoBehaviour
     {
         [SerializeField] private TileSpawnerSettings settings;
-        [SerializeField] private static List<GameObject> tiles = new();
+        
+        private static readonly List<Tile> Tiles = new();
 
-        public bool CheckGridPosition(int x, int y)
+        public bool GetReachableTiles(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
+        {
+            var reachablePositions = new List<Vector2Int>();
+            
+            CheckMoveDirections(startPosition, range, reachablePositions);
+
+            reachableTiles = GetTilesFromPositions(reachablePositions); 
+            
+            FilterForOccupiedTiles(reachableTiles);
+            
+            return reachableTiles.Count > 0;
+        }
+
+        private void FilterForOccupiedTiles(List<Tile> reachableTiles)
+        {
+            if (reachableTiles == null || reachableTiles.Count == 0)
+                return;
+
+            reachableTiles.RemoveAll(t => t == null || t.IsOccupied);
+        }
+
+        private List<Tile> GetTilesFromPositions(List<Vector2Int> reachablePositions)
+        {
+            var result = new List<Tile>();
+
+            if (reachablePositions == null || reachablePositions.Count == 0)
+                return result;
+
+            foreach (var pos in reachablePositions)
+            {
+                var tile = Tiles.Find(t => t.Position == pos);
+                if (tile != null)
+                {
+                    result.Add(tile);
+                }
+            }
+
+            return result;
+        }
+
+        private void CheckMoveDirections(Vector2Int startPosition, int range, List<Vector2Int> tiles)
+        {
+            // Pre-calc forward as Vector2 for dot product
+            Vector2 forward = Direction.Forward;
+
+            for (int dx = -range; dx <= range; dx++)
+            {
+                for (int dy = -range; dy <= range; dy++)
+                {
+                    // skip own tile
+                    if (dx == 0 && dy == 0)
+                        continue;
+
+                    // only keep tiles inside the diamond (Manhattan distance)
+                    if (Mathf.Abs(dx) + Mathf.Abs(dy) > range)
+                        continue;
+
+                    var offset = new Vector2Int(dx, dy);
+
+                    // filter to "forward and sides" half-space:
+                    // dot(offset, forward) >= 0 => not behind the unit
+                    float dot = Vector2.Dot(offset, forward);
+                    if (dot < 0f)
+                        continue;
+
+                    var position = startPosition + offset;
+
+                    if (!CheckForGridBoundaries(position.x, position.y))
+                        continue;
+
+                    tiles.Add(position);
+                }
+            }
+        }
+
+        public void HighlightMoveableTiles(Vector2Int startPosition, int range)
+        {
+            List<Tile> tiles = new();
+            GetReachableTiles(startPosition, range, out tiles);
+            
+            foreach (var tile in tiles)
+            {
+                HighlightTile(tile.Position);
+            }
+        }
+        public bool CheckForGridBoundaries(int x, int y)
         {
             return x >= 0 && x < settings.GridSizeX && y >= 0 && y < settings.GridSizeY;
         }
@@ -23,13 +108,13 @@ namespace Runtime
 
         public void HighlightTile(Vector2Int tilePosition)
         {
-            if (!CheckGridPosition(tilePosition.x, tilePosition.y))
+            if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
             {
                 Debug.LogWarning("Tile Position was out of bounds");
                 return;
             }
 
-            var tile = tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
+            var tile = Tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
             if (tile == null)
             {
                 Debug.LogWarning("Tile not found at position: " + tilePosition);
@@ -41,7 +126,7 @@ namespace Runtime
 
         public static void ResetHighlightedTiles()
         {
-            foreach (var tile in tiles)
+            foreach (var tile in Tiles)
             {
                 tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.None);
             }
@@ -64,7 +149,7 @@ namespace Runtime
 
         private void ClearGrid()
         {
-            foreach (var tile in tiles)
+            foreach (var tile in Tiles)
             {
                 Destroy(tile);
             }
@@ -74,11 +159,13 @@ namespace Runtime
         {
             var position = GridIndexToWorldPosition(xIndex, yIndex);
             
-            var tile = Instantiate(settings.TilePrefab, position, Quaternion.identity,transform);
-            tile.name = $"Tile {xIndex}-{yIndex}";
-            tile.GetComponentInChildren<TextMeshPro>().text = xIndex + "-" + yIndex;
-            tile.GetComponent<Tile>().Position = new Vector2Int(xIndex, yIndex);
-            tiles.Add(tile);
+            var instance = Instantiate(settings.TilePrefab, position, Quaternion.identity,transform);
+            instance.name = $"Tile {xIndex}-{yIndex}";
+            instance.GetComponentInChildren<TextMeshPro>().text = xIndex + "-" + yIndex;
+            
+            var tile = instance.GetComponent<Tile>();
+            tile.Position = new Vector2Int(xIndex, yIndex);
+            Tiles.Add(tile);
         }
 
         public Vector2Int GetRandomGridPosition()

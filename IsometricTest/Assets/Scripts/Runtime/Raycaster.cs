@@ -26,7 +26,6 @@ namespace Runtime
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
             SortByYAxis(hits);
-
             
             if (SelectUnit(hits))
             {
@@ -36,11 +35,12 @@ namespace Runtime
 
             if (selectedUnit != null && SelectTile(hits))
             {
-                selectedUnit.MoveToTile(selectedTile);
-                selectedUnit = null;
-                selectedUnit = null;
-                
-                OnTurnFinished?.Invoke();
+                if(selectedUnit.TryMoveToTile(selectedTile))
+                {
+                    selectedUnit = null;
+                    selectedUnit = null;
+                    OnTurnFinished?.Invoke();
+                }
             }
 
             // Debug.Log(hits[0].collider.name);
