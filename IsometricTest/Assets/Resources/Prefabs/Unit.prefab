@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4351215620135471239}
+  - component: {fileID: 6995585119922183477}
   - component: {fileID: 4200606160372379713}
   - component: {fileID: 5182324867896202502}
-  - component: {fileID: 6995585119922183477}
   m_Layer: 7
   m_Name: Unit
   m_TagString: Untagged
@@ -34,6 +34,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 15, y: 45, z: 15}
+--- !u!114 &6995585119922183477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4048790538827275665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11bcdeda3db5441782d1a1fcde05cea4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blueprint: {fileID: 11400000, guid: 2d7962b1c0a6843348fa2cfe73604659, type: 2}
+  currentState:
+    Health: 0
+    Position: {x: 0, y: 0}
+    Range: 0
+    Team: 0
+  tileSpawner: {fileID: 0}
+  unitSpawner: {fileID: 0}
 --- !u!212 &4200606160372379713
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -142,15 +162,3 @@ PolygonCollider2D:
       - {x: 0.099999994, y: -0.01}
       - {x: 0.02, y: 0.02}
   m_UseDelaunayMesh: 0
---- !u!114 &6995585119922183477
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4048790538827275665}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11bcdeda3db5441782d1a1fcde05cea4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

@@ -10,12 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 731695122bff4c06a4d1dcb0d3389e71, type: 3}
-  m_Name: DefaultTileSpawnerSettings
+  m_Name: Default TileSpawnerSettings
   m_EditorClassIdentifier: 
+  TilePrefab: {fileID: 889486881757413405, guid: b50c7363ae3cb445a9927c9793504ae3, type: 3}
   TileSize: 3.13
   HalfTileOffsetX: 0.5
   HalfTileOffsetY: 0.25
-  TilePrefab: {fileID: 889486881757413405, guid: b50c7363ae3cb445a9927c9793504ae3, type: 3}
   StartPosition: {x: -1, y: -1, z: 0}
   GridSizeX: 5
   GridSizeY: 5
+  SpawnZoneSize: 2

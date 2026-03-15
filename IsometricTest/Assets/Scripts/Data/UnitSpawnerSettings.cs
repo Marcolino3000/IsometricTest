@@ -1,3 +1,4 @@
+using Runtime;
 using UnityEngine;
 
 namespace Data
@@ -7,6 +8,7 @@ namespace Data
     {
         [Header("Unit Settings")]
         public GameObject Prefab;
+        public UnitBlueprint Blueprint;
         public Vector3 PositionOffset;
         public Vector3 RotationOffset;
         public Vector3 Scale;

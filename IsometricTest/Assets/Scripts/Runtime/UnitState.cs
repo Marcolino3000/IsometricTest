@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Runtime
 {
     [Serializable]
-    public class UnitState
+    public struct UnitState
     {
         public int Health;
         public Vector2Int Position;

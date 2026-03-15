@@ -1,13 +1,13 @@
+using System;
 using System.Linq;
-using Data;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Runtime
 {
     public class Raycaster : MonoBehaviour
     {
-        [SerializeField] private LayerMask layerMask;
+        public event Action OnTurnFinished;
+        
         [SerializeField] private Unit selectedUnit;
         [SerializeField] private Tile selectedTile;
         
@@ -15,11 +15,11 @@ namespace Runtime
         {
             if (Input.GetMouseButtonDown(0))
             {
-                LogHits();
+                DoRaycast();
             }
         }
 
-        private void LogHits()
+        private void DoRaycast()
         {
             TileSpawner.ResetHighlightedTiles();
             
@@ -39,6 +39,8 @@ namespace Runtime
                 selectedUnit.MoveToTile(selectedTile);
                 selectedUnit = null;
                 selectedUnit = null;
+                
+                OnTurnFinished?.Invoke();
             }
 
             // Debug.Log(hits[0].collider.name);

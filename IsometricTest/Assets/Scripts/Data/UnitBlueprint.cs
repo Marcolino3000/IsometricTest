@@ -1,0 +1,22 @@
+using UnityEngine;
+
+namespace Runtime
+{
+    [CreateAssetMenu(menuName = "ScriptableObjects/Data/UnitBlueprint")]
+    public class UnitBlueprint : ScriptableObject
+    {
+        public UnitState DefaultState;
+        // public int Range;
+        public int Speed;
+        public int Attack;
+        public int Defense;
+        public int MovementInitiative;
+        public int CombatInitiative;
+    }
+
+    public enum CombatType
+    {
+        Melee,
+        Ranged
+    }
+}

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Data;
 using TMPro;
 using UnityEngine;
@@ -35,7 +36,7 @@ namespace Runtime
                 return;
             }
             
-            tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.Orange);
+            tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.White);
         }
 
         public static void ResetHighlightedTiles()
@@ -83,7 +84,20 @@ namespace Runtime
         public Vector2Int GetRandomGridPosition()
         {
             return GetRandomGridPosition(settings.GridSizeX, settings.GridSizeY);
-            
+        }
+        
+        public Vector2Int GetRandomSpawnZonePosition(Team team)
+        {
+            var positions = settings.GetSpawnZonePositions(team);
+
+            if (positions == null || positions.Count == 0)
+            {
+                Debug.LogWarning("No spawn positions defined for team: " + team);
+                return Vector2Int.zero;
+            }
+
+            var index = Random.Range(0, positions.Count);
+            return positions[index];
         }
 
         public Vector3 GridIndexToWorldPosition(int xIndex, int yIndex)

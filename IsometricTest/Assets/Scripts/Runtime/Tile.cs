@@ -5,5 +5,6 @@ namespace Runtime
     public class Tile : MonoBehaviour
     {
         public Vector2Int Position;
+        public bool IsOccupied;
     }
 }
