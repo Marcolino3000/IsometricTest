@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 731695122bff4c06a4d1dcb0d3389e71, type: 3}
+  m_Name: DefaultTileSpawnerSettings
+  m_EditorClassIdentifier: 
+  TileSize: 3.13
+  HalfTileOffsetX: 0.5
+  HalfTileOffsetY: 0.25
+  TilePrefab: {fileID: 889486881757413405, guid: b50c7363ae3cb445a9927c9793504ae3, type: 3}
+  StartPosition: {x: -1, y: -1, z: 0}
+  GridSizeX: 5
+  GridSizeY: 5
