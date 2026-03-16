@@ -45,13 +45,33 @@ namespace Runtime
 
         private void HandleUnitClicked(Unit unit)
         {
-            if (activeTeam != unit.CurrentState.Team)
+            if (CheckForAttackOnUnit(unit))
             {
+                selectedUnit = null;
+                OnTurnFinished?.Invoke();
                 return;
             }
+
+            CheckForSelectUnit(unit);
+        }
+
+        private void CheckForSelectUnit(Unit unit)
+        {
+            if(unit.CurrentState.Team != activeTeam)
+                return;
             
             selectedUnit = unit;
             selectedUnit.HighlightMoveableTiles();
+        }
+
+        private bool CheckForAttackOnUnit(Unit unit)
+        {
+            if (activeTeam != unit.CurrentState.Team && selectedUnit != null)
+            {
+                return selectedUnit.TryAttackUnit(unit);
+            }
+
+            return false;
         }
 
         public void HandleStateChange(State newState)

@@ -11,7 +11,7 @@ namespace Runtime
         
         private static readonly List<Tile> Tiles = new();
 
-        public bool GetReachableTiles(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
+        public bool GetTilesWithinReach(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
         {
             var reachablePositions = new List<Vector2Int>();
             
@@ -19,12 +19,12 @@ namespace Runtime
 
             reachableTiles = GetTilesFromPositions(reachablePositions); 
             
-            FilterForOccupiedTiles(reachableTiles);
+            // FilterForOccupiedTiles(reachableTiles);
             
             return reachableTiles.Count > 0;
         }
 
-        private void FilterForOccupiedTiles(List<Tile> reachableTiles)
+        public void FilterForOccupiedTiles(List<Tile> reachableTiles)
         {
             if (reachableTiles == null || reachableTiles.Count == 0)
                 return;
@@ -94,7 +94,8 @@ namespace Runtime
         public void HighlightMoveableTiles(Vector2Int startPosition, int range)
         {
             List<Tile> tiles = new();
-            GetReachableTiles(startPosition, range, out tiles);
+            GetTilesWithinReach(startPosition, range, out tiles);
+            FilterForOccupiedTiles(tiles);
             
             foreach (var tile in tiles)
             {
@@ -141,7 +142,7 @@ namespace Runtime
         {
             foreach (var tile in Tiles)
             {
-                tile.SetOccupied(false);
+                tile.SetUnit(null);
             }
         }
         

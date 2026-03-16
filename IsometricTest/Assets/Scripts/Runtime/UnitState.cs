@@ -7,7 +7,7 @@ namespace Runtime
     public struct UnitState
     {
         public int Health;
-        public Vector2Int Position;
+        public Tile Position;
         public int Range;
         public Team Team;
     }

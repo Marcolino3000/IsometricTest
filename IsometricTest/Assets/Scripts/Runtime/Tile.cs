@@ -5,11 +5,18 @@ namespace Runtime
     public class Tile : MonoBehaviour
     {
         public Vector2Int Position;
-        public bool IsOccupied;
+        public bool IsOccupied {get; private set;}
         
+        [SerializeField] private Unit unit;
         [SerializeField] private TileMarker marker;
+
+        public void SetUnit(Unit unit)
+        {
+            this.unit = unit;
+            SetOccupied(unit != null);
+        }
         
-        public void SetOccupied(bool occupied)
+        private void SetOccupied(bool occupied)
         {
             IsOccupied = occupied;
             

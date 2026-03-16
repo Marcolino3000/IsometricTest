@@ -9,6 +9,12 @@ namespace Runtime
         [SerializeField] private List<GameObject> units;
         [SerializeField] private UnitSpawnerSettings settings;
         [SerializeField] private TileSpawner tileSpawner;
+
+        public void RemoveUnit(Unit unit)
+        {
+            units.Remove(unit.gameObject);
+            Destroy(unit.gameObject);
+        }
         
         private void Awake()
         {
