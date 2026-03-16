@@ -1,14 +1,23 @@
 using System;
-using UnityEngine;
 
 namespace Runtime
 {
     [Serializable]
-    public struct UnitState
+    public class UnitState
     {
         public int Health;
         public Tile Position;
         public int Range;
         public Team Team;
+
+        public UnitState(UnitState other)
+        {
+            Health = other.Health;
+            Position = null;
+            Range = other.Range;
+            Team = other.Team;
+        }
     }
+
+    
 }

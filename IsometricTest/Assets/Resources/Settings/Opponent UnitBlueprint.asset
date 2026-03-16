@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbcaca3db3794b188c3bb2227ae55a0d, type: 3}
   m_Name: Opponent UnitBlueprint
   m_EditorClassIdentifier: 
-  DefaultState:
-    Health: 100
-    Position: {x: 0, y: 4}
+  defaultState:
+    Health: 10
+    Position: {fileID: 0}
     Range: 2
     Team: 1
   Speed: 1
-  Attack: 1
+  Attack: 4
   Defense: 1
   MovementInitiative: 1
   CombatInitiative: 1

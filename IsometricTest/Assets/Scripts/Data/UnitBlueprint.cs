@@ -5,7 +5,9 @@ namespace Runtime
     [CreateAssetMenu(menuName = "ScriptableObjects/Data/UnitBlueprint")]
     public class UnitBlueprint : ScriptableObject
     {
-        public UnitState DefaultState;
+        public UnitState DefaultState => new(defaultState);
+
+        [SerializeField] private UnitState defaultState;
         public int Speed;
         public int Attack;
         public int Defense;

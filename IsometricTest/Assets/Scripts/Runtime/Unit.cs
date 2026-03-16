@@ -5,6 +5,7 @@ namespace Runtime
     public class Unit : MonoBehaviour
     {
         public UnitState CurrentState => currentState;
+        public UnitBlueprint Blueprint => blueprint;
         
         [SerializeField] private UnitState currentState;
         [SerializeField] private UnitBlueprint blueprint;
@@ -46,9 +47,10 @@ namespace Runtime
 
         private void AttackUnit(Unit targetUnit)
         {
-            var targetPosition = targetUnit.CurrentState.Position;
-            targetUnit.Remove();
-            TryMoveToTile(targetPosition);
+            CombatRunner.ResolveCombat(this, targetUnit);
+            // var targetPosition = targetUnit.CurrentState.Position;
+            // targetUnit.Remove();
+            // TryMoveToTile(targetPosition);
         }
 
         public bool TryMoveToTile(Tile selectedTile)
