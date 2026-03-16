@@ -37,9 +37,9 @@ namespace Runtime
         private static Vector2Int backLeft;
         private static Vector2Int backRight;
 
-        private static void SetContext(Context context)
+        private static void SetContext(State newState)
         {
-            switch (context.Team)
+            switch (newState.Team)
             {
                 case Team.Player:
                     forward      = new Vector2Int(0,  1);
@@ -67,7 +67,7 @@ namespace Runtime
 
         public void HandleStateChange(State newState)
         {
-            SetContext(new Context());
+            SetContext(newState);
         }
     }
 }

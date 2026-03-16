@@ -31,7 +31,6 @@ namespace Runtime
         private void SwitchActiveTeam()
         {
             CurrentTeam = CurrentTeam == Team.Player ? Team.Opponent : Team.Player;
-            
             NotifyStateChangeHandlers();
         }
 
@@ -40,6 +39,8 @@ namespace Runtime
             stateChangeHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
                 .OfType<IStateChangeHandler>()
                 .ToList();
+            
+            stateChangeHandlers.Add(new Direction());
         }
 
         private void NotifyStateChangeHandlers()
