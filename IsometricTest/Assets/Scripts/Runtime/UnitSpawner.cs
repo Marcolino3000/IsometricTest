@@ -34,15 +34,14 @@ namespace Runtime
                 instance.layer = 7;
                 
                 var unit = instance.GetComponent<Unit>();
-                unit.Init(tileSpawner, this);
+                unit.Init(tileSpawner, this, team);
                 
                 PlaceUnit(unit, team);
-                
 
                 if(team == Team.Opponent)
                 {
                     instance.GetComponent<SpriteRenderer>().flipX = true;
-                    instance.GetComponent<SpriteRenderer>().color = Color.gray;
+                    instance.GetComponent<SpriteRenderer>().color = Color.red;
                 }
                 
                 units.Add(instance);

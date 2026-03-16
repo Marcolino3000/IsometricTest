@@ -4,14 +4,17 @@ namespace Runtime
 {
     public class Unit : MonoBehaviour
     {
-        [SerializeField] private UnitBlueprint blueprint;
+        public UnitState CurrentState => currentState;
+        
         [SerializeField] private UnitState currentState;
+        [SerializeField] private UnitBlueprint blueprint;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
 
-        public void Init(TileSpawner tileSpawner, UnitSpawner unitSpawner)
+        public void Init(TileSpawner tileSpawner, UnitSpawner unitSpawner, Team team)
         {
             currentState = blueprint.DefaultState;
+            currentState.Team = team;
             
             this.tileSpawner = tileSpawner;
             this.unitSpawner = unitSpawner;

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Runtime
 {
-    public static class Direction
+    public class Direction
     {
         public static List<Vector2Int> ForwardAndSides
         {

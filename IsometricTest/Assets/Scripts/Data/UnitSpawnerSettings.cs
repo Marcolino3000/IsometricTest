@@ -12,7 +12,6 @@ namespace Data
         public Vector3 PositionOffset;
         public Vector3 RotationOffset;
         public Vector3 Scale;
-
         public int Amount;
         
         [Header("Visual Settings")]

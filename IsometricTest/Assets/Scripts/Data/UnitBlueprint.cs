@@ -6,7 +6,6 @@ namespace Runtime
     public class UnitBlueprint : ScriptableObject
     {
         public UnitState DefaultState;
-        // public int Range;
         public int Speed;
         public int Attack;
         public int Defense;

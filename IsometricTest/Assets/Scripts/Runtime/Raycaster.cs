@@ -1,16 +1,16 @@
 using System;
-using System.Linq;
 using UnityEngine;
 
 namespace Runtime
 {
     public class Raycaster : MonoBehaviour
     {
-        public event Action OnTurnFinished;
-        
-        [SerializeField] private Unit selectedUnit;
-        [SerializeField] private Tile selectedTile;
-        
+        public event Action<Unit> OnUnitClicked;
+        public event Action<Tile> OnTileClicked;
+
+        [SerializeField] private LayerMask unitLayerMask;
+        [SerializeField] private LayerMask tileLayerMask;
+
         private void Update()
         {
             if (Input.GetMouseButtonDown(0))
@@ -22,68 +22,63 @@ namespace Runtime
         private void DoRaycast()
         {
             TileSpawner.ResetHighlightedTiles();
-            
+
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
-            SortByYAxis(hits);
-            
-            if (SelectUnit(hits))
-            {
-                selectedUnit.HighlightMoveableTiles();
+
+            if (ClickUnit(ray))
                 return;
-            }
 
-            if (selectedUnit != null && SelectTile(hits))
+            ClickTile(ray);
+        }
+
+        private bool ClickTile(Ray ray)
+        {
+            if (!GetYSortedHits(ray, tileLayerMask, out var hits)) 
+                return false;
+            
+            var selectedTile = hits[0].collider.gameObject.GetComponent<Tile>();
+            
+            if (selectedTile == null)
             {
-                if(selectedUnit.TryMoveToTile(selectedTile))
-                {
-                    selectedUnit = null;
-                    selectedUnit = null;
-                    OnTurnFinished?.Invoke();
-                }
+                Debug.LogWarning("No Tile component found on object on Tiles Layermask.");
+                return false;
             }
-
-            // Debug.Log(hits[0].collider.name);
-            // TileSpawner.SetTileColor(hits[0].collider.gameObject);
-        }
-
-        private bool SelectTile(RaycastHit2D[] hits)
-        {
-            var tiles = hits
-                .Select(hit => hit.collider.gameObject.GetComponent<Tile>())
-                .Where(unit => unit != null)
-                .ToList();
             
-            if (tiles.Count == 0) return false;
-            
-            selectedTile = tiles[0];
-
-            Debug.Log("Selected Tile: " + selectedTile.gameObject.name);
+            OnTileClicked?.Invoke(selectedTile);
             return true;
         }
 
-        private bool SelectUnit(RaycastHit2D[] hits)
+        private bool ClickUnit(Ray ray)
         {
-            var units = hits
-                .Select(hit => hit.collider.gameObject.GetComponent<Unit>())
-                .Where(unit => unit != null)
-                .ToList();
-
-            if (units.Count == 0) return false;
+            if (!GetYSortedHits(ray, unitLayerMask, out var hits)) 
+                return false;
             
-            selectedUnit = null;
-            selectedUnit = units[0];
-
-            if (selectedUnit == null) return false;
+            var selectedUnit = hits[0].collider.gameObject.GetComponent<Unit>();
             
-            Debug.Log($"Selected unit: {selectedUnit.name}");
+            if (selectedUnit == null)
+            {
+                Debug.LogWarning("No Unit component found on object on Units Layermask.");
+                return false;
+            }
+            
+            OnUnitClicked?.Invoke(selectedUnit);
             return true;
+        }
 
+        private static bool GetYSortedHits(Ray ray, LayerMask mask, out RaycastHit2D[] hits)
+        {
+            hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity, mask);
+            
+            if (hits == null || hits.Length == 0)
+                return false;
+            
+            SortByYAxis(hits);
+            return true;
         }
 
         private static void SortByYAxis(RaycastHit2D[] hits)
         {
-            System.Array.Sort(hits, (a, b) => a.collider.transform.position.y.CompareTo(b.collider.transform.position.y));
+            Array.Sort(hits, (a, b) => a.collider.transform.position.y.CompareTo(b.collider.transform.position.y));
         }
     }
 }
