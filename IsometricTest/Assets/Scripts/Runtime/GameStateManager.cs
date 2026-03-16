@@ -22,16 +22,15 @@ namespace Runtime
 
         private void Setup()
         {
-            FindStateChangeHandlers();
-            
             selector.OnTurnFinished += SwitchActiveTeam;
-            Direction.SetContext(new Context{ Team = CurrentTeam });
+            
+            FindStateChangeHandlers();
+            NotifyStateChangeHandlers();
         }
 
         private void SwitchActiveTeam()
         {
             CurrentTeam = CurrentTeam == Team.Player ? Team.Opponent : Team.Player;
-            Direction.SetContext(new Context{ Team = CurrentTeam });
             
             NotifyStateChangeHandlers();
         }

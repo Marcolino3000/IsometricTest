@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Runtime
 {
-    public class Direction
+    public class Direction : IStateChangeHandler
     {
         public static List<Vector2Int> ForwardAndSides
         {
@@ -37,7 +37,7 @@ namespace Runtime
         private static Vector2Int backLeft;
         private static Vector2Int backRight;
 
-        public static void SetContext(Context context)
+        private static void SetContext(Context context)
         {
             switch (context.Team)
             {
@@ -63,6 +63,11 @@ namespace Runtime
                     backRight    = new Vector2Int(-1,  1);
                     break;
             }
+        }
+
+        public void HandleStateChange(State newState)
+        {
+            SetContext(new Context());
         }
     }
 }
