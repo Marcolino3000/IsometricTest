@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Runtime
 {
@@ -11,19 +12,19 @@ namespace Runtime
         [SerializeField] private LayerMask unitLayerMask;
         [SerializeField] private LayerMask tileLayerMask;
 
-        private void Update()
+        private InputAction clickAction;
+
+        private void OnClickPerformed(InputAction.CallbackContext ctx)
         {
-            if (Input.GetMouseButtonDown(0))
-            {
-                DoRaycast();
-            }
+            DoRaycast();
         }
 
         private void DoRaycast()
         {
             TileSpawner.ResetHighlightedTiles();
 
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Vector2 mousePosition = Mouse.current.position.ReadValue();
+            Ray ray = Camera.main.ScreenPointToRay(mousePosition);
 
             if (ClickUnit(ray))
                 return;
@@ -79,6 +80,25 @@ namespace Runtime
         private static void SortByYAxis(RaycastHit2D[] hits)
         {
             Array.Sort(hits, (a, b) => a.collider.transform.position.y.CompareTo(b.collider.transform.position.y));
+        }
+
+        private void OnEnable()
+        {
+            clickAction = new InputAction(
+                type: InputActionType.Button,
+                binding: "<Mouse>/leftButton");
+
+            clickAction.performed += OnClickPerformed;
+            clickAction.Enable();
+        }
+
+        private void OnDisable()
+        {
+            if (clickAction != null)
+            {
+                clickAction.performed -= OnClickPerformed;
+                clickAction.Disable();
+            }
         }
     }
 }
