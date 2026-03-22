@@ -13,14 +13,14 @@ namespace Runtime
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private HealthBar healthBar;
 
-        public void Init(TileSpawner tileSpawner, UnitSpawner unitSpawner, Team team)
+        public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team)
         {
             currentState = blueprint.DefaultState;
             currentState.Team = team;
             currentState.SetHealthChangedCallback(HealthChangedCallback);
             
-            this.tileSpawner = tileSpawner;
-            this.unitSpawner = unitSpawner;
+            tileSpawner = tileSpawnerArg;
+            unitSpawner = unitSpawnerArg;
             
             healthBar.Setup(blueprint.DefaultState.Health);
         }
@@ -77,7 +77,7 @@ namespace Runtime
             unitSpawner.RemoveUnit(this);
         }
 
-        private bool IsTileWithinReach(Tile selectedTile, bool filterOccupiedTiles)
+        public bool IsTileWithinReach(Tile selectedTile, bool filterOccupiedTiles)
         {
             if (selectedTile == null)
             {
