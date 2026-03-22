@@ -4,8 +4,8 @@ namespace Runtime
     {
         public static void ResolveCombat(Unit attacker, Unit target)
         {
-            bool attackerDied = ApplyDamage(attacker, target);
-            bool targetDied = ApplyDamage(target, attacker);
+            bool targetDied = ApplyDamage(attacker, target);
+            bool attackerDied = ApplyDamage(target, attacker);
 
             var formerTargetPosition = target.CurrentState.Position;
             

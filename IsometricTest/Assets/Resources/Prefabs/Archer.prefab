@@ -82,7 +82,7 @@ GameObject:
   - component: {fileID: 4351215620135471239}
   - component: {fileID: 6973456096741093380}
   m_Layer: 7
-  m_Name: Unit
+  m_Name: Archer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -122,7 +122,7 @@ MonoBehaviour:
     Range: 0
     Team: 0
     health: 0
-  blueprint: {fileID: 11400000, guid: 2d7962b1c0a6843348fa2cfe73604659, type: 2}
+  blueprint: {fileID: 11400000, guid: bd0379b61e8bb485e8bfc2b29a7280be, type: 2}
   tileSpawner: {fileID: 0}
   unitSpawner: {fileID: 0}
   healthBar: {fileID: 8233212973314276433}

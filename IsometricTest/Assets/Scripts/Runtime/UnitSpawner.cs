@@ -1,18 +1,20 @@
 using System.Collections.Generic;
 using Data;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Runtime
 {
     public class UnitSpawner : MonoBehaviour
     {
-        [SerializeField] private List<GameObject> units;
+        [SerializeField] private List<Unit> units;
         [SerializeField] private UnitSpawnerSettings settings;
         [SerializeField] private TileSpawner tileSpawner;
+        [SerializeField] private Color OpponentColor;
 
         public void RemoveUnit(Unit unit)
         {
-            units.Remove(unit.gameObject);
+            units.Remove(unit);
             Destroy(unit.gameObject);
         }
         
@@ -31,14 +33,22 @@ namespace Runtime
         }
         private void SpawnUnitsForTeam(Team team)
         {
-            for(int i = 0; i < settings.Amount; i++)
+            foreach (var unitAmount in settings.UnitAmounts)
             {
-                var instance = Instantiate(settings.Prefab, transform);
+                SpawnUnitsFromPrefab(team, unitAmount.Amount, unitAmount.Prefab);
+            }
+        }
+
+        private void SpawnUnitsFromPrefab(Team team, int amount, Unit prefab)
+        {
+            for(int i = 0; i < amount; i++)
+            {
+                var instance = Instantiate(prefab, transform);
                 instance.transform.GetChild(1).localScale = settings.Scale;
 
                 var spriteRenderer = instance.GetComponentInChildren<SpriteRenderer>();
                 spriteRenderer.sortingOrder = settings.OrderInLayer;
-                // instance.layer = 7;
+                spriteRenderer.sprite = prefab.Blueprint.Sprite;
                 
                 var unit = instance.GetComponentInChildren<Unit>();
                 unit.Init(tileSpawner, this, team);
@@ -48,13 +58,14 @@ namespace Runtime
                 if(team == Team.Opponent)
                 {
                     spriteRenderer.flipX = true;
-                    spriteRenderer.color = Color.red;
+                    spriteRenderer.color = OpponentColor;
+                    instance.name = $"Opponent {prefab.name} {i}";
                 }
                 
                 units.Add(instance);
             }
         }
-        
+
         private void PlaceUnit(Unit unit, Team team)
         {
             var gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);

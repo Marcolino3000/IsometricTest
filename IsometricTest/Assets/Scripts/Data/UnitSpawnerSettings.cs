@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Runtime;
 using UnityEngine;
 
@@ -7,14 +9,21 @@ namespace Data
     public class UnitSpawnerSettings : ScriptableObject
     {
         [Header("Unit Settings")]
-        public GameObject Prefab;
+        // public GameObject Prefab;
         public UnitBlueprint Blueprint;
         public Vector3 PositionOffset;
         public Vector3 RotationOffset;
         public Vector3 Scale;
-        public int Amount;
+        public List<UnitAmount> UnitAmounts;
         
         [Header("Visual Settings")]
         public int OrderInLayer;
+    }
+
+    [Serializable]
+    public class UnitAmount
+    {
+        public int Amount;
+        public Unit Prefab;
     }
 }
