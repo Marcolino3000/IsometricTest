@@ -18,6 +18,7 @@ namespace Data
         public int GridSizeX;
         public int GridSizeY;
         public int SpawnZoneSize;
+        public bool AllowMovementInAllDirections;
         
         public List<Vector2Int> GetSpawnZonePositions(Team team)
         {

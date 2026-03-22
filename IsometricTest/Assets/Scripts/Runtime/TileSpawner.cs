@@ -58,9 +58,6 @@ namespace Runtime
 
         private void CheckMoveDirections(Vector2Int startPosition, int range, List<Vector2Int> tiles)
         {
-            // Pre-calc forward as Vector2 for dot product
-            Vector2 forward = Direction.Forward;
-
             for (int dx = -range; dx <= range; dx++)
             {
                 for (int dy = -range; dy <= range; dy++)
@@ -77,9 +74,12 @@ namespace Runtime
 
                     // filter to "forward and sides" half-space:
                     // dot(offset, forward) >= 0 => not behind the unit
-                    float dot = Vector2.Dot(offset, forward);
-                    if (dot < 0f)
-                        continue;
+                    if(settings.AllowMovementInAllDirections)
+                    {
+                        float dot = Vector2.Dot(offset, Direction.Forward);
+                        if (dot < 0f)
+                            continue;
+                    }
 
                     var position = startPosition + offset;
 
@@ -93,8 +93,7 @@ namespace Runtime
 
         public void HighlightMoveableTiles(Vector2Int startPosition, int range)
         {
-            List<Tile> tiles = new();
-            GetTilesWithinReach(startPosition, range, out tiles);
+            GetTilesWithinReach(startPosition, range, out var tiles);
             FilterForOccupiedTiles(tiles);
             
             foreach (var tile in tiles)
