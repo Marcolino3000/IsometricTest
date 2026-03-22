@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Player UnitBlueprint
   m_EditorClassIdentifier: 
   defaultState:
-    Health: 10
     Position: {fileID: 0}
     Range: 2
     Team: 0
+    health: 10
   Speed: 1
   Attack: 8
   Defense: 0

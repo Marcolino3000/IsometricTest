@@ -11,16 +11,25 @@ namespace Runtime
         [SerializeField] private UnitBlueprint blueprint;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
+        [SerializeField] private HealthBar healthBar;
 
         public void Init(TileSpawner tileSpawner, UnitSpawner unitSpawner, Team team)
         {
             currentState = blueprint.DefaultState;
             currentState.Team = team;
+            currentState.SetHealthChangedCallback(HealthChangedCallback);
             
             this.tileSpawner = tileSpawner;
             this.unitSpawner = unitSpawner;
+            
+            healthBar.Setup(blueprint.DefaultState.Health);
         }
-        
+
+        private void HealthChangedCallback(int newHealth)
+        {
+            healthBar.SetBlobAmount(newHealth);
+        }
+
         public bool TryPlaceAtTile(Tile selectedTile)
         {
             if (selectedTile == null)

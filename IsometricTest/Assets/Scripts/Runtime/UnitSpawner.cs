@@ -34,20 +34,21 @@ namespace Runtime
             for(int i = 0; i < settings.Amount; i++)
             {
                 var instance = Instantiate(settings.Prefab, transform);
-                instance.transform.localScale = settings.Scale;
+                instance.transform.GetChild(1).localScale = settings.Scale;
 
-                instance.GetComponent<SpriteRenderer>().sortingOrder = settings.OrderInLayer;
-                instance.layer = 7;
+                var spriteRenderer = instance.GetComponentInChildren<SpriteRenderer>();
+                spriteRenderer.sortingOrder = settings.OrderInLayer;
+                // instance.layer = 7;
                 
-                var unit = instance.GetComponent<Unit>();
+                var unit = instance.GetComponentInChildren<Unit>();
                 unit.Init(tileSpawner, this, team);
                 
                 PlaceUnit(unit, team);
 
                 if(team == Team.Opponent)
                 {
-                    instance.GetComponent<SpriteRenderer>().flipX = true;
-                    instance.GetComponent<SpriteRenderer>().color = Color.red;
+                    spriteRenderer.flipX = true;
+                    spriteRenderer.color = Color.red;
                 }
                 
                 units.Add(instance);
@@ -61,13 +62,13 @@ namespace Runtime
             while(!unit.TryPlaceAtTile(tileSpawner.GetTileAtPosition(gridPosition)))
                 gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);
             
-            unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition) + settings.PositionOffset;
-            unit.transform.rotation = Quaternion.Euler(settings.RotationOffset);
+            unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition);
+            // unit.transform.rotation = Quaternion.Euler(settings.RotationOffset);
         }
 
         public Vector3 GridToWorldPosition(Vector2Int gridPosition)
         {
-            return tileSpawner.GridIndexToWorldPosition(gridPosition) + settings.PositionOffset;
+            return tileSpawner.GridIndexToWorldPosition(gridPosition);
         }
 
         private void ClearUnits()

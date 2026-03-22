@@ -1,4 +1,5 @@
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -37,7 +38,7 @@ namespace Runtime
             if (!GetYSortedHits(ray, tileLayerMask, out var hits)) 
                 return false;
             
-            var selectedTile = hits[0].collider.gameObject.GetComponent<Tile>();
+            var selectedTile = hits[0].collider.gameObject.GetComponentInChildren<Tile>();
             
             if (selectedTile == null)
             {
@@ -54,7 +55,7 @@ namespace Runtime
             if (!GetYSortedHits(ray, unitLayerMask, out var hits)) 
                 return false;
             
-            var selectedUnit = hits[0].collider.gameObject.GetComponent<Unit>();
+            var selectedUnit = hits[0].collider.gameObject.transform.parent.GetComponent<Unit>();
             
             if (selectedUnit == null)
             {
