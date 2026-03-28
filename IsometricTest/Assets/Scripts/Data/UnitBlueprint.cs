@@ -1,3 +1,4 @@
+using Runtime.Actions;
 using UnityEngine;
 
 namespace Runtime
@@ -9,6 +10,7 @@ namespace Runtime
         public UnitState DefaultState => new(defaultState);
 
         [SerializeField] private UnitState defaultState;
+        public Move MoveAction;
         public int Speed;
         public int Attack;
         public int Defense;

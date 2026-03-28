@@ -17,6 +17,7 @@ namespace Runtime
                 HealthChangedCallback?.Invoke(health);
             }
         }
+        public int ActionPoints;
         public Tile Position;
         public int Range;
         public Team Team;
@@ -33,6 +34,7 @@ namespace Runtime
         {
             Health = other.Health;
             Position = null;
+            ActionPoints = other.ActionPoints;
             Range = other.Range;
             Team = other.Team;
         }

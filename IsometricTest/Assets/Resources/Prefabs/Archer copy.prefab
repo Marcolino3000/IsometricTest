@@ -81,8 +81,9 @@ GameObject:
   m_Component:
   - component: {fileID: 4351215620135471239}
   - component: {fileID: 6973456096741093380}
+  - component: {fileID: 65652866546638758}
   m_Layer: 7
-  m_Name: Archer
+  m_Name: Archer copy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -118,6 +119,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentState:
+    ActionPoints: 0
     Position: {fileID: 0}
     Range: 0
     Team: 0
@@ -126,6 +128,18 @@ MonoBehaviour:
   tileSpawner: {fileID: 0}
   unitSpawner: {fileID: 0}
   healthBar: {fileID: 8233212973314276433}
+--- !u!114 &65652866546638758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4048790538827275665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d63da63c2674737811ad0e1e9d2686b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Controls.Clickable
 --- !u!1 &4524403525204030475
 GameObject:
   m_ObjectHideFlags: 0

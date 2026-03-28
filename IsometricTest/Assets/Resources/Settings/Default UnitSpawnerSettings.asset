@@ -18,7 +18,7 @@ MonoBehaviour:
   Scale: {x: 4, y: 4, z: 4}
   UnitAmounts:
   - Amount: 1
-    Prefab: {fileID: 6973456096741093380, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+    Prefab: {fileID: 1033920189357735479, guid: 560cd3456b51c4f609e960b3b8f037c6, type: 3}
   - Amount: 1
-    Prefab: {fileID: 6973456096741093380, guid: ba2174d38c50a4b458758d511f743b10, type: 3}
+    Prefab: {fileID: 8279638395231357746, guid: cc378132656d04836986c39202c89fca, type: 3}
   OrderInLayer: 2

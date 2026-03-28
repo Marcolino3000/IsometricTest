@@ -1,8 +1,9 @@
+using Runtime.Controls;
 using UnityEngine;
 
 namespace Runtime
 {
-    public class Unit : MonoBehaviour
+    public class Unit : MonoBehaviour, IClickable
     {
         public UnitState CurrentState => currentState;
         public UnitBlueprint Blueprint => blueprint;
