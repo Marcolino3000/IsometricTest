@@ -50,7 +50,6 @@ namespace Runtime
             for(int i = 0; i < amount; i++)
             {
                 var instance = Instantiate(prefab, transform);
-                instance.transform.GetChild(1).localScale = settings.Scale;
 
                 var spriteRenderer = instance.GetComponentInChildren<SpriteRenderer>();
                 spriteRenderer.sortingOrder = settings.OrderInLayer;
@@ -82,7 +81,6 @@ namespace Runtime
                 gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);
             
             unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition);
-            // unit.transform.rotation = Quaternion.Euler(settings.RotationOffset);
         }
 
         public Vector3 GridToWorldPosition(Vector2Int gridPosition)

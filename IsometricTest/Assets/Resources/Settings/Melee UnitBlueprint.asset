@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Sprite: {fileID: -61923535, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
   defaultState:
+    ActionPoints: 3
     Position: {fileID: 0}
     Range: 1
     Team: 0
     health: 12
+  MoveAction: {fileID: 0}
   Speed: 2
   Attack: 8
   Defense: 2

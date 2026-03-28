@@ -9,11 +9,6 @@ namespace Data
     public class UnitSpawnerSettings : ScriptableObject
     {
         [Header("Unit Settings")]
-        // public GameObject Prefab;
-        public UnitBlueprint Blueprint;
-        public Vector3 PositionOffset;
-        public Vector3 RotationOffset;
-        public Vector3 Scale;
         public List<UnitAmount> UnitAmounts;
         
         [Header("Visual Settings")]

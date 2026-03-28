@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 70249593548022443}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.02, y: 0.88, z: 0}
+  m_LocalPosition: {x: 0.02, y: 0.76, z: 0}
   m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -48,7 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 11400000, guid: dd0f4100653ff47528bf1c277c871d26, type: 2}
   m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 9e4b081c3997f4a24ada229e7fb5b091, type: 3}
+  sourceAsset: {fileID: 9197481963319205126, guid: 2c2d92c1648044d1ba060c8a8eca6f1c, type: 3}
   m_SortingOrder: 0
   m_Position: 0
   m_WorldSpaceSizeMode: 1
