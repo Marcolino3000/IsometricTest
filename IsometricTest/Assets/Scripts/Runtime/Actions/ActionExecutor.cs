@@ -26,7 +26,8 @@ namespace Runtime.Actions
         // private Func<Tile, bool> attackActionTest;
         // private Func<Tile, bool> attackAction;
         
-
+        public bool PlanActionsNew()
+        
         public bool PlanActions(List<UnitAction> actions, ExecuteArgs executeArgs)
         {
             plannedActions = actions;
@@ -47,20 +48,6 @@ namespace Runtime.Actions
             return true;
         }
 
-        // private bool CheckActionValidity(List<UnitAction> actions, Tile target)
-        // {
-        //     foreach (var action in actions)
-        //     {
-        //         if (action is Move)
-        //         {
-        //             if(!moveActionTest.Invoke(target))
-        //                 return false;
-        //         }
-        //     }
-        //
-        //     return true;
-        // }
-
         private int GetTotalCost(List<UnitAction> actions)
         {
             var totalCost = actions.Sum(action => action.Cost);
@@ -74,7 +61,6 @@ namespace Runtime.Actions
             foreach (var action in plannedActions)
             {
                 totalCost += action.Cost;
-                // moveAction.Invoke(args.Target);
                 _moveMoveExecutor.Execute(args.TargetTile);
             }
 

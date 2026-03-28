@@ -29,16 +29,27 @@ namespace Runtime
         private void HandleClick(IClickable clickable)
         {
             TileSpawner.ResetHighlightedTiles();
+
+            if (clickable is Unit unit)
+            {
+                if (activeTeam != unit.CurrentState.Team && selectedUnit != null)
+                    UpdatePlannedActions(unit);
+            }
             
             switch (clickable)
             {
                 case Tile tile:
                     HandleTileClicked(tile);
                     break;
-                case Unit unit:
-                    HandleUnitClicked(unit);
-                    break; 
+                // case Unit unit:
+                //     HandleUnitClicked(unit);
+                //     break; 
             }
+        }
+
+        private void UpdateExecutor(IClickable clickable)
+        {
+            isActionValid = selectedUnit.ActionExecutor.PlanActions()
         }
 
         private void HandleMouseEnter(IClickable clickable)
@@ -79,10 +90,10 @@ namespace Runtime
             return actions;
         }
 
-        private void UpdatePlannedActions(Unit unit)
-        {
-            int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, unit.CurrentState.Position.Position);   
-        }
+        // private void UpdatePlannedActions(Unit unit)
+        // {
+        //     int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, unit.CurrentState.Position.Position);   
+        // }
         
         public static int ChebyshevDistance(Vector2Int a, Vector2Int b)
         {
@@ -125,6 +136,18 @@ namespace Runtime
 
             CheckForSelectUnit(unit);
         }
+        
+        // private void HandleUnitClicked(Unit unit)
+        // {
+        //     if (!isActionValid)
+        //         return;
+        //
+        //     selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
+        //     OnTurnFinished?.Invoke();
+        //     
+        //     selectedUnit = null;
+        //     isActionValid = false;
+        // }
 
         private void CheckForSelectUnit(Unit unit)
         {
