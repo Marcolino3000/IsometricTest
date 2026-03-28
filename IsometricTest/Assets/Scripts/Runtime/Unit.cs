@@ -9,7 +9,7 @@ namespace Runtime
     {
         public UnitState CurrentState => currentState;
         public UnitBlueprint Blueprint => blueprint;
-        public ActionPointCounter ActionPointCounter => actionPointCounter;
+        public ActionExecutor ActionExecutor => actionExecutor;
         
         [Header("Debug")]
         [SerializeField] private UnitState currentState;
@@ -19,7 +19,7 @@ namespace Runtime
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private HealthBar healthBar;
-        [SerializeField] private ActionPointCounter actionPointCounter;
+        [SerializeField] private ActionExecutor actionExecutor;
 
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team)
         {
@@ -31,7 +31,7 @@ namespace Runtime
             unitSpawner = unitSpawnerArg;
             
             healthBar.Setup(blueprint.DefaultState.Health);
-            actionPointCounter.Setup(currentState);
+            actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile);
         }
 
         private void HealthChangedCallback(int newHealth)
@@ -69,6 +69,11 @@ namespace Runtime
             // var targetPosition = targetUnit.CurrentState.Position;
             // targetUnit.Remove();
             // TryMoveToTile(targetPosition);
+        }
+        
+        public bool CheckMoveValid(Tile selectedTile)
+        {
+            return IsTileWithinReach(selectedTile, true);
         }
 
         public bool TryMoveToTile(Tile selectedTile)

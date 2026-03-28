@@ -5,7 +5,8 @@ namespace Runtime
 {
     [Serializable]
     public class UnitState
-    { public int Health
+    { 
+        public int Health
         {
             get => health;
             set
@@ -17,13 +18,26 @@ namespace Runtime
                 HealthChangedCallback?.Invoke(health);
             }
         }
-        public int ActionPoints;
+        
+        public int ActionPoints
+        {
+            get => actionPoints;
+            set
+            {
+                if (value < 0)
+                    throw new ArgumentOutOfRangeException(nameof(ActionPoints), "ActionPoints cannot be negative.");
+
+                actionPoints = value;
+            }
+        }
+        
         public Tile Position;
         public int Range;
         public Team Team;
 
         private Action<int> HealthChangedCallback;
         [SerializeField] private int health;
+        [SerializeField] private int actionPoints;
         
         public void SetHealthChangedCallback(Action<int> callback)
         {

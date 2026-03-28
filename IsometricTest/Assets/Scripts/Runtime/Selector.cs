@@ -13,6 +13,7 @@ namespace Runtime
         [Header("Debug")]
         [SerializeField] private Unit selectedUnit;
         [SerializeField] private Team activeTeam;
+        [SerializeField] private bool isActionValid;
 
         [Header("References")]
         [SerializeField] private Raycaster raycaster;
@@ -41,41 +42,41 @@ namespace Runtime
 
         private void HandleMouseEnter(IClickable clickable)
         {
+            if(selectedUnit == null)
+                return;
+            
             switch (clickable)
             {
                 case Tile tile:
                     Debug.Log("Highlight path: " + tile.name);
-                    UpdateActionPointCounter(tile);
+                    UpdatePlannedActions(tile);
                     break;
                 case Unit unit:
                     Debug.Log("show attack stuff: " + unit.name);
-                    UpdateActionPointCounter(unit);
+                    // UpdatePlannedActions(unit);
                     break;
             }   
         }
 
-        private void UpdateActionPointCounter(Tile tile)
+        private void UpdatePlannedActions(Tile tile)
         {
             int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, tile.Position);
 
             var actions = CreateActions(steps);
             
-            selectedUnit.ActionPointCounter.PlanActions(actions, selectedUnit.CurrentState);
+            isActionValid = selectedUnit.ActionExecutor.PlanActions(actions, tile);
         }
 
         private List<UnitAction> CreateActions(int steps)
         {
             List<UnitAction> actions = new List<UnitAction>();
             
-            for (int i = 0; i < steps; i++)
-            {
-                actions.Add(selectedUnit.Blueprint.MoveAction);
-            }
+            actions.Add(selectedUnit.Blueprint.MoveAction);
             
             return actions;
         }
 
-        private void UpdateActionPointCounter(Unit unit)
+        private void UpdatePlannedActions(Unit unit)
         {
             int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, unit.CurrentState.Position.Position);   
         }
@@ -98,25 +99,17 @@ namespace Runtime
 
         private void HandleTileClicked(Tile tile)
         {
-            if(CheckForMovement(tile))
-                OnTurnFinished?.Invoke();
+            if (!isActionValid)
+                return;
+
+            selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile));
+            // if(CheckForMovement(tile))
+            OnTurnFinished?.Invoke();
             
             selectedUnit = null;
+            isActionValid = false;
         }
 
-        private bool CheckForMovement(Tile tile)
-        {
-            if (selectedUnit != null)
-            {
-                if (selectedUnit.TryMoveToTile(tile))
-                {
-                    selectedUnit = null;
-                    return true;
-                }
-            }
-            
-            return false;
-        }
 
         private void HandleUnitClicked(Unit unit)
         {

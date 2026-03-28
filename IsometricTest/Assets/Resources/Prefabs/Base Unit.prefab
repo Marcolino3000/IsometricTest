@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 2986837763248994373}
   - component: {fileID: 2595553748593128112}
   - component: {fileID: 3415384219615473639}
-  - component: {fileID: 7299242098996670915}
   m_Layer: 5
   m_Name: ActionPointsBar
   m_TagString: Untagged
@@ -71,25 +70,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UI.ActionsPointsBar
   maxElements: 0
   blopTemplate: {fileID: 9197481963319205126, guid: 8b83cb1ea2eee407c963e3ea3752b8bd, type: 3}
---- !u!114 &7299242098996670915
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 70249593548022443}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1911448f9bbf4e75b966b333a43535b0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Actions.ActionPointCounter
-  unitState:
-    ActionPoints: 0
-    Position: {fileID: 0}
-    Range: 0
-    Team: 0
-    health: 0
-  actionsPointsBar: {fileID: 3415384219615473639}
 --- !u!1 &3801719132238461822
 GameObject:
   m_ObjectHideFlags: 0
@@ -171,6 +151,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4351215620135471239}
   - component: {fileID: 6973456096741093380}
+  - component: {fileID: 5349758326273555319}
   m_Layer: 7
   m_Name: Base Unit
   m_TagString: Untagged
@@ -218,7 +199,26 @@ MonoBehaviour:
   tileSpawner: {fileID: 0}
   unitSpawner: {fileID: 0}
   healthBar: {fileID: 8233212973314276433}
-  actionPointCounter: {fileID: 7299242098996670915}
+  actionExecutor: {fileID: 5349758326273555319}
+--- !u!114 &5349758326273555319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4048790538827275665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1911448f9bbf4e75b966b333a43535b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Actions.ActionPointCounter
+  unitState:
+    ActionPoints: 0
+    Position: {fileID: 0}
+    Range: 0
+    Team: 0
+    health: 0
+  actionsPointsBar: {fileID: 3415384219615473639}
 --- !u!1 &4524403525204030475
 GameObject:
   m_ObjectHideFlags: 0

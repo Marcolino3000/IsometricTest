@@ -21,5 +21,17 @@ namespace Runtime.Controls
             OnClick?.Invoke(clickable);
             Debug.Log("Click: " + name);
         }
+
+        public void HoverEnter()
+        {
+            OnMouseEnter?.Invoke(clickable);
+            Debug.Log("HoverEnter: " + name);
+        }
+
+        public void HoverExit()
+        {
+            OnMouseExit?.Invoke(clickable);
+            Debug.Log("HoverExit: " + name);
+        }
     }
 }
