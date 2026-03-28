@@ -15,13 +15,6 @@ namespace Runtime
         [Header("References")]
         [SerializeField] private Raycaster raycaster;
 
-
-        private void Awake()
-        {
-            // raycaster.OnUnitClicked += HandleUnitClicked;
-            // raycaster.OnTileClicked += HandleTileClicked;
-        }
-
         public void RegisterClickable(Clickable clickable)
         {
             clickable.OnClick += HandleClick;

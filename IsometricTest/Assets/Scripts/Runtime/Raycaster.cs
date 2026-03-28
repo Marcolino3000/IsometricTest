@@ -8,9 +8,6 @@ namespace Runtime
 {
     public class Raycaster : MonoBehaviour
     {
-        public event Action<Unit> OnUnitClicked;
-        public event Action<Tile> OnTileClicked;
-
         [SerializeField] private LayerMask unitLayerMask;
         [SerializeField] private LayerMask tileLayerMask;
 
@@ -18,10 +15,10 @@ namespace Runtime
 
         private void OnClickPerformed(InputAction.CallbackContext ctx)
         {
-            DoClickableRaycast();
+            DoRaycast();
         }
 
-        private void DoClickableRaycast()
+        private void DoRaycast()
         {
             Vector2 mousePosition = Mouse.current.position.ReadValue();
             Ray ray = Camera.main.ScreenPointToRay(mousePosition);
@@ -38,20 +35,7 @@ namespace Runtime
             
             clickable?.Click();
         }
-
-        private void DoRaycast()
-        {
-            TileSpawner.ResetHighlightedTiles();
-
-            Vector2 mousePosition = Mouse.current.position.ReadValue();
-            Ray ray = Camera.main.ScreenPointToRay(mousePosition);
-
-            if (ClickUnit(ray))
-                return;
-
-            ClickTile(ray);
-        }
-
+        
         private Tile ClickTile(Ray ray)
         {
             if (!GetYSortedHits(ray, tileLayerMask, out var hits)) 
@@ -65,7 +49,6 @@ namespace Runtime
                 return null;
             }
             
-            // OnTileClicked?.Invoke(selectedTile);
             return selectedTile;
         }
 
@@ -82,7 +65,6 @@ namespace Runtime
                 return null;
             }
             
-            // OnUnitClicked?.Invoke(selectedUnit);
             return selectedUnit;
         }
 
