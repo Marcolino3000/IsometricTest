@@ -1,4 +1,5 @@
 using System;
+using Runtime.Controls;
 using UnityEngine;
 
 namespace Runtime
@@ -17,8 +18,40 @@ namespace Runtime
 
         private void Awake()
         {
-            raycaster.OnUnitClicked += HandleUnitClicked;
-            raycaster.OnTileClicked += HandleTileClicked;
+            // raycaster.OnUnitClicked += HandleUnitClicked;
+            // raycaster.OnTileClicked += HandleTileClicked;
+        }
+
+        public void RegisterClickable(Clickable clickable)
+        {
+            clickable.OnClick += HandleClick;
+            clickable.OnMouseEnter += HandleMouseEnter;
+            clickable.OnMouseExit += HandleMouseExit;
+        }
+
+        private void HandleMouseExit(IClickable obj)
+        {
+            
+        }
+
+        private void HandleMouseEnter(IClickable obj)
+        {
+            
+        }
+
+        private void HandleClick(IClickable clickable)
+        {
+            TileSpawner.ResetHighlightedTiles();
+            
+            switch (clickable)
+            {
+                case Tile tile:
+                    HandleTileClicked(tile);
+                    break;
+                case Unit unit:
+                    HandleUnitClicked(unit);
+                    break; 
+            }
         }
 
         private void HandleTileClicked(Tile tile)

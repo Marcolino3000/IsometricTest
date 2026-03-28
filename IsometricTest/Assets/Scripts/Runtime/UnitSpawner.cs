@@ -1,16 +1,22 @@
 using System.Collections.Generic;
 using Data;
-using Unity.VisualScripting;
+using Runtime.Controls;
 using UnityEngine;
 
 namespace Runtime
 {
     public class UnitSpawner : MonoBehaviour
     {
+        [Header("Debug")]
         [SerializeField] private List<Unit> units;
+        
+        [Header("Settings")]
+        [SerializeField] private Color OpponentColor;
+        
+        [Header("References")]
         [SerializeField] private UnitSpawnerSettings settings;
         [SerializeField] private TileSpawner tileSpawner;
-        [SerializeField] private Color OpponentColor;
+        [SerializeField] private Selector selector;
 
         public void RemoveUnit(Unit unit)
         {
@@ -63,6 +69,8 @@ namespace Runtime
                 }
                 
                 units.Add(instance);
+                
+                selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
             }
         }
 

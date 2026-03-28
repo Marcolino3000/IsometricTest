@@ -4,7 +4,8 @@ using UnityEngine.EventSystems;
 
 namespace Runtime.Controls
 {
-    public class Clickable : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+    public class Clickable : MonoBehaviour
+        // , IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public event Action<IClickable> OnClick;
         public event Action<IClickable> OnMouseEnter;
@@ -14,25 +15,29 @@ namespace Runtime.Controls
 
         private void Awake()
         {
-            clickable = GetComponent<IClickable>();
+            clickable = GetComponentInParent<IClickable>();
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void Click()
         {
-            Debug.Log("Click: " + eventData.pointerCurrentRaycast.gameObject.name);
             OnClick?.Invoke(clickable);
+            Debug.Log("Click: " + name);
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            Debug.Log("Enter: " + eventData.pointerCurrentRaycast.gameObject.name);
-            OnMouseEnter?.Invoke(clickable);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            Debug.Log("Exit: " + eventData.pointerCurrentRaycast.gameObject.name);
-            OnMouseExit?.Invoke(clickable);
-        }
+        // public void OnPointerClick(PointerEventData eventData)
+        // {
+        //     OnClick?.Invoke(clickable);
+        //     Debug.Log("Click: " + eventData.pointerCurrentRaycast.gameObject.name);
+        // }
+        //
+        // public void OnPointerEnter(PointerEventData eventData)
+        // {
+        //     OnMouseEnter?.Invoke(clickable);
+        // }
+        //
+        // public void OnPointerExit(PointerEventData eventData)
+        // {
+        //     OnMouseExit?.Invoke(clickable);
+        // }
     }
 }

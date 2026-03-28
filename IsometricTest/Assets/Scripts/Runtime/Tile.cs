@@ -1,8 +1,9 @@
+using Runtime.Controls;
 using UnityEngine;
 
 namespace Runtime
 {
-    public class Tile : MonoBehaviour
+    public class Tile : MonoBehaviour, IClickable
     {
         public Vector2Int Position;
         public bool IsOccupied {get; private set;}

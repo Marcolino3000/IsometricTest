@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Data;
+using Runtime.Controls;
 using TMPro;
 using UnityEngine;
 
@@ -7,7 +8,10 @@ namespace Runtime
 {
     public class TileSpawner : MonoBehaviour
     {
+        
+        [Header("References")]
         [SerializeField] private TileSpawnerSettings settings;
+        [SerializeField] private Selector selector;
         
         private static readonly List<Tile> Tiles = new();
 
@@ -179,6 +183,8 @@ namespace Runtime
             var tile = instance.GetComponent<Tile>();
             tile.Position = new Vector2Int(xIndex, yIndex);
             Tiles.Add(tile);
+            
+            selector.RegisterClickable(tile.GetComponent<Clickable>());
         }
 
         public Vector2Int GetRandomGridPosition()

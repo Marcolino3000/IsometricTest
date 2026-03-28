@@ -164,6 +164,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   settings: {fileID: 11400000, guid: 516d56cb6972f47c590936721111409a, type: 2}
+  selector: {fileID: 596677168}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -563,7 +564,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectedUnit: {fileID: 0}
   activeTeam: 0
-  raycaster: {fileID: 1592425708}
+  raycaster: {fileID: 0}
 --- !u!4 &596677169
 Transform:
   m_ObjectHideFlags: 0
@@ -669,6 +670,56 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1877632616}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &710307853
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 710307855}
+  - component: {fileID: 710307854}
+  m_Layer: 0
+  m_Name: Raycaster
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &710307854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 710307853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42319e6402e146eeb6b4f118d8023c12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Raycaster
+  unitLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  tileLayerMask:
+    serializedVersion: 2
+    m_Bits: 64
+--- !u!4 &710307855
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 710307853}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &762209797
 GameObject:
@@ -1262,7 +1313,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CurrentTeam: 0
-  raycaster: {fileID: 1592425708}
   selector: {fileID: 596677168}
 --- !u!4 &1526166832
 Transform:
@@ -1274,56 +1324,6 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.5, y: -0.95000005, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1592425707
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1592425709}
-  - component: {fileID: 1592425708}
-  m_Layer: 0
-  m_Name: Raycaster
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1592425708
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1592425707}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 42319e6402e146eeb6b4f118d8023c12, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  unitLayerMask:
-    serializedVersion: 2
-    m_Bits: 128
-  tileLayerMask:
-    serializedVersion: 2
-    m_Bits: 64
---- !u!4 &1592425709
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1592425707}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.082120806, y: 0.47992402, z: 0.88386714}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1673,9 +1673,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   units: []
+  OpponentColor: {r: 0.7264151, g: 0.33236918, b: 0.33236918, a: 1}
   settings: {fileID: 11400000, guid: 75853796c13ce4decb9ecabeedda06ca, type: 2}
   tileSpawner: {fileID: 159287919}
-  OpponentColor: {r: 0.7264151, g: 0.33236918, b: 0.33236918, a: 1}
+  selector: {fileID: 596677168}
 --- !u!4 &2116949057
 Transform:
   m_ObjectHideFlags: 0
@@ -1824,6 +1825,6 @@ SceneRoots:
   - {fileID: 1877632616}
   - {fileID: 159287918}
   - {fileID: 2116949057}
-  - {fileID: 1592425709}
   - {fileID: 1526166832}
   - {fileID: 596677169}
+  - {fileID: 710307855}

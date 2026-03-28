@@ -10,7 +10,6 @@ namespace Runtime
         [SerializeField] private Team CurrentTeam;
 
         [Header("References")] 
-        [SerializeField] private Raycaster raycaster;
         [SerializeField] private Selector selector;
 
         private List<IStateChangeHandler> stateChangeHandlers;

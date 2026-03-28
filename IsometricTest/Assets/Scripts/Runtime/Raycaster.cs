@@ -1,4 +1,5 @@
 using System;
+using Runtime.Controls;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,7 +18,25 @@ namespace Runtime
 
         private void OnClickPerformed(InputAction.CallbackContext ctx)
         {
-            DoRaycast();
+            DoClickableRaycast();
+        }
+
+        private void DoClickableRaycast()
+        {
+            Vector2 mousePosition = Mouse.current.position.ReadValue();
+            Ray ray = Camera.main.ScreenPointToRay(mousePosition);
+
+            CheckForClickable(ray);
+        }
+
+        private void CheckForClickable(Ray ray)
+        {
+            Clickable clickable = ClickUnit(ray)?.GetComponentInChildren<Clickable>();
+            
+            if(clickable == null)
+                clickable = ClickTile(ray)?.GetComponentInChildren<Clickable>();
+            
+            clickable?.Click();
         }
 
         private void DoRaycast()
@@ -33,38 +52,38 @@ namespace Runtime
             ClickTile(ray);
         }
 
-        private bool ClickTile(Ray ray)
+        private Tile ClickTile(Ray ray)
         {
             if (!GetYSortedHits(ray, tileLayerMask, out var hits)) 
-                return false;
+                return null;
             
             var selectedTile = hits[0].collider.gameObject.GetComponentInChildren<Tile>();
             
             if (selectedTile == null)
             {
                 Debug.LogWarning("No Tile component found on object on Tiles Layermask.");
-                return false;
+                return null;
             }
             
-            OnTileClicked?.Invoke(selectedTile);
-            return true;
+            // OnTileClicked?.Invoke(selectedTile);
+            return selectedTile;
         }
 
-        private bool ClickUnit(Ray ray)
+        private Unit ClickUnit(Ray ray)
         {
             if (!GetYSortedHits(ray, unitLayerMask, out var hits)) 
-                return false;
+                return null;
             
             var selectedUnit = hits[0].collider.gameObject.transform.parent.GetComponent<Unit>();
             
             if (selectedUnit == null)
             {
                 Debug.LogWarning("No Unit component found on object on Units Layermask.");
-                return false;
+                return null;
             }
             
-            OnUnitClicked?.Invoke(selectedUnit);
-            return true;
+            // OnUnitClicked?.Invoke(selectedUnit);
+            return selectedUnit;
         }
 
         private static bool GetYSortedHits(Ray ray, LayerMask mask, out RaycastHit2D[] hits)

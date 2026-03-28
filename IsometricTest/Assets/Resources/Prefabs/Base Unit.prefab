@@ -81,7 +81,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4351215620135471239}
   - component: {fileID: 6973456096741093380}
-  - component: {fileID: 65652866546638758}
   m_Layer: 7
   m_Name: Base Unit
   m_TagString: Untagged
@@ -128,18 +127,6 @@ MonoBehaviour:
   tileSpawner: {fileID: 0}
   unitSpawner: {fileID: 0}
   healthBar: {fileID: 8233212973314276433}
---- !u!114 &65652866546638758
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4048790538827275665}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d63da63c2674737811ad0e1e9d2686b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Controls.Clickable
 --- !u!1 &4524403525204030475
 GameObject:
   m_ObjectHideFlags: 0
@@ -151,6 +138,7 @@ GameObject:
   - component: {fileID: 501065638092419866}
   - component: {fileID: 7616597018661060969}
   - component: {fileID: 8126027339519297793}
+  - component: {fileID: 1426485570190726254}
   m_Layer: 7
   m_Name: Sprite
   m_TagString: Untagged
@@ -286,3 +274,15 @@ PolygonCollider2D:
       - {x: 0.12975058, y: -0.10698313}
       - {x: -0.0014858637, y: -0.001533486}
   m_UseDelaunayMesh: 1
+--- !u!114 &1426485570190726254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4524403525204030475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d63da63c2674737811ad0e1e9d2686b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Controls.Clickable
