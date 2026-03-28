@@ -1,4 +1,6 @@
+using Runtime.Actions;
 using Runtime.Controls;
+using UI;
 using UnityEngine;
 
 namespace Runtime
@@ -7,12 +9,17 @@ namespace Runtime
     {
         public UnitState CurrentState => currentState;
         public UnitBlueprint Blueprint => blueprint;
+        public ActionPointCounter ActionPointCounter => actionPointCounter;
         
+        [Header("Debug")]
         [SerializeField] private UnitState currentState;
+        
+        [Header("References")]
         [SerializeField] private UnitBlueprint blueprint;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private HealthBar healthBar;
+        [SerializeField] private ActionPointCounter actionPointCounter;
 
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team)
         {
@@ -24,6 +31,7 @@ namespace Runtime
             unitSpawner = unitSpawnerArg;
             
             healthBar.Setup(blueprint.DefaultState.Health);
+            actionPointCounter.Setup(currentState);
         }
 
         private void HealthChangedCallback(int newHealth)

@@ -9,3 +9,17 @@
     margin-bottom: 30px;
     margin-left: 15px;
 }
+
+.actionPointBlob {
+    background-color: rgb(154, 28, 28);
+    border-top-left-radius: 500px;
+    border-top-right-radius: 500px;
+    border-bottom-right-radius: 500px;
+    border-bottom-left-radius: 500px;
+    margin-top: 30px;
+    margin-right: 15px;
+    margin-bottom: 30px;
+    margin-left: 15px;
+}
+
+

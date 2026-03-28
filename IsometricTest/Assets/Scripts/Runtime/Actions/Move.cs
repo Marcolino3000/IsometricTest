@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Runtime.Actions
 {
     [CreateAssetMenu(menuName = "Data/Actions/Move")]
-    public class Move : Action
+    public class Move : UnitAction
     {
         
     }
