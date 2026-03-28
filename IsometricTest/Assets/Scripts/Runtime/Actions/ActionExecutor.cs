@@ -18,11 +18,16 @@ namespace Runtime.Actions
         [Header("References")]
         [SerializeField] private ActionsPointsBar actionsPointsBar;
 
-        private Func<Tile, bool> moveActionTest;
-        private Func<Tile, bool> moveAction;
+        MoveExecutor _moveMoveExecutor;
+        AttackExecutor _attackMoveExecutor;
+        
+        // private Func<Tile, bool> moveActionTest;
+        // private Func<Tile, bool> moveAction;
+        // private Func<Tile, bool> attackActionTest;
+        // private Func<Tile, bool> attackAction;
         
 
-        public bool PlanActions(List<UnitAction> actions, Tile target)
+        public bool PlanActions(List<UnitAction> actions, ExecuteArgs executeArgs)
         {
             plannedActions = actions;
 
@@ -31,7 +36,10 @@ namespace Runtime.Actions
             if (totalCost > unit.CurrentState.ActionPoints)
                 return false;
 
-            if (!CheckActionValidity(actions, target))
+            if (!_moveMoveExecutor.CheckActionValidity(actions, executeArgs.TargetTile))
+                return false;
+            
+            if(!_attackMoveExecutor.CheckActionValidity(actions, executeArgs.TargetUnit))
                 return false;
 
             actionsPointsBar.SetBlobAmount(totalCost);
@@ -39,19 +47,19 @@ namespace Runtime.Actions
             return true;
         }
 
-        private bool CheckActionValidity(List<UnitAction> actions, Tile target)
-        {
-            foreach (var action in actions)
-            {
-                if (action is Move)
-                {
-                    if(!moveActionTest.Invoke(target))
-                        return false;
-                }
-            }
-
-            return true;
-        }
+        // private bool CheckActionValidity(List<UnitAction> actions, Tile target)
+        // {
+        //     foreach (var action in actions)
+        //     {
+        //         if (action is Move)
+        //         {
+        //             if(!moveActionTest.Invoke(target))
+        //                 return false;
+        //         }
+        //     }
+        //
+        //     return true;
+        // }
 
         private int GetTotalCost(List<UnitAction> actions)
         {
@@ -66,44 +74,53 @@ namespace Runtime.Actions
             foreach (var action in plannedActions)
             {
                 totalCost += action.Cost;
-                moveAction.Invoke(args.Target);
+                // moveAction.Invoke(args.Target);
+                _moveMoveExecutor.Execute(args.TargetTile);
             }
 
             unit.CurrentState.ActionPoints -= totalCost;
             actionsPointsBar.SetBlobAmount(unit.CurrentState.ActionPoints);
         }
         
-        
-        // private bool CheckForMovement(Tile tile)
-        // {
-        //     if (selectedUnit != null)
-        //     {
-        //         if (selectedUnit.TryMoveToTile(tile))
-        //         {
-        //             selectedUnit = null;
-        //             return true;
-        //         }
-        //     }
-        //     
-        //     return false;
-        // }
 
-        public void Setup(Unit unit, Func<Tile, bool> moveActionTestArg, Func<Tile, bool> moveActionArg)
+        public void Setup(Unit unit, 
+            Func<Tile, bool> moveActionTestArg, Func<Tile, bool> moveActionArg,
+            Func<Unit, bool> attackActionTestArg, Func<Unit, bool> attackActionArg)
         {
             this.unit = unit;
-            moveActionTest = moveActionTestArg;
-            moveAction = moveActionArg;
+            
+            _moveMoveExecutor = new MoveExecutor(moveActionTestArg, moveActionArg);
+            _attackMoveExecutor = new AttackExecutor(attackActionTestArg, attackActionArg);
+            
+            // moveActionTest = moveActionTestArg;
+            // moveAction = moveActionArg;
             actionsPointsBar.Setup(unit.CurrentState.ActionPoints); //todo: add max action  points to blueprint
         }
     }
     
     public class ExecuteArgs
     {
-        public ExecuteArgs(Tile target)
-        {
-            Target = target;
-        }
+        public readonly Tile TargetTile;
+        public readonly Unit TargetUnit;
 
-        public readonly Tile Target;
+        public ExecuteArgs(Tile targetTile = null, Unit targetUnit = null)
+        {
+            TargetTile = targetTile;
+            TargetUnit = targetUnit;
+        }
+        
+        public Vector2Int TargetPosition
+        {
+            get
+            {
+                if (TargetTile != null)
+                    return TargetTile.Position;
+
+                if (TargetUnit != null)
+                    return TargetUnit.CurrentState.Position.Position;
+
+                throw new InvalidOperationException("Both TargetTile and TargetUnit are null.");
+            }
+        }
     }
 }

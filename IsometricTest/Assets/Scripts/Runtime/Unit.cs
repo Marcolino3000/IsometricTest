@@ -1,6 +1,5 @@
 using Runtime.Actions;
 using Runtime.Controls;
-using UI;
 using UnityEngine;
 
 namespace Runtime
@@ -31,7 +30,7 @@ namespace Runtime
             unitSpawner = unitSpawnerArg;
             
             healthBar.Setup(blueprint.DefaultState.Health);
-            actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile);
+            actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile, CheckAttackValid, TryAttackUnit);
         }
 
         private void HealthChangedCallback(int newHealth)
@@ -70,10 +69,15 @@ namespace Runtime
             // targetUnit.Remove();
             // TryMoveToTile(targetPosition);
         }
-        
-        public bool CheckMoveValid(Tile selectedTile)
+
+        private bool CheckMoveValid(Tile selectedTile)
         {
             return IsTileWithinReach(selectedTile, true);
+        }
+        
+        private bool CheckAttackValid(Unit selectedUnit)
+        {
+            return IsTileWithinReach(selectedUnit.CurrentState.Position, true);
         }
 
         public bool TryMoveToTile(Tile selectedTile)

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Runtime.Actions;
 using Runtime.Controls;
+using Unity.VisualScripting.Dependencies.NCalc;
 using UnityEngine;
 
 namespace Runtime
@@ -45,26 +46,28 @@ namespace Runtime
             if(selectedUnit == null)
                 return;
             
-            switch (clickable)
-            {
-                case Tile tile:
-                    Debug.Log("Highlight path: " + tile.name);
-                    UpdatePlannedActions(tile);
-                    break;
-                case Unit unit:
-                    Debug.Log("show attack stuff: " + unit.name);
-                    // UpdatePlannedActions(unit);
-                    break;
-            }   
+            UpdatePlannedActions(clickable);
         }
 
-        private void UpdatePlannedActions(Tile tile)
+        private void UpdatePlannedActions(IClickable clickable)
         {
-            int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, tile.Position);
+            ExecuteArgs executeArgs = CreateExecutionArgs(clickable);   
+            
+            int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, executeArgs.TargetPosition);
 
             var actions = CreateActions(steps);
             
-            isActionValid = selectedUnit.ActionExecutor.PlanActions(actions, tile);
+            isActionValid = selectedUnit.ActionExecutor.PlanActions(actions, executeArgs);
+        }
+
+        private ExecuteArgs CreateExecutionArgs(IClickable clickable)
+        {
+            return clickable switch
+            {
+                Tile tile => new ExecuteArgs(tile, null),
+                Unit unit => new ExecuteArgs(null, unit),
+                _ => null
+            };
         }
 
         private List<UnitAction> CreateActions(int steps)
