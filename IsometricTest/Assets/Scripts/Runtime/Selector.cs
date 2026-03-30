@@ -26,39 +26,66 @@ namespace Runtime
             clickable.OnMouseExit += HandleMouseExit;
         }
 
+        private void HandleMouseEnter(IClickable clickable)
+        { 
+            if(selectedUnit == null) 
+                return;
+            
+            TileSpawner.ResetHighlightedTiles();
+            
+            if (clickable is Unit unit)
+            {
+                if (CheckForAttackOnUnit(unit))
+                    isActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
+            }
+            else if (clickable is Tile tile)
+            {
+                if (selectedUnit != null)
+                    isActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
+            }
+            else
+            {
+                Debug.LogError("Clicked object is not a tile or unit");
+            }
+        }
+
         private void HandleClick(IClickable clickable)
         {
             TileSpawner.ResetHighlightedTiles();
-
+            
+            // if(selectedUnit != null && !isActionValid)
+            //     return;
+            
             if (clickable is Unit unit)
             {
-                if (activeTeam != unit.CurrentState.Team && selectedUnit != null)
-                    UpdatePlannedActions(unit);
+                CheckForSelectUnit(unit);
+                    // return;
+                if (CheckForAttackOnUnit(unit))
+                    selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
             }
-            
-            switch (clickable)
+            else if (clickable is Tile tile)
             {
-                case Tile tile:
-                    HandleTileClicked(tile);
-                    break;
-                // case Unit unit:
-                //     HandleUnitClicked(unit);
-                //     break; 
+                if (selectedUnit != null)
+                    selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile, null));
+            }
+            else
+            {
+                Debug.LogError("Clicked object is not a tile or unit");
             }
         }
 
-        private void UpdateExecutor(IClickable clickable)
-        {
-            isActionValid = selectedUnit.ActionExecutor.PlanActions()
-        }
+        // private void UpdateExecutor(IClickable clickable)
+        // {
+        //     isActionValid = selectedUnit.ActionExecutor.PlanActionsNew()
+        // }
 
-        private void HandleMouseEnter(IClickable clickable)
-        {
-            if(selectedUnit == null)
-                return;
-            
-            UpdatePlannedActions(clickable);
-        }
+        // private void HandleMouseEnter(IClickable clickable)
+        // {
+        //     if(selectedUnit == null)
+        //         return;
+        //     
+        //     UpdatePlannedActions(clickable);
+        // }
 
         private void UpdatePlannedActions(IClickable clickable)
         {
@@ -149,20 +176,22 @@ namespace Runtime
         //     isActionValid = false;
         // }
 
-        private void CheckForSelectUnit(Unit unit)
+        private bool CheckForSelectUnit(Unit unit)
         {
             if(unit.CurrentState.Team != activeTeam)
-                return;
+                return false;
             
             selectedUnit = unit;
             selectedUnit.HighlightMoveableTiles();
+            
+            return true;
         }
 
-        private bool CheckForAttackOnUnit(Unit unit)
+        private bool CheckForAttackOnUnit(Unit targetUnit)
         {
-            if (activeTeam != unit.CurrentState.Team && selectedUnit != null)
+            if (activeTeam != targetUnit.CurrentState.Team && selectedUnit != null)
             {
-                return selectedUnit.TryAttackUnit(unit);
+                return true;
             }
 
             return false;

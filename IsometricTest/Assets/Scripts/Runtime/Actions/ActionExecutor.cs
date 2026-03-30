@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NUnit.Framework;
 using UI;
 using UnityEngine;
 
@@ -25,9 +26,46 @@ namespace Runtime.Actions
         // private Func<Tile, bool> moveAction;
         // private Func<Tile, bool> attackActionTest;
         // private Func<Tile, bool> attackAction;
-        
-        public bool PlanActionsNew()
-        
+
+        public bool PlanActionsNew(ExecuteArgs executeArgs)
+        {
+            var actions = CreateActions(executeArgs);
+            
+            var totalCost = GetTotalCost(actions);
+            
+            if (totalCost > unit.CurrentState.ActionPoints)
+                return false;
+
+            if (!_moveMoveExecutor.CheckActionValidity(actions, executeArgs.TargetTile))
+                return false;
+            
+            if(!_attackMoveExecutor.CheckActionValidity(actions, executeArgs.TargetUnit))
+                return false;
+            
+            plannedActions = actions;
+
+            actionsPointsBar.SetBlobAmount(totalCost);
+            
+            return true;
+            
+        }
+
+        private List<UnitAction> CreateActions(ExecuteArgs executeArgs)
+        {
+            var actions = new List<UnitAction>();
+            
+            if(executeArgs.TargetTile != null)
+                actions.Add(unit.Blueprint.MoveAction);
+            
+            else if(executeArgs.TargetUnit != null)
+                actions.Add(unit.Blueprint.AttackAction);
+
+            else
+                Debug.LogError("either both or none execute args were null");
+            
+            return actions;
+        }
+
         public bool PlanActions(List<UnitAction> actions, ExecuteArgs executeArgs)
         {
             plannedActions = actions;
@@ -61,7 +99,12 @@ namespace Runtime.Actions
             foreach (var action in plannedActions)
             {
                 totalCost += action.Cost;
-                _moveMoveExecutor.Execute(args.TargetTile);
+                if(args.TargetTile != null)
+                    _moveMoveExecutor.Execute(args.TargetTile);
+                else if(args.TargetUnit != null)
+                    _attackMoveExecutor.Execute(args.TargetUnit);
+                else
+                    Debug.LogError("either both or none execute args were null");
             }
 
             unit.CurrentState.ActionPoints -= totalCost;
