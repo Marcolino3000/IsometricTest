@@ -24,7 +24,7 @@ namespace Runtime
             Destroy(unit.gameObject);
         }
         
-        private void Awake()
+        private void Start()
         {
             SpawnUnits();
         }
@@ -68,8 +68,9 @@ namespace Runtime
                 }
                 
                 units.Add(instance);
-                
-                selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
+
+                ClickableRegistry.RegisterClickable(instance.GetComponentInChildren<Clickable>());
+                // selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
             }
         }
 

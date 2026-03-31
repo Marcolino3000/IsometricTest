@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Runtime.Actions;
 using Runtime.Controls;
 using UnityEngine;
@@ -8,17 +7,26 @@ namespace Runtime
 {
     public class Selector : MonoBehaviour, IStateChangeHandler
     {
+        public event Action<Selection> OnSelectionChanged; 
         public event Action OnTurnFinished;
         
         [Header("Debug")]
         [SerializeField] private Unit selectedUnit;
+        [SerializeField] private Selection selection;
         [SerializeField] private Team activeTeam;
         [SerializeField] private bool isHoveredActionValid;
 
         [Header("References")]
         [SerializeField] private Raycaster raycaster;
 
-        public void RegisterClickable(Clickable clickable)
+
+        private void Awake()
+        {
+            ClickableRegistry.OnClickableSpawned += RegisterClickable;
+            selection.OnSelectionChanged += selection => OnSelectionChanged?.Invoke(selection);
+        }
+
+        private void RegisterClickable(Clickable clickable)
         {
             clickable.OnClick += HandleClick;
             clickable.OnMouseEnter += HandleMouseEnter;
@@ -50,8 +58,8 @@ namespace Runtime
         {
             if(CheckIfFriendlyUnit(unit) && selectedUnit == null)
             {
-                TileSpawner.ResetHighlightedTiles(); //todo: in highlight moveable tiles?
-                unit.HighlightMoveableTiles();
+                // TileSpawner.ResetHighlightedTiles(); //todo: in highlight moveable tiles?
+                // unit.HighlightMoveableTiles();
                 return;
             }
             
@@ -61,7 +69,7 @@ namespace Runtime
 
         private void HandleClick(IClickable clickable)
         {
-            TileSpawner.ResetHighlightedTiles();
+            // TileSpawner.ResetHighlightedTiles();
             
             bool executedAction = false;
             
@@ -83,7 +91,8 @@ namespace Runtime
             
             isHoveredActionValid = false;
             selectedUnit = null;
-            TileSpawner.ResetHighlightedTiles();
+            selection.Unit = null;
+            // TileSpawner.ResetHighlightedTiles();
             OnTurnFinished?.Invoke();
         }
 
@@ -99,7 +108,7 @@ namespace Runtime
         {
             if (CheckForSelectUnit(unit))
             {
-                unit.HighlightMoveableTiles();
+                // unit.HighlightMoveableTiles();
                 return false;
             }
             
@@ -108,36 +117,7 @@ namespace Runtime
             
             return selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
         }
-
-        // private void UpdatePlannedActions(IClickable clickable)
-        // {
-        //     ExecuteArgs executeArgs = CreateExecutionArgs(clickable);   
-        //     
-        //     int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, executeArgs.TargetPosition);
-        //
-        //     var actions = CreateActions(steps);
-        //     
-        //     isActionValid = selectedUnit.ActionExecutor.PlanActions(actions, executeArgs);
-        // }
-
-        private ExecuteArgs CreateExecutionArgs(IClickable clickable)
-        {
-            return clickable switch
-            {
-                Tile tile => new ExecuteArgs(tile, null),
-                Unit unit => new ExecuteArgs(null, unit),
-                _ => null
-            };
-        }
-
-        // private List<UnitAction> CreateActions(int steps)
-        // {
-        //     List<UnitAction> actions = new List<UnitAction>();
-        //     
-        //     actions.Add(selectedUnit.Blueprint.MoveAction);
-        //     
-        //     return actions;
-        // }
+        
 
         private static int ChebyshevDistance(Vector2Int a, Vector2Int b)
         {
@@ -154,8 +134,8 @@ namespace Runtime
             {
                 case Unit unit:
                 {
-                    if (selectedUnit == null)
-                        TileSpawner.ResetHighlightedTiles();
+                    // if (selectedUnit == null)
+                        // TileSpawner.ResetHighlightedTiles();
                     break;
                 }
                 case Tile tile:
@@ -179,6 +159,7 @@ namespace Runtime
                 return false;
             
             selectedUnit = unit;
+            selection.Unit = unit;
             
             return true;
         }
@@ -197,5 +178,18 @@ namespace Runtime
         {
             activeTeam = newState.Team;
         }
+    }
+
+    [Serializable]
+    public class Selection
+    {
+        public event Action<Selection> OnSelectionChanged; 
+        public Unit Unit { get => unit; set
+        { 
+            unit = value;
+            OnSelectionChanged?.Invoke(this);
+        }}
+
+        private Unit unit;
     }
 }

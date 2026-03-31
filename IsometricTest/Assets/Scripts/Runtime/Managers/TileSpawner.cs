@@ -114,7 +114,7 @@ namespace Runtime
             tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.Orange);
         }
 
-        public void HighlightTile(Vector2Int tilePosition)
+        public void HighlightTile(Vector2Int tilePosition, MarkerColor markerColor = MarkerColor.White)
         {
             if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
             {
@@ -129,9 +129,9 @@ namespace Runtime
                 return;
             }
             
-            tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.White);
+            tile.GetComponentInChildren<TileMarker>().SetMarkerColor(markerColor);
         }
-
+  
         public static void ResetHighlightedTiles()
         {
             foreach (var tile in Tiles)
@@ -148,7 +148,7 @@ namespace Runtime
             }
         }
         
-        private void Awake()
+        private void Start()
         {
             SpawnGrid();
         }
@@ -182,8 +182,9 @@ namespace Runtime
             var tile = instance.GetComponent<Tile>();
             tile.Position = new Vector2Int(xIndex, yIndex);
             Tiles.Add(tile);
-            
-            selector.RegisterClickable(tile.GetComponent<Clickable>());
+
+            ClickableRegistry.RegisterClickable(tile.GetComponent<Clickable>());
+            // selector.RegisterClickable(tile.GetComponent<Clickable>());
         }
 
         public Vector2Int GetRandomGridPosition()
