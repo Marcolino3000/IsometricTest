@@ -29,8 +29,23 @@ namespace Runtime
 
         private void SwitchActiveTeam()
         {
-            CurrentTeam = CurrentTeam == Team.Player ? Team.Opponent : Team.Player;
+            ToggleCurrentTeam();
             NotifyStateChangeHandlers();
+        }
+
+        private void NotifyStateChangeHandlers()
+        {
+            foreach (var handler in stateChangeHandlers)
+            {
+                handler.HandleStateChange(new State{Team = CurrentTeam});
+            }
+        }
+
+        #region Helpers
+
+        private void ToggleCurrentTeam()
+        {
+            CurrentTeam = CurrentTeam == Team.Player ? Team.Opponent : Team.Player;
         }
 
         private void FindStateChangeHandlers()
@@ -42,12 +57,6 @@ namespace Runtime
             stateChangeHandlers.Add(new Direction());
         }
 
-        private void NotifyStateChangeHandlers()
-        {
-            foreach (var handler in stateChangeHandlers)
-            {
-                handler.HandleStateChange(new State{Team = CurrentTeam});
-            }
-        }
+        #endregion
     }
 }

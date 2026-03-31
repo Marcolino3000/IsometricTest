@@ -8,7 +8,6 @@ namespace Runtime
 {
     public class TileSpawner : MonoBehaviour
     {
-        
         [Header("References")]
         [SerializeField] private TileSpawnerSettings settings;
         [SerializeField] private Selector selector;

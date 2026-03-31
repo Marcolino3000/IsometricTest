@@ -130,14 +130,14 @@ namespace Runtime
             };
         }
 
-        private List<UnitAction> CreateActions(int steps)
-        {
-            List<UnitAction> actions = new List<UnitAction>();
-            
-            actions.Add(selectedUnit.Blueprint.MoveAction);
-            
-            return actions;
-        }
+        // private List<UnitAction> CreateActions(int steps)
+        // {
+        //     List<UnitAction> actions = new List<UnitAction>();
+        //     
+        //     actions.Add(selectedUnit.Blueprint.MoveAction);
+        //     
+        //     return actions;
+        // }
 
         private static int ChebyshevDistance(Vector2Int a, Vector2Int b)
         {

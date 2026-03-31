@@ -50,10 +50,10 @@ namespace Runtime.Actions
             var actions = new List<UnitAction>();
             
             if(executeArgs.TargetTile != null)
-                actions.Add(unit.Blueprint.MoveAction);
+                actions.Add(unit.CurrentState.MoveAction);
             
             else if(executeArgs.TargetUnit != null)
-                actions.Add(unit.Blueprint.AttackAction);
+                actions.Add(unit.CurrentState.AttackAction);
 
             else
                 Debug.LogError("either both or none execute args were null");

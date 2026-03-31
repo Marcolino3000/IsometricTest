@@ -10,8 +10,6 @@ namespace Runtime
         public UnitState DefaultState => new(defaultState);
 
         [SerializeField] private UnitState defaultState;
-        public Move MoveAction;
-        public Attack AttackAction;
         public int Speed;
         public int Attack;
         public int Defense;
