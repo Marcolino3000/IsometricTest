@@ -21,11 +21,6 @@ namespace Runtime.Actions
 
         MoveExecutor _moveMoveExecutor;
         AttackExecutor _attackMoveExecutor;
-        
-        // private Func<Tile, bool> moveActionTest;
-        // private Func<Tile, bool> moveAction;
-        // private Func<Tile, bool> attackActionTest;
-        // private Func<Tile, bool> attackAction;
 
         public bool PlanActionsNew(ExecuteArgs executeArgs)
         {
@@ -92,23 +87,28 @@ namespace Runtime.Actions
             return totalCost;
         }
 
-        public void ExecuteActions(ExecuteArgs args)
+        public bool ExecuteActions(ExecuteArgs executeArgs)
         {
+            if(!PlanActionsNew(executeArgs))
+                return false;
+            
             int totalCost = 0;
 
             foreach (var action in plannedActions)
             {
                 totalCost += action.Cost;
-                if(args.TargetTile != null)
-                    _moveMoveExecutor.Execute(args.TargetTile);
-                else if(args.TargetUnit != null)
-                    _attackMoveExecutor.Execute(args.TargetUnit);
+                if(executeArgs.TargetTile != null)
+                    _moveMoveExecutor.Execute(executeArgs.TargetTile);
+                else if(executeArgs.TargetUnit != null)
+                    _attackMoveExecutor.Execute(executeArgs.TargetUnit);
                 else
                     Debug.LogError("either both or none execute args were null");
             }
 
             unit.CurrentState.ActionPoints -= totalCost;
             actionsPointsBar.SetBlobAmount(unit.CurrentState.ActionPoints);
+
+            return true;
         }
         
 

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Runtime.Actions;
 using Runtime.Controls;
-using Unity.VisualScripting.Dependencies.NCalc;
 using UnityEngine;
 
 namespace Runtime
@@ -14,7 +13,7 @@ namespace Runtime
         [Header("Debug")]
         [SerializeField] private Unit selectedUnit;
         [SerializeField] private Team activeTeam;
-        [SerializeField] private bool isActionValid;
+        [SerializeField] private bool isHoveredActionValid;
 
         [Header("References")]
         [SerializeField] private Raycaster raycaster;
@@ -27,76 +26,99 @@ namespace Runtime
         }
 
         private void HandleMouseEnter(IClickable clickable)
-        { 
-            if(selectedUnit == null) 
+        {
+            switch (clickable)
+            {
+                case Unit unit:
+                {
+                    HandleUnitHover(unit);
+                    break;
+                }
+                case Tile tile:
+                {
+                    if (selectedUnit != null)
+                        isHoveredActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
+                    break;
+                }
+                default:
+                    Debug.LogError("Clicked object is not a tile or unit");
+                    break;
+            }
+        }
+
+        private void HandleUnitHover(Unit unit)
+        {
+            if(CheckIfFriendlyUnit(unit) && selectedUnit == null)
+            {
+                TileSpawner.ResetHighlightedTiles(); //todo: in highlight moveable tiles?
+                unit.HighlightMoveableTiles();
                 return;
+            }
             
-            TileSpawner.ResetHighlightedTiles();
-            
-            if (clickable is Unit unit)
-            {
-                if (CheckForAttackOnUnit(unit))
-                    isActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
-            }
-            else if (clickable is Tile tile)
-            {
-                if (selectedUnit != null)
-                    isActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
-            }
-            else
-            {
-                Debug.LogError("Clicked object is not a tile or unit");
-            }
+            if (CheckForAttackOnUnit(unit))
+                isHoveredActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
         }
 
         private void HandleClick(IClickable clickable)
         {
             TileSpawner.ResetHighlightedTiles();
             
-            // if(selectedUnit != null && !isActionValid)
-            //     return;
+            bool executedAction = false;
             
             if (clickable is Unit unit)
             {
-                CheckForSelectUnit(unit);
-                    // return;
-                if (CheckForAttackOnUnit(unit))
-                    selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
+                executedAction = HandleUnitClick(unit);
             }
             else if (clickable is Tile tile)
             {
-                if (selectedUnit != null)
-                    selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile, null));
+                executedAction = HandleTileClick(tile);
             }
             else
             {
                 Debug.LogError("Clicked object is not a tile or unit");
             }
+
+            if (!executedAction) 
+                return;
+            
+            isHoveredActionValid = false;
+            selectedUnit = null;
+            TileSpawner.ResetHighlightedTiles();
+            OnTurnFinished?.Invoke();
         }
 
-        // private void UpdateExecutor(IClickable clickable)
-        // {
-        //     isActionValid = selectedUnit.ActionExecutor.PlanActionsNew()
-        // }
-
-        // private void HandleMouseEnter(IClickable clickable)
-        // {
-        //     if(selectedUnit == null)
-        //         return;
-        //     
-        //     UpdatePlannedActions(clickable);
-        // }
-
-        private void UpdatePlannedActions(IClickable clickable)
+        private bool HandleTileClick(Tile tile)
         {
-            ExecuteArgs executeArgs = CreateExecutionArgs(clickable);   
+            if (selectedUnit == null)
+                return false;
             
-            int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, executeArgs.TargetPosition);
-
-            var actions = CreateActions(steps);
-            
-            isActionValid = selectedUnit.ActionExecutor.PlanActions(actions, executeArgs);
+            return selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile, null));
         }
+
+        private bool HandleUnitClick(Unit unit)
+        {
+            if (CheckForSelectUnit(unit))
+            {
+                unit.HighlightMoveableTiles();
+                return false;
+            }
+            
+            if (!CheckForAttackOnUnit(unit))
+                return false;
+            
+            return selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
+        }
+
+        // private void UpdatePlannedActions(IClickable clickable)
+        // {
+        //     ExecuteArgs executeArgs = CreateExecutionArgs(clickable);   
+        //     
+        //     int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, executeArgs.TargetPosition);
+        //
+        //     var actions = CreateActions(steps);
+        //     
+        //     isActionValid = selectedUnit.ActionExecutor.PlanActions(actions, executeArgs);
+        // }
 
         private ExecuteArgs CreateExecutionArgs(IClickable clickable)
         {
@@ -117,12 +139,7 @@ namespace Runtime
             return actions;
         }
 
-        // private void UpdatePlannedActions(Unit unit)
-        // {
-        //     int steps = ChebyshevDistance(selectedUnit.CurrentState.Position.Position, unit.CurrentState.Position.Position);   
-        // }
-        
-        public static int ChebyshevDistance(Vector2Int a, Vector2Int b)
+        private static int ChebyshevDistance(Vector2Int a, Vector2Int b)
         {
             int dx = Mathf.Abs(a.x - b.x);
             int dy = Mathf.Abs(a.y - b.y);
@@ -131,50 +148,30 @@ namespace Runtime
 
         private void HandleMouseExit(IClickable clickable)
         {
-            // switch (clickable)
-            // {
-            //     case Tile tile:
-            //         
-            // }
-        }
-
-        private void HandleTileClicked(Tile tile)
-        {
-            if (!isActionValid)
-                return;
-
-            selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile));
-            // if(CheckForMovement(tile))
-            OnTurnFinished?.Invoke();
+            isHoveredActionValid = false;
             
-            selectedUnit = null;
-            isActionValid = false;
-        }
-
-
-        private void HandleUnitClicked(Unit unit)
-        {
-            if (CheckForAttackOnUnit(unit))
+            switch (clickable)
             {
-                selectedUnit = null;
-                OnTurnFinished?.Invoke();
-                return;
+                case Unit unit:
+                {
+                    if (selectedUnit == null)
+                        TileSpawner.ResetHighlightedTiles();
+                    break;
+                }
+                case Tile tile:
+                {
+                    break;
+                }
+                default:
+                    Debug.LogError("Clicked object is not a tile or unit");
+                    break;
             }
-
-            CheckForSelectUnit(unit);
         }
         
-        // private void HandleUnitClicked(Unit unit)
-        // {
-        //     if (!isActionValid)
-        //         return;
-        //
-        //     selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
-        //     OnTurnFinished?.Invoke();
-        //     
-        //     selectedUnit = null;
-        //     isActionValid = false;
-        // }
+        private bool CheckIfFriendlyUnit(Unit unit)
+        {
+            return unit.CurrentState.Team == activeTeam;
+        }
 
         private bool CheckForSelectUnit(Unit unit)
         {
@@ -182,7 +179,6 @@ namespace Runtime
                 return false;
             
             selectedUnit = unit;
-            selectedUnit.HighlightMoveableTiles();
             
             return true;
         }

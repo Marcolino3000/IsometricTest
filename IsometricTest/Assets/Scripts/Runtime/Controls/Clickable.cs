@@ -1,4 +1,6 @@
 using System;
+using UnityEditor.Toolbars;
+using UnityEditor.UIElements;
 using UnityEngine;
 
 namespace Runtime.Controls
@@ -19,19 +21,21 @@ namespace Runtime.Controls
         public void Click()
         {
             OnClick?.Invoke(clickable);
-            Debug.Log("Click: " + name);
+            // Debug.Log("Click: " + name);
         }
+        
+        //todo: Select
 
         public void HoverEnter()
         {
             OnMouseEnter?.Invoke(clickable);
-            Debug.Log("HoverEnter: " + name);
+            // Debug.Log("HoverEnter: " + name);
         }
 
         public void HoverExit()
         {
             OnMouseExit?.Invoke(clickable);
-            Debug.Log("HoverExit: " + name);
+            // Debug.Log("HoverExit: " + name);
         }
     }
 }

@@ -77,7 +77,7 @@ namespace Runtime
         
         private bool CheckAttackValid(Unit selectedUnit)
         {
-            return IsTileWithinReach(selectedUnit.CurrentState.Position, true);
+            return IsTileWithinReach(selectedUnit.CurrentState.Position, false);
         }
 
         public bool TryMoveToTile(Tile selectedTile)
@@ -111,6 +111,7 @@ namespace Runtime
             
             if(!reachableTiles.Contains(selectedTile))
                 return false;
+            
             return true;
         }
 
