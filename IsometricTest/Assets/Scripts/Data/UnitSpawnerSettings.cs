@@ -14,6 +14,7 @@ namespace Data
         
         [Header("Visual Settings")]
         public int OrderInLayer;
+        public Color OpponentColor;
     }
 
     [Serializable]

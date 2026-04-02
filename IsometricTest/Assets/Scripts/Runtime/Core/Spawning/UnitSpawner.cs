@@ -12,13 +12,9 @@ namespace Runtime.Core.Spawning
         [Header("Debug")]
         [SerializeField] private List<Unit> units;
         
-        [Header("Settings")]
-        [SerializeField] private Color OpponentColor;
-        
         [Header("References")]
         [SerializeField] private UnitSpawnerSettings settings;
         [SerializeField] private TileSpawner tileSpawner;
-        [SerializeField] private Selector selector;
 
         public void RemoveUnit(Unit unit)
         {
@@ -65,7 +61,7 @@ namespace Runtime.Core.Spawning
                 if(team == Team.Opponent)
                 {
                     spriteRenderer.flipX = true;
-                    spriteRenderer.color = OpponentColor;
+                    spriteRenderer.color = settings.OpponentColor;
                     instance.name = $"Opponent {prefab.name} {i}";
                 }
                 

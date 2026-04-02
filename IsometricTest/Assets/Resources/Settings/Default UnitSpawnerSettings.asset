@@ -12,13 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1c599704cdf42c1a1466a89341ea0b3, type: 3}
   m_Name: Default UnitSpawnerSettings
   m_EditorClassIdentifier: 
-  Blueprint: {fileID: 0}
-  PositionOffset: {x: 0, y: 0.7, z: 0}
-  RotationOffset: {x: 15, y: 45, z: 15}
-  Scale: {x: 4, y: 4, z: 4}
   UnitAmounts:
   - Amount: 1
     Prefab: {fileID: 1033920189357735479, guid: 560cd3456b51c4f609e960b3b8f037c6, type: 3}
   - Amount: 1
     Prefab: {fileID: 8279638395231357746, guid: cc378132656d04836986c39202c89fca, type: 3}
   OrderInLayer: 2
+  OpponentColor: {r: 0.7924528, g: 0.22801706, b: 0.22801706, a: 0.5803922}

@@ -14,7 +14,7 @@ namespace Runtime.Core.Spawning
     {
         [Header("References")]
         [SerializeField] private TileSpawnerSettings settings;
-        [SerializeField] private Selector selector;
+        // [SerializeField] private Selector selector;
         
         private static readonly List<Tile> Tiles = new();
 
@@ -118,14 +118,14 @@ namespace Runtime.Core.Spawning
         {
             if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
             {
-                UnityEngine.Debug.LogWarning("Tile Position was out of bounds");
+                Debug.LogWarning("Tile Position was out of bounds");
                 return;
             }
 
             var tile = Tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
             if (tile == null)
             {
-                UnityEngine.Debug.LogWarning("Tile not found at position: " + tilePosition);
+                Debug.LogWarning("Tile not found at position: " + tilePosition);
                 return;
             }
             
@@ -198,7 +198,7 @@ namespace Runtime.Core.Spawning
 
             if (positions == null || positions.Count == 0)
             {
-                UnityEngine.Debug.LogWarning("No spawn positions defined for team: " + team);
+                Debug.LogWarning("No spawn positions defined for team: " + team);
                 return Vector2Int.zero;
             }
 
