@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using Data;
 using Runtime.Controls;
+using Runtime.Core.State;
+using Runtime.Entities;
+using Runtime.Feedback;
+using Runtime.Gameplay.Global;
 using TMPro;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Core.Spawning
 {
     public class TileSpawner : MonoBehaviour
     {
@@ -114,14 +118,14 @@ namespace Runtime
         {
             if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
             {
-                Debug.LogWarning("Tile Position was out of bounds");
+                UnityEngine.Debug.LogWarning("Tile Position was out of bounds");
                 return;
             }
 
             var tile = Tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
             if (tile == null)
             {
-                Debug.LogWarning("Tile not found at position: " + tilePosition);
+                UnityEngine.Debug.LogWarning("Tile not found at position: " + tilePosition);
                 return;
             }
             
@@ -194,7 +198,7 @@ namespace Runtime
 
             if (positions == null || positions.Count == 0)
             {
-                Debug.LogWarning("No spawn positions defined for team: " + team);
+                UnityEngine.Debug.LogWarning("No spawn positions defined for team: " + team);
                 return Vector2Int.zero;
             }
 

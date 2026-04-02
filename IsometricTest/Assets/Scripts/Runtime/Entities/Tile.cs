@@ -1,7 +1,8 @@
 using Runtime.Controls;
+using Runtime.Feedback;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Entities
 {
     public class Tile : MonoBehaviour, IClickable
     {

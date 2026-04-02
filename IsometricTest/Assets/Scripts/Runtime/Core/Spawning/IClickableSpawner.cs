@@ -1,7 +1,7 @@
 using System;
 using Runtime.Controls;
 
-namespace Runtime
+namespace Runtime.Core.Spawning
 {
     public interface IClickableSpawner
     {

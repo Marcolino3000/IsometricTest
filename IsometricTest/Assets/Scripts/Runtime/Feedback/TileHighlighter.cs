@@ -1,6 +1,9 @@
+using Runtime.Core.Spawning;
+using Runtime.Entities;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Feedback
 {
     public class TileHighlighter : MonoBehaviour
     {

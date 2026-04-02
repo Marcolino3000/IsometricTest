@@ -1,13 +1,14 @@
 using System.Linq;
+using Runtime.Debugger;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using Object = System.Object;
 
-namespace Runtime
+namespace Editor
 {
     [CustomEditor(typeof(Object), true)]
-    public class DebugEditor : Editor
+    public class DebugEditor : UnityEditor.Editor
     {
         [SerializeField] private DebugViewer viewer;
         [SerializeField] private DebugViewWindow viewWindow;

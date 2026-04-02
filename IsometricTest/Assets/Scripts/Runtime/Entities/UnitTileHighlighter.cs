@@ -1,6 +1,7 @@
+using Runtime.Core.Spawning;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Entities
 {
     public class UnitTileHighlighter : UnitComponent
     {

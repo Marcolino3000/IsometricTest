@@ -1,9 +1,12 @@
 using System;
 using Runtime.Actions;
 using Runtime.Controls;
+using Runtime.Core.Spawning;
+using Runtime.Core.State;
+using Runtime.Entities;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Gameplay.Global
 {
     public class Selector : MonoBehaviour, IStateChangeHandler
     {
@@ -48,7 +51,7 @@ namespace Runtime
                     break;
                 }
                 default:
-                    Debug.LogError("Clicked object is not a tile or unit");
+                    UnityEngine.Debug.LogError("Clicked object is not a tile or unit");
                     break;
             }
         }
@@ -88,7 +91,7 @@ namespace Runtime
             }
             else
             {
-                Debug.LogError("Clicked object is not a tile or unit");
+                UnityEngine.Debug.LogError("Clicked object is not a tile or unit");
             }
 
             if (!executedAction) 
@@ -146,7 +149,7 @@ namespace Runtime
                     break;
                 }
                 default:
-                    Debug.LogError("Clicked object is not a tile or unit");
+                    UnityEngine.Debug.LogError("Clicked object is not a tile or unit");
                     break;
             }
         }

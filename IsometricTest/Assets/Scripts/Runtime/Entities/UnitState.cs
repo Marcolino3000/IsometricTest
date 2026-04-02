@@ -2,7 +2,7 @@ using System;
 using Runtime.Actions;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Entities
 {
     [Serializable]
     public class UnitState

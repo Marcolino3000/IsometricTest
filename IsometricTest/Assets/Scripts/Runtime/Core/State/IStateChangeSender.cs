@@ -1,6 +1,6 @@
 using System;
 
-namespace Runtime
+namespace Runtime.Core.State
 {
     public interface IStateChangeSender<T> where T : State
     {

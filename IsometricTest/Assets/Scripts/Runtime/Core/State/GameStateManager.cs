@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+using Runtime.Entities;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Core.State
 {
     public class GameStateManager : MonoBehaviour
     {

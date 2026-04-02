@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using Data;
 using Runtime.Controls;
+using Runtime.Entities;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Core.Spawning
 {
     public class UnitSpawner : MonoBehaviour
     {

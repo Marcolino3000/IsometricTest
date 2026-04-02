@@ -4,7 +4,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Runtime
+namespace Editor
 {
     public class DebugViewWindow : EditorWindow
     {

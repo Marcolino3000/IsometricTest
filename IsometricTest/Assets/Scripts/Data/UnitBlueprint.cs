@@ -1,7 +1,7 @@
-using Runtime.Actions;
+using Runtime.Entities;
 using UnityEngine;
 
-namespace Runtime
+namespace Data
 {
     [CreateAssetMenu(menuName = "ScriptableObjects/Data/UnitBlueprint")]
     public class UnitBlueprint : ScriptableObject

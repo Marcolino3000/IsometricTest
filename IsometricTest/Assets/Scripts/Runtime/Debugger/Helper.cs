@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Debugger
 {
     public static class Helper
     {

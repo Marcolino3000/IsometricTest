@@ -1,9 +1,10 @@
 using System;
 using Runtime.Controls;
+using Runtime.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Runtime
+namespace Runtime.Gameplay.Global
 {
     public class Raycaster : MonoBehaviour
     {
@@ -75,7 +76,7 @@ namespace Runtime
 
             if (selectedTile == null)
             {
-                Debug.LogWarning("No Tile component found on object on Tiles Layermask.");
+                UnityEngine.Debug.LogWarning("No Tile component found on object on Tiles Layermask.");
                 return null;
             }
 
@@ -91,7 +92,7 @@ namespace Runtime
 
             if (selectedUnit == null)
             {
-                Debug.LogWarning("No Unit component found on object on Units Layermask.");
+                UnityEngine.Debug.LogWarning("No Unit component found on object on Units Layermask.");
                 return null;
             }
 

@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using Runtime.Entities;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Core.State
 {
     public class Direction : IStateChangeHandler
     {

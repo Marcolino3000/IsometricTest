@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Runtime;
+using Runtime.Entities;
 using UnityEngine;
 
 namespace Data

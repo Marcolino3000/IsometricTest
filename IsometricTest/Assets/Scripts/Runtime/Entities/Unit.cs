@@ -1,9 +1,13 @@
-using System.Collections.Generic;
+using Data;
 using Runtime.Actions;
 using Runtime.Controls;
+using Runtime.Core.Spawning;
+using Runtime.Core.State;
+using Runtime.Gameplay.Global;
+using UI;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Entities
 {
     public class Unit : MonoBehaviour, IClickable, IStateChangeHandler
     {
@@ -47,7 +51,7 @@ namespace Runtime
         {
             if (selectedTile == null)
             {
-                Debug.LogWarning("Selected tile is null");
+                UnityEngine.Debug.LogWarning("Selected tile is null");
                 return false;
             }
 
@@ -101,7 +105,7 @@ namespace Runtime
         {
             if (selectedTile == null)
             {
-                Debug.LogWarning("Selected tile is null");
+                UnityEngine.Debug.LogWarning("Selected tile is null");
                 return false;
             }
             

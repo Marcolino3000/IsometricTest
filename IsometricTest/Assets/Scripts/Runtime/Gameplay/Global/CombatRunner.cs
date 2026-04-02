@@ -1,6 +1,7 @@
+using Runtime.Entities;
 using UnityEngine;
 
-namespace Runtime
+namespace Runtime.Gameplay.Global
 {
     public class CombatRunner
     {
