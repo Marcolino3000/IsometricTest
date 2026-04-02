@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using Runtime.Actions;
 using Runtime.Controls;
 using UnityEngine;
 
 namespace Runtime
 {
-    public class Unit : MonoBehaviour, IClickable
+    public class Unit : MonoBehaviour, IClickable, IStateChangeHandler
     {
         public UnitState CurrentState => currentState;
         public UnitBlueprint Blueprint => blueprint;
@@ -12,8 +13,10 @@ namespace Runtime
         
         [Header("Debug")]
         [SerializeField] private UnitState currentState;
-        
+
         [Header("References")]
+        public UnitTileHighlighter TileHighlighter;
+        
         [SerializeField] private UnitBlueprint blueprint;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
@@ -31,6 +34,8 @@ namespace Runtime
             
             healthBar.Setup(blueprint.DefaultState.Health);
             actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile, CheckAttackValid, TryAttackUnit);
+            
+            TileHighlighter.Setup(currentState, tileSpawner);
         }
 
         private void HealthChangedCallback(int newHealth)
@@ -53,7 +58,7 @@ namespace Runtime
             return true;
         }
 
-        public bool TryAttackUnit(Unit targetUnit)
+        private bool TryAttackUnit(Unit targetUnit)
         {
             if (!IsTileWithinReach(targetUnit.CurrentState.Position, false))
                 return false;
@@ -65,9 +70,6 @@ namespace Runtime
         private void AttackUnit(Unit targetUnit)
         {
             CombatRunner.ResolveCombat(this, targetUnit);
-            // var targetPosition = targetUnit.CurrentState.Position;
-            // targetUnit.Remove();
-            // TryMoveToTile(targetPosition);
         }
 
         private bool CheckMoveValid(Tile selectedTile)
@@ -125,13 +127,18 @@ namespace Runtime
             transform.position = unitSpawner.GridToWorldPosition(selectedTile.Position);
             
             selectedTile.SetUnit(this);
-            
-            // TileSpawner.ResetHighlightedTiles();
         }
 
-        public void HighlightMoveableTiles()
+        public void HandleStateChange(ChangeEvent changeEvent)
         {
-            tileSpawner.HighlightMoveableTiles(currentState.Position.Position, currentState.Range);
+            if(changeEvent.previousValue != changeEvent.newValue)
+                HandleNewTurn(changeEvent.newValue);
+        }
+
+        private void HandleNewTurn(State newState)
+        {
+            if(newState.Team == currentState.Team)
+                currentState.ActionPoints = blueprint.DefaultState.ActionPoints;
         }
     }
 

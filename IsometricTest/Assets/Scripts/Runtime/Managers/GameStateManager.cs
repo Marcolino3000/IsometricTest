@@ -24,20 +24,30 @@ namespace Runtime
             selector.OnTurnFinished += SwitchActiveTeam;
             
             FindStateChangeHandlers();
-            NotifyStateChangeHandlers();
+            var changeEvent = new ChangeEvent
+            {
+                previousValue = new State{Team = CurrentTeam},
+                newValue = new State{Team = CurrentTeam}
+            };
+            NotifyStateChangeHandlers(changeEvent);
         }
 
         private void SwitchActiveTeam()
         {
+            var changeEvent = new ChangeEvent{previousValue = new State{Team = CurrentTeam}};
+            
             ToggleCurrentTeam();
-            NotifyStateChangeHandlers();
+            
+            changeEvent.newValue = new State{Team = CurrentTeam};
+            
+            NotifyStateChangeHandlers(changeEvent);
         }
 
-        private void NotifyStateChangeHandlers()
+        private void NotifyStateChangeHandlers(ChangeEvent changeEvent)
         {
             foreach (var handler in stateChangeHandlers)
             {
-                handler.HandleStateChange(new State{Team = CurrentTeam});
+                handler.HandleStateChange(changeEvent);
             }
         }
 

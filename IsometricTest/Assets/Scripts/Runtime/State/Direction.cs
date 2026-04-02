@@ -65,9 +65,9 @@ namespace Runtime
             }
         }
 
-        public void HandleStateChange(State newState)
+        public void HandleStateChange(ChangeEvent changeEvent)
         {
-            SetContext(newState);
+            SetContext(changeEvent.newValue);
         }
     }
 }

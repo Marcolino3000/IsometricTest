@@ -23,7 +23,7 @@ namespace Runtime
         private void Awake()
         {
             ClickableRegistry.OnClickableSpawned += RegisterClickable;
-            selection.OnSelectionChanged += selection => OnSelectionChanged?.Invoke(selection);
+            selection.OnSelectionChanged += sel => OnSelectionChanged?.Invoke(sel);
         }
 
         private void RegisterClickable(Clickable clickable)
@@ -94,7 +94,7 @@ namespace Runtime
             if (!executedAction) 
                 return;
             
-            isHoveredActionValid = false;
+            // isHoveredActionValid = false;
             selectedUnit = null;
             selection.SelectedUnit = null;
             OnTurnFinished?.Invoke();
@@ -177,9 +177,9 @@ namespace Runtime
             return false;
         }
 
-        public void HandleStateChange(State newState)
+        public void HandleStateChange(ChangeEvent changeEvent)
         {
-            activeTeam = newState.Team;
+            activeTeam = changeEvent.newValue.Team;
         }
     }
 

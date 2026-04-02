@@ -152,6 +152,7 @@ GameObject:
   - component: {fileID: 4351215620135471239}
   - component: {fileID: 6973456096741093380}
   - component: {fileID: 5349758326273555319}
+  - component: {fileID: 8405904222454837858}
   m_Layer: 7
   m_Name: Base Unit
   m_TagString: Untagged
@@ -190,11 +191,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentState:
-    ActionPoints: 0
     Position: {fileID: 0}
     Range: 0
     Team: 0
+    MoveAction: {fileID: 0}
+    AttackAction: {fileID: 0}
     health: 0
+    actionPoints: 0
+    hasActionsLeft: 0
+  TileHighlighter: {fileID: 8405904222454837858}
   blueprint: {fileID: 0}
   tileSpawner: {fileID: 0}
   unitSpawner: {fileID: 0}
@@ -212,13 +217,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1911448f9bbf4e75b966b333a43535b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Actions.ActionPointCounter
-  unitState:
-    ActionPoints: 0
-    Position: {fileID: 0}
-    Range: 0
-    Team: 0
-    health: 0
+  unit: {fileID: 0}
+  plannedActions: []
+  moveActionData: {fileID: 0}
   actionsPointsBar: {fileID: 3415384219615473639}
+--- !u!114 &8405904222454837858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4048790538827275665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fb1b0f2619b4790957d5b46649e2782, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.UnitTileHighlighter
+  _tileSpawner: {fileID: 0}
 --- !u!1 &4524403525204030475
 GameObject:
   m_ObjectHideFlags: 0

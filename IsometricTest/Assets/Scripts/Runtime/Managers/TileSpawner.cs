@@ -104,14 +104,10 @@ namespace Runtime
                 HighlightTile(tile.Position);
             }
         }
-        public bool CheckForGridBoundaries(int x, int y)
+
+        private bool CheckForGridBoundaries(int x, int y)
         {
             return x >= 0 && x < settings.GridSizeX && y >= 0 && y < settings.GridSizeY;
-        }
-
-        public static void HighlightTile(GameObject tile)
-        {
-            tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.Orange);
         }
 
         public void HighlightTile(Vector2Int tilePosition, MarkerColor markerColor = MarkerColor.White)

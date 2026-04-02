@@ -21,24 +21,22 @@ namespace Runtime
             
             else
                 HandleNoUnitSelectedCases(selection);
-                
         }
 
         private void HandleNoUnitSelectedCases(Selection selection)
         {
             if(selection.HoveredUnit != null)
-                selection.HoveredUnit.HighlightMoveableTiles();
+                selection.HoveredUnit.TileHighlighter.HighlightMoveableTiles();
         }
 
         private void HandleUnitSelectedCases(Selection selection)
         {
-            selection.SelectedUnit.HighlightMoveableTiles();
+            selection.SelectedUnit.TileHighlighter.HighlightMoveableTiles();
             
             if(selection.HoveredUnit != null && 
                selection.HoveredUnit.CurrentState.Team != selection.SelectedUnit.CurrentState.Team)
                 ShowAttackIndicatorTile(selection.HoveredUnit.CurrentState.Position);
         }
-        
 
         private void ShowAttackIndicatorTile(Tile tile)
         {

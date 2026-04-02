@@ -2,21 +2,17 @@ namespace Runtime
 {
     public interface IStateChangeHandler
     {
-        public void HandleStateChange(State newState); 
+        public void HandleStateChange(ChangeEvent changeEvent); 
     }
 
     public class State
     {
         public Team Team;
     }
-     public class GameState : State
-     {
-         
-     }
 
-     public enum GameStateType
-     {
-         Setup,
-         Battle
-     }
+    public class ChangeEvent
+    {
+        public State previousValue;
+        public State newValue;
+    }
 }
