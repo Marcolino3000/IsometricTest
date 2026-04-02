@@ -44,8 +44,7 @@ namespace Runtime
                 }
                 case Tile tile:
                 {
-                    if (selectedUnit != null)
-                        isHoveredActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
+                    HandleTileHover(tile);
                     break;
                 }
                 default:
@@ -54,12 +53,20 @@ namespace Runtime
             }
         }
 
+        private void HandleTileHover(Tile tile)
+        {
+            selection.HoveredTile = tile;
+            
+            if (selectedUnit != null)
+                isHoveredActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
+        }
+
         private void HandleUnitHover(Unit unit)
         {
+            selection.HoveredUnit = unit;
+            
             if(CheckIfFriendlyUnit(unit) && selectedUnit == null)
             {
-                // TileSpawner.ResetHighlightedTiles(); //todo: in highlight moveable tiles?
-                // unit.HighlightMoveableTiles();
                 return;
             }
             
@@ -69,8 +76,6 @@ namespace Runtime
 
         private void HandleClick(IClickable clickable)
         {
-            // TileSpawner.ResetHighlightedTiles();
-            
             bool executedAction = false;
             
             if (clickable is Unit unit)
@@ -91,8 +96,7 @@ namespace Runtime
             
             isHoveredActionValid = false;
             selectedUnit = null;
-            selection.Unit = null;
-            // TileSpawner.ResetHighlightedTiles();
+            selection.SelectedUnit = null;
             OnTurnFinished?.Invoke();
         }
 
@@ -108,7 +112,6 @@ namespace Runtime
         {
             if (CheckForSelectUnit(unit))
             {
-                // unit.HighlightMoveableTiles();
                 return false;
             }
             
@@ -134,12 +137,12 @@ namespace Runtime
             {
                 case Unit unit:
                 {
-                    // if (selectedUnit == null)
-                        // TileSpawner.ResetHighlightedTiles();
+                    selection.HoveredUnit = null;
                     break;
                 }
                 case Tile tile:
                 {
+                    selection.HoveredTile = null;
                     break;
                 }
                 default:
@@ -159,7 +162,7 @@ namespace Runtime
                 return false;
             
             selectedUnit = unit;
-            selection.Unit = unit;
+            selection.SelectedUnit = unit;
             
             return true;
         }
@@ -183,13 +186,51 @@ namespace Runtime
     [Serializable]
     public class Selection
     {
-        public event Action<Selection> OnSelectionChanged; 
-        public Unit Unit { get => unit; set
-        { 
-            unit = value;
-            OnSelectionChanged?.Invoke(this);
-        }}
+        public event Action<Selection> OnSelectionChanged;
 
-        private Unit unit;
+        public Unit SelectedUnit
+        {
+            get => selectedUnit;
+            set
+            {
+                selectedUnit = value;
+                OnSelectionChanged?.Invoke(this);
+            }
+        }
+
+        public Unit HoveredUnit
+        {
+            get => hoveredUnit;
+            set
+            {
+                hoveredUnit = value;
+                OnSelectionChanged?.Invoke(this);
+            }
+        }
+
+        public Tile SelectedTile
+        {
+            get => selectedTile;
+            set
+            {
+                selectedTile = value;
+                OnSelectionChanged?.Invoke(this);
+            }
+        }
+
+        public Tile HoveredTile
+        {
+            get => hoveredTile;
+            set
+            {
+                hoveredTile = value;
+                OnSelectionChanged?.Invoke(this);
+            }
+        }
+
+        private Unit selectedUnit;
+        private Unit hoveredUnit;
+        private Tile selectedTile;
+        private Tile hoveredTile;
     }
 }
