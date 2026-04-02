@@ -1,6 +1,6 @@
 using System;
-using Runtime.Controls;
-using Runtime.Entities;
+using Runtime.Gameplay.Controls;
+using Runtime.Gameplay.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 

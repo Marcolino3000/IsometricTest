@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Runtime.Entities;
+using Runtime.Gameplay.Entities;
 using UnityEngine;
 
 namespace Runtime.Core.State

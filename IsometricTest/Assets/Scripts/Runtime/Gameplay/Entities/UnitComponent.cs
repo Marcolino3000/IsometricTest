@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Runtime.Entities
+namespace Runtime.Gameplay.Entities
 {
     public class UnitComponent : MonoBehaviour
     {

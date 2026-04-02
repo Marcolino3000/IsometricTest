@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Runtime.Entities;
+using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
 using UnityEngine;
 

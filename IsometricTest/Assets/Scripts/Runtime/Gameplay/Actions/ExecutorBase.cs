@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Runtime.Actions
+namespace Runtime.Gameplay.Actions
 {
     public abstract class ExecutorBase<Target, ActionType> where ActionType : UnitAction
     {

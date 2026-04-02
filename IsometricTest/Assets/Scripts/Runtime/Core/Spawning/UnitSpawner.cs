@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Data;
-using Runtime.Controls;
-using Runtime.Entities;
+using Runtime.Gameplay.Controls;
+using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
 using UnityEngine;
 

@@ -1,9 +1,9 @@
 using System;
-using Runtime.Actions;
-using Runtime.Controls;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
-using Runtime.Entities;
+using Runtime.Gameplay.Actions;
+using Runtime.Gameplay.Controls;
+using Runtime.Gameplay.Entities;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Global

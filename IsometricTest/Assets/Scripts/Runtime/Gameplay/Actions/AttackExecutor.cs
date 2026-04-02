@@ -1,7 +1,7 @@
 using System;
-using Runtime.Entities;
+using Runtime.Gameplay.Entities;
 
-namespace Runtime.Actions
+namespace Runtime.Gameplay.Actions
 {
     public class AttackExecutor : ExecutorBase<Unit, Attack>
     {

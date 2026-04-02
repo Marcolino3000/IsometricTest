@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Runtime.Actions
+namespace Runtime.Gameplay.Actions
 {
     [CreateAssetMenu(menuName = "Data/Actions/Attack")]
     public class Attack : UnitAction

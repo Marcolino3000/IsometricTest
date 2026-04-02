@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Data;
-using Runtime.Controls;
 using Runtime.Core.State;
-using Runtime.Entities;
-using Runtime.Feedback;
+using Runtime.Gameplay.Controls;
+using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Global;
 using TMPro;
 using UnityEngine;

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Runtime.Actions
+namespace Runtime.Gameplay.Actions
 {
     public abstract class UnitAction : ScriptableObject
     {

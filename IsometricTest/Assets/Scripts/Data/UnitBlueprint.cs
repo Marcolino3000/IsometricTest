@@ -1,4 +1,4 @@
-using Runtime.Entities;
+using Runtime.Gameplay.Entities;
 using UnityEngine;
 
 namespace Data

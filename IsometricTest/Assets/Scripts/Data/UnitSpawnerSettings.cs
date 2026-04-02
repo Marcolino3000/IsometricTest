@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Runtime;
-using Runtime.Entities;
+using Runtime.Gameplay.Entities;
 using UnityEngine;
 
 namespace Data

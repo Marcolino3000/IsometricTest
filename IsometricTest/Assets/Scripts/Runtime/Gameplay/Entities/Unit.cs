@@ -1,13 +1,13 @@
 using Data;
-using Runtime.Actions;
-using Runtime.Controls;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
+using Runtime.Gameplay.Actions;
+using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Global;
 using UI;
 using UnityEngine;
 
-namespace Runtime.Entities
+namespace Runtime.Gameplay.Entities
 {
     public class Unit : MonoBehaviour, IClickable, IStateChangeHandler
     {

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Runtime.Controls
+namespace Runtime.Gameplay.Controls
 {
     public class Clickable : MonoBehaviour
     {

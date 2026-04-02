@@ -1,8 +1,8 @@
 using System;
-using Runtime.Actions;
+using Runtime.Gameplay.Actions;
 using UnityEngine;
 
-namespace Runtime.Entities
+namespace Runtime.Gameplay.Entities
 {
     [Serializable]
     public class UnitState

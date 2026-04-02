@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Runtime.Feedback
+namespace Runtime.Gameplay.Feedback
 {
     public class TileMarker : MonoBehaviour
     {

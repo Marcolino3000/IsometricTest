@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Runtime.Entities;
+using Runtime.Gameplay.Entities;
 using UI;
 using UnityEngine;
 
-namespace Runtime.Actions
+namespace Runtime.Gameplay.Actions
 {
     public class  ActionExecutor : MonoBehaviour
     {
