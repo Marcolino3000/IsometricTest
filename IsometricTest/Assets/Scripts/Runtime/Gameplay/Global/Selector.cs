@@ -182,7 +182,7 @@ namespace Runtime.Gameplay.Global
 
         public void Setup(GameStateManager gameStateManagerArg)
         {
-            gameStateManagerArg.GameStateChanged += HandleStateChange;
+            gameStateManagerArg.OnGameStateChanged += HandleStateChange;
         }
 
         public void HandleStateChange(ChangeEvent changeEvent)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Data;
 using Runtime.Core.State;
 using Runtime.Gameplay.Controls;
@@ -70,12 +71,13 @@ namespace Runtime.Core.Spawning
 
         private void CheckIfNoneHaveActionsLeft()
         {
-            var noneHaveActionsLeft = units.TrueForAll(u => 
-                !u.CurrentState.HasActionsLeft && 
-                gameStateManager.State.Team == u.CurrentState.Team);
+            var noneHaveActionsLeft = units
+                .Where(u => u.CurrentState.Team == gameStateManager.State.Team)
+                .All(u => !u.CurrentState.HasActionsLeft);
             
             if(noneHaveActionsLeft)
-                gameStateManager.State.UnitsHaveActionsLeft = false;
+                gameStateManager.SetActionsLeft(false);     
+            
         }
 
         private void PlaceUnit(Unit unit, Team team)

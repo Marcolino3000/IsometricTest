@@ -10,9 +10,18 @@ namespace Runtime.Core.State
     
     [Serializable]
     public class State
-    {
+    { 
         public Team Team;
         public bool UnitsHaveActionsLeft;
+        
+        public State Clone()
+        {
+            return new State
+            {
+                Team = Team,
+                UnitsHaveActionsLeft = UnitsHaveActionsLeft
+            };
+        }
     }
 
     public class ChangeEvent

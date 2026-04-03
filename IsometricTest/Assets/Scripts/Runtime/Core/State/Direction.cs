@@ -68,7 +68,7 @@ namespace Runtime.Core.State
 
         public static void Setup(GameStateManager gameStateManager)
         {
-            gameStateManager.GameStateChanged += HandleStateChange;
+            gameStateManager.OnGameStateChanged += HandleStateChange;
         }
 
         public static void HandleStateChange(ChangeEvent changeEvent)

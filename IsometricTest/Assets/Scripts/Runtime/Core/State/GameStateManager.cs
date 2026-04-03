@@ -1,60 +1,64 @@
 using System;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Runtime.Core.State
 {
     public class GameStateManager : MonoBehaviour
     {
-        public event Action<ChangeEvent> GameStateChanged;
+        public event Action<ChangeEvent> OnGameStateChanged;
 
         [Header("Current State")] 
-        public State State;
-
+        public State State { get; private set; }
+       
         [Header("References")] 
         [SerializeField] private Selector selector;
 
-        public void UpdateState()
-        {   
+        private State previousState;
+
+        public void SetActionsLeft(bool teamHasActionsLeft)
+        {
+            State.UnitsHaveActionsLeft = teamHasActionsLeft;
             
+            HandleStateChangeNew();
         }
-        public void Setup()
+        
+        private void HandleStateChangeNew()
         {
             var changeEvent = new ChangeEvent
             {
-                previousValue = new State{Team = State.Team},
-                newValue = new State{Team = State.Team}
+                previousValue = previousState.Clone(),
+                newValue = State.Clone()
             };
-            // NotifyStateChangeHandlers(changeEvent);
-            GameStateChanged?.Invoke(changeEvent);
-        }
+            
+            OnGameStateChanged?.Invoke(changeEvent);
 
-        public void SwitchActiveTeam()
+            previousState = State.Clone();
+        }
+        
+        public void Setup()
         {
-            var changeEvent = new ChangeEvent{previousValue = new State{Team = State.Team}};
+            State = new State
+            {
+                Team = Team.Opponent,
+                UnitsHaveActionsLeft = true
+            };
+
+            previousState = State.Clone();
             
-            ToggleCurrentTeam();
-            
-            changeEvent.newValue = new State{Team = State.Team};
-            
-            // NotifyStateChangeHandlers(changeEvent);
-            GameStateChanged?.Invoke(changeEvent);
+            HandleStateChangeNew();
+            // State.OnStateChanged += HandleStateChange;
         }
-
-        // private void NotifyStateChangeHandlers(ChangeEvent changeEvent)
-        // {
-        //     foreach (var handler in stateChangeHandlers)
-        //     {
-        //         handler.HandleStateChange(changeEvent);
-        //     }
-        // }
-
+        
         #region Helpers
 
-        private void ToggleCurrentTeam()
+        public void ToggleCurrentTeam()
         {
             State.Team = State.Team == Team.Player ? Team.Opponent : Team.Player;
+            
+            HandleStateChangeNew();
         }
 
         // private void FindStateChangeHandlers()

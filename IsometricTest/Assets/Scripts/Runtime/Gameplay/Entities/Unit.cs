@@ -39,7 +39,7 @@ namespace Runtime.Gameplay.Entities
             unitSpawner = unitSpawnerArg;
             
             gameStateManager = gameStateManagerArg;
-            gameStateManager.GameStateChanged += HandleStateChange;
+            gameStateManager.OnGameStateChanged += HandleStateChange;
             
             healthBar.Setup(blueprint.DefaultState.Health);
             actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile, CheckAttackValid, TryAttackUnit);
@@ -56,7 +56,7 @@ namespace Runtime.Gameplay.Entities
         {
             if (selectedTile == null)
             {
-                UnityEngine.Debug.LogWarning("Selected tile is null");
+                Debug.LogWarning("Selected tile is null");
                 return false;
             }
 
@@ -110,7 +110,7 @@ namespace Runtime.Gameplay.Entities
         {
             if (selectedTile == null)
             {
-                UnityEngine.Debug.LogWarning("Selected tile is null");
+                Debug.LogWarning("Selected tile is null");
                 return false;
             }
             
@@ -140,7 +140,7 @@ namespace Runtime.Gameplay.Entities
 
         public void HandleStateChange(ChangeEvent changeEvent)
         {
-            if(changeEvent.previousValue != changeEvent.newValue)
+            if(changeEvent.previousValue.Team != changeEvent.newValue.Team)
                 HandleNewTurn(changeEvent.newValue);
         }
 

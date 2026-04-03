@@ -8,21 +8,30 @@ namespace UI
     {
         private Button _button;
 
-        public void Highlight()
+        private void Highlight(ChangeEvent changeEvent)
         {
-            _button.AddToClassList("highlighted");   
+            if(!changeEvent.newValue.UnitsHaveActionsLeft)
+                _button.AddToClassList("highlighted");   
         }
         
-        public void ResetHighlight()
+        private void ResetHighlight(ChangeEvent changeEvent)
         {
-            _button.RemoveFromClassList("highlighted");
+            if(changeEvent.previousValue.Team != changeEvent.newValue.Team)
+                _button.RemoveFromClassList("highlighted");
         }
         
         public void Setup(GameStateManager gameStateManager)
         {
-            _button.clicked += gameStateManager.SwitchActiveTeam;
+            _button.clicked += gameStateManager.ToggleCurrentTeam;
+            gameStateManager.OnGameStateChanged += HandleStateChange;
         }
-        
+
+        private void HandleStateChange(ChangeEvent changeEvent)
+        {
+            Highlight(changeEvent);
+            ResetHighlight(changeEvent);
+        }
+
         private void Awake()
         {
             _button = GetComponent<UIDocument>().rootVisualElement.Q<Button>("nextTurnButton");

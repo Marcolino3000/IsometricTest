@@ -32,6 +32,7 @@ namespace Runtime.Core
 
         private void SetupReferences()
         {
+            gameStateManager.Setup();
             unitSpawner.Setup(gameStateManager, selector);
             tileSpawner.Setup(selector);
             selector.Setup(gameStateManager);
@@ -46,7 +47,7 @@ namespace Runtime.Core
 
         private void StartGame()
         {
-            gameStateManager.SwitchActiveTeam();
+            gameStateManager.ToggleCurrentTeam();
         }
     }
 }
