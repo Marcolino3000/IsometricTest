@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Runtime.Core.State
@@ -24,9 +22,11 @@ namespace Runtime.Core.State
         //     Setup();
         // }
 
+        
+        
         public void Setup()
         {
-            selector.OnTurnFinished += SwitchActiveTeam;
+            // selector.OnTurnFinished += SwitchActiveTeam;
             
             // FindStateChangeHandlers();
             var changeEvent = new ChangeEvent
@@ -38,7 +38,7 @@ namespace Runtime.Core.State
             GameStateChanged?.Invoke(changeEvent);
         }
 
-        private void SwitchActiveTeam()
+        public void SwitchActiveTeam()
         {
             var changeEvent = new ChangeEvent{previousValue = new State{Team = CurrentTeam}};
             

@@ -100,7 +100,7 @@ namespace Runtime.Gameplay.Global
             // isHoveredActionValid = false;
             selectedUnit = null;
             selection.SelectedUnit = null;
-            OnTurnFinished?.Invoke();
+            // OnTurnFinished?.Invoke();
         }
 
         private bool HandleTileClick(Tile tile)

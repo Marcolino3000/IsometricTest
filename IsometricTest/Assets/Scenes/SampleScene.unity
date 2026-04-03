@@ -636,6 +636,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 839429105084348837, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 839429105084348837, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 839429105084348837, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 839429105084348837, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 839429105084348837, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -2.5
+      objectReference: {fileID: 0}
     - target: {fileID: 6161654108688559747, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -676,6 +696,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8722650819136852705, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: sourceAsset
+      value: 
+      objectReference: {fileID: 9197481963319205126, guid: 919b060ec316d438696f2ac923795141, type: 3}
+    - target: {fileID: 8722650819136852705, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: m_WorldSpaceWidth
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 8722650819136852705, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: m_WorldSpaceHeight
+      value: 200
+      objectReference: {fileID: 0}
     - target: {fileID: 8961793008856171245, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
       propertyPath: m_Name
       value: Systems
@@ -683,7 +715,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5569924132095987555, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

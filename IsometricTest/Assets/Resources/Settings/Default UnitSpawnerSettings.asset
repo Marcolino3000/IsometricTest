@@ -18,4 +18,4 @@ MonoBehaviour:
   - Amount: 1
     Prefab: {fileID: 8279638395231357746, guid: cc378132656d04836986c39202c89fca, type: 3}
   OrderInLayer: 2
-  OpponentColor: {r: 0.7924528, g: 0.22801706, b: 0.22801706, a: 0.56078434}
+  OpponentColor: {r: 0.7924528, g: 0.22801706, b: 0.22801706, a: 0.78039217}

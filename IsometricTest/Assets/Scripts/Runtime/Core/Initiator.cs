@@ -1,6 +1,7 @@
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Global;
+using UI;
 using UnityEngine;
 
 namespace Runtime.Core
@@ -12,12 +13,21 @@ namespace Runtime.Core
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private Raycaster raycaster;
         [SerializeField] private Selector selector;
+        
+        [Header("UI")]
+        [SerializeField] private NextTurnButton nextTurnButton;
 
         private void Awake()
         {
             SetupReferences();
             SpawnEntities();
+            SetupUI();
             StartGame();
+        }
+
+        private void SetupUI()
+        {
+            nextTurnButton.Setup(gameStateManager);
         }
 
         private void SetupReferences()
@@ -36,7 +46,7 @@ namespace Runtime.Core
 
         private void StartGame()
         {
-            gameStateManager.Setup();
+            gameStateManager.SwitchActiveTeam();
         }
     }
 }
