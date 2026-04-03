@@ -1,3 +1,4 @@
+using System;
 using Runtime.Gameplay.Entities;
 
 namespace Runtime.Core.State
@@ -6,10 +7,12 @@ namespace Runtime.Core.State
     {
         public void HandleStateChange(ChangeEvent changeEvent); 
     }
-
+    
+    [Serializable]
     public class State
     {
         public Team Team;
+        public bool UnitsHaveActionsLeft;
     }
 
     public class ChangeEvent

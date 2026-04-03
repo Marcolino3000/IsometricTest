@@ -8,31 +8,23 @@ namespace Runtime.Core.State
     public class GameStateManager : MonoBehaviour
     {
         public event Action<ChangeEvent> GameStateChanged;
-        
-        [Header("Current State")]
-        [SerializeField] private Team CurrentTeam;
+
+        [Header("Current State")] 
+        public State State;
 
         [Header("References")] 
         [SerializeField] private Selector selector;
 
-        // private List<IStateChangeHandler> stateChangeHandlers;
-
-        // private void Start()
-        // {
-        //     Setup();
-        // }
-
-        
-        
+        public void UpdateState()
+        {   
+            
+        }
         public void Setup()
         {
-            // selector.OnTurnFinished += SwitchActiveTeam;
-            
-            // FindStateChangeHandlers();
             var changeEvent = new ChangeEvent
             {
-                previousValue = new State{Team = CurrentTeam},
-                newValue = new State{Team = CurrentTeam}
+                previousValue = new State{Team = State.Team},
+                newValue = new State{Team = State.Team}
             };
             // NotifyStateChangeHandlers(changeEvent);
             GameStateChanged?.Invoke(changeEvent);
@@ -40,11 +32,11 @@ namespace Runtime.Core.State
 
         public void SwitchActiveTeam()
         {
-            var changeEvent = new ChangeEvent{previousValue = new State{Team = CurrentTeam}};
+            var changeEvent = new ChangeEvent{previousValue = new State{Team = State.Team}};
             
             ToggleCurrentTeam();
             
-            changeEvent.newValue = new State{Team = CurrentTeam};
+            changeEvent.newValue = new State{Team = State.Team};
             
             // NotifyStateChangeHandlers(changeEvent);
             GameStateChanged?.Invoke(changeEvent);
@@ -62,7 +54,7 @@ namespace Runtime.Core.State
 
         private void ToggleCurrentTeam()
         {
-            CurrentTeam = CurrentTeam == Team.Player ? Team.Opponent : Team.Player;
+            State.Team = State.Team == Team.Player ? Team.Opponent : Team.Player;
         }
 
         // private void FindStateChangeHandlers()

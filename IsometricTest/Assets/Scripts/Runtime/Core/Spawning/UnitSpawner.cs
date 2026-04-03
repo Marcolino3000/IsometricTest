@@ -57,9 +57,25 @@ namespace Runtime.Core.Spawning
                 
                 units.Add(instance);
 
-                // ClickableRegistry.RegisterClickable(instance.GetComponentInChildren<Clickable>());
                 selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
+
+                SubscribeToStateEvents(unit);
             }
+        }
+
+        private void SubscribeToStateEvents(Unit unit)
+        {
+            unit.CurrentState.OnNoActionsLeft += CheckIfNoneHaveActionsLeft;
+        }
+
+        private void CheckIfNoneHaveActionsLeft()
+        {
+            var noneHaveActionsLeft = units.TrueForAll(u => 
+                !u.CurrentState.HasActionsLeft && 
+                gameStateManager.State.Team == u.CurrentState.Team);
+            
+            if(noneHaveActionsLeft)
+                gameStateManager.State.UnitsHaveActionsLeft = false;
         }
 
         private void PlaceUnit(Unit unit, Team team)

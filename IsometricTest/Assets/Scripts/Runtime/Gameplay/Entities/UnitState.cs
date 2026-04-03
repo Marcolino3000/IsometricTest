@@ -6,7 +6,8 @@ namespace Runtime.Gameplay.Entities
 {
     [Serializable]
     public class UnitState
-    { 
+    {
+        public event Action OnNoActionsLeft; 
         public int Health
         {
             get => health;
@@ -28,9 +29,12 @@ namespace Runtime.Gameplay.Entities
                 if (value < 0)
                     throw new ArgumentOutOfRangeException(nameof(ActionPoints), "ActionPoints cannot be negative.");
 
-                hasActionsLeft = actionPoints >= MoveAction.Cost || actionPoints >= AttackAction.Cost;
-                
                 actionPoints = value;
+                
+                hasActionsLeft = actionPoints >= MoveAction.Cost || actionPoints >= AttackAction.Cost;
+                if(!hasActionsLeft)
+                    OnNoActionsLeft?.Invoke();
+                    
             }
         }
         

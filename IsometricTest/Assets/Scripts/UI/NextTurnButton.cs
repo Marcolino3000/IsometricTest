@@ -6,12 +6,20 @@ namespace UI
 {
     public class NextTurnButton : MonoBehaviour
     {
-        // private GameStateManager _gameStateManager;
         private Button _button;
 
+        public void Highlight()
+        {
+            _button.AddToClassList("highlighted");   
+        }
+        
+        public void ResetHighlight()
+        {
+            _button.RemoveFromClassList("highlighted");
+        }
+        
         public void Setup(GameStateManager gameStateManager)
         {
-            // _gameStateManager = gameStateManager;
             _button.clicked += gameStateManager.SwitchActiveTeam;
         }
         

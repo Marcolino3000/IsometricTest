@@ -1,3 +1,4 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/MainUIStyles.uss?fileID=7433441132597879392&amp;guid=c0f0371e8e5244982b79067be1d74924&amp;type=3#MainUIStyles"/>
     <ui:Button text="NEXT &#10;TURN" name="nextTurnButton" style="flex-grow: 1; font-size: 35px; -unity-font-style: bold;"/>
 </ui:UXML>
