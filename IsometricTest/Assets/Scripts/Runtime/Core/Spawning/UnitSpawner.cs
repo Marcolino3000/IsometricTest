@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Data;
+using Runtime.Core.State;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
@@ -15,26 +16,15 @@ namespace Runtime.Core.Spawning
         [Header("References")]
         [SerializeField] private UnitSpawnerSettings settings;
         [SerializeField] private TileSpawner tileSpawner;
+        [SerializeField] private Selector selector;
+        [SerializeField] private GameStateManager gameStateManager;
 
         public void RemoveUnit(Unit unit)
         {
             units.Remove(unit);
             Destroy(unit.gameObject);
         }
-        
-        private void Start()
-        {
-            SpawnUnits();
-        }
 
-        [ContextMenu("Spawn Units")]
-        private void SpawnUnits()
-        {
-            tileSpawner.ResetOccupiedTiles();
-            ClearUnits();
-            SpawnUnitsForTeam(Team.Player);
-            SpawnUnitsForTeam(Team.Opponent);
-        }
         private void SpawnUnitsForTeam(Team team)
         {
             foreach (var unitAmount in settings.UnitAmounts)
@@ -54,7 +44,7 @@ namespace Runtime.Core.Spawning
                 spriteRenderer.sprite = prefab.Blueprint.Sprite;
                 
                 var unit = instance.GetComponentInChildren<Unit>();
-                unit.Init(tileSpawner, this, team);
+                unit.Init(tileSpawner, this, team, gameStateManager);
                 
                 PlaceUnit(unit, team);
 
@@ -67,8 +57,8 @@ namespace Runtime.Core.Spawning
                 
                 units.Add(instance);
 
-                ClickableRegistry.RegisterClickable(instance.GetComponentInChildren<Clickable>());
-                // selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
+                // ClickableRegistry.RegisterClickable(instance.GetComponentInChildren<Clickable>());
+                selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
             }
         }
 
@@ -94,5 +84,24 @@ namespace Runtime.Core.Spawning
                 Destroy(unit);
             }
         }
+
+        #region Setup
+
+        public void Setup(GameStateManager gameStateManagerArg, Selector selectorArg)
+        {
+            gameStateManager = gameStateManagerArg;
+            selector = selectorArg;
+        }
+
+        [ContextMenu("Spawn Units")]
+        public void SpawnUnits()
+        {
+            tileSpawner.ResetOccupiedTiles();
+            ClearUnits();
+            SpawnUnitsForTeam(Team.Player);
+            SpawnUnitsForTeam(Team.Opponent);
+        }
+
+        #endregion
     }
 }

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Runtime.Gameplay.Global
 {
-    public class Selector : MonoBehaviour, IStateChangeHandler
+    public class Selector : MonoBehaviour
     {
         public event Action<Selection> OnSelectionChanged; 
         public event Action OnTurnFinished;
@@ -25,11 +25,11 @@ namespace Runtime.Gameplay.Global
 
         private void Awake()
         {
-            ClickableRegistry.OnClickableSpawned += RegisterClickable;
+            // ClickableRegistry.OnClickableSpawned += RegisterClickable;
             selection.OnSelectionChanged += sel => OnSelectionChanged?.Invoke(sel);
         }
 
-        private void RegisterClickable(Clickable clickable)
+        public void RegisterClickable(Clickable clickable)
         {
             clickable.OnClick += HandleClick;
             clickable.OnMouseEnter += HandleMouseEnter;
@@ -51,7 +51,7 @@ namespace Runtime.Gameplay.Global
                     break;
                 }
                 default:
-                    UnityEngine.Debug.LogError("Clicked object is not a tile or unit");
+                    Debug.LogError("Clicked object is not a tile or unit");
                     break;
             }
         }
@@ -91,7 +91,7 @@ namespace Runtime.Gameplay.Global
             }
             else
             {
-                UnityEngine.Debug.LogError("Clicked object is not a tile or unit");
+                Debug.LogError("Clicked object is not a tile or unit");
             }
 
             if (!executedAction) 
@@ -149,7 +149,7 @@ namespace Runtime.Gameplay.Global
                     break;
                 }
                 default:
-                    UnityEngine.Debug.LogError("Clicked object is not a tile or unit");
+                    Debug.LogError("Clicked object is not a tile or unit");
                     break;
             }
         }
@@ -178,6 +178,11 @@ namespace Runtime.Gameplay.Global
             }
 
             return false;
+        }
+
+        public void Setup(GameStateManager gameStateManagerArg)
+        {
+            gameStateManagerArg.GameStateChanged += HandleStateChange;
         }
 
         public void HandleStateChange(ChangeEvent changeEvent)

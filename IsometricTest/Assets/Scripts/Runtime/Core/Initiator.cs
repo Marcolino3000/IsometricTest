@@ -1,0 +1,42 @@
+using Runtime.Core.Spawning;
+using Runtime.Core.State;
+using Runtime.Gameplay.Global;
+using UnityEngine;
+
+namespace Runtime.Core
+{
+    public class Initiator : MonoBehaviour
+    {
+        [SerializeField] private GameStateManager gameStateManager;
+        [SerializeField] private TileSpawner tileSpawner;
+        [SerializeField] private UnitSpawner unitSpawner;
+        [SerializeField] private Raycaster raycaster;
+        [SerializeField] private Selector selector;
+
+        private void Awake()
+        {
+            SetupReferences();
+            SpawnEntities();
+            StartGame();
+        }
+
+        private void SetupReferences()
+        {
+            unitSpawner.Setup(gameStateManager, selector);
+            tileSpawner.Setup(selector);
+            selector.Setup(gameStateManager);
+            Direction.Setup(gameStateManager);
+        }
+
+        private void SpawnEntities()
+        {
+            tileSpawner.SpawnTiles();
+            unitSpawner.SpawnUnits();
+        }
+
+        private void StartGame()
+        {
+            gameStateManager.Setup();
+        }
+    }
+}

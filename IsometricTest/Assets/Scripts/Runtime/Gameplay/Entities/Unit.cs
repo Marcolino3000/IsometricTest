@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Runtime.Gameplay.Entities
 {
-    public class Unit : MonoBehaviour, IClickable, IStateChangeHandler
+    public class Unit : MonoBehaviour, IClickable
     {
         public UnitState CurrentState => currentState;
         public UnitBlueprint Blueprint => blueprint;
@@ -24,10 +24,12 @@ namespace Runtime.Gameplay.Entities
         [SerializeField] private UnitBlueprint blueprint;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
+        [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private HealthBar healthBar;
         [SerializeField] private ActionExecutor actionExecutor;
 
-        public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team)
+        public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team,
+            GameStateManager gameStateManagerArg)
         {
             currentState = blueprint.DefaultState;
             currentState.Team = team;
@@ -35,6 +37,9 @@ namespace Runtime.Gameplay.Entities
             
             tileSpawner = tileSpawnerArg;
             unitSpawner = unitSpawnerArg;
+            
+            gameStateManager = gameStateManagerArg;
+            gameStateManager.GameStateChanged += HandleStateChange;
             
             healthBar.Setup(blueprint.DefaultState.Health);
             actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile, CheckAttackValid, TryAttackUnit);

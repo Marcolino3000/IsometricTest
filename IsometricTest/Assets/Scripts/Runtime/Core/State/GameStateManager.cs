@@ -1,37 +1,41 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Runtime.Core.State
 {
     public class GameStateManager : MonoBehaviour
     {
+        public event Action<ChangeEvent> GameStateChanged;
+        
         [Header("Current State")]
         [SerializeField] private Team CurrentTeam;
 
         [Header("References")] 
         [SerializeField] private Selector selector;
 
-        private List<IStateChangeHandler> stateChangeHandlers;
+        // private List<IStateChangeHandler> stateChangeHandlers;
 
-        private void Start()
-        {
-            Setup();
-        }
+        // private void Start()
+        // {
+        //     Setup();
+        // }
 
-        private void Setup()
+        public void Setup()
         {
             selector.OnTurnFinished += SwitchActiveTeam;
             
-            FindStateChangeHandlers();
+            // FindStateChangeHandlers();
             var changeEvent = new ChangeEvent
             {
                 previousValue = new State{Team = CurrentTeam},
                 newValue = new State{Team = CurrentTeam}
             };
-            NotifyStateChangeHandlers(changeEvent);
+            // NotifyStateChangeHandlers(changeEvent);
+            GameStateChanged?.Invoke(changeEvent);
         }
 
         private void SwitchActiveTeam()
@@ -42,16 +46,17 @@ namespace Runtime.Core.State
             
             changeEvent.newValue = new State{Team = CurrentTeam};
             
-            NotifyStateChangeHandlers(changeEvent);
+            // NotifyStateChangeHandlers(changeEvent);
+            GameStateChanged?.Invoke(changeEvent);
         }
 
-        private void NotifyStateChangeHandlers(ChangeEvent changeEvent)
-        {
-            foreach (var handler in stateChangeHandlers)
-            {
-                handler.HandleStateChange(changeEvent);
-            }
-        }
+        // private void NotifyStateChangeHandlers(ChangeEvent changeEvent)
+        // {
+        //     foreach (var handler in stateChangeHandlers)
+        //     {
+        //         handler.HandleStateChange(changeEvent);
+        //     }
+        // }
 
         #region Helpers
 
@@ -60,14 +65,14 @@ namespace Runtime.Core.State
             CurrentTeam = CurrentTeam == Team.Player ? Team.Opponent : Team.Player;
         }
 
-        private void FindStateChangeHandlers()
-        {
-            stateChangeHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-                .OfType<IStateChangeHandler>()
-                .ToList();
-            
-            stateChangeHandlers.Add(new Direction());
-        }
+        // private void FindStateChangeHandlers()
+        // {
+        //     stateChangeHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+        //         .OfType<IStateChangeHandler>()
+        //         .ToList();
+        //     
+        //     stateChangeHandlers.Add(new Direction());
+        // }
 
         #endregion
     }

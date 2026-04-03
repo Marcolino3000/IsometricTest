@@ -14,9 +14,11 @@ namespace Runtime.Core.Spawning
     {
         [Header("References")]
         [SerializeField] private TileSpawnerSettings settings;
-        // [SerializeField] private Selector selector;
+        [SerializeField] private Selector selector;
         
         private static readonly List<Tile> Tiles = new();
+
+        #region Services
 
         public bool GetTilesWithinReach(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
         {
@@ -43,6 +45,83 @@ namespace Runtime.Core.Spawning
         {
             return Tiles.Find(t => t.Position == position);
         }
+
+        public void HighlightMoveableTiles(Vector2Int startPosition, int range)
+        {
+            GetTilesWithinReach(startPosition, range, out var tiles);
+            FilterForOccupiedTiles(tiles);
+            
+            foreach (var tile in tiles)
+            {
+                HighlightTile(tile.Position);
+            }
+        }
+
+        public void HighlightTile(Vector2Int tilePosition, MarkerColor markerColor = MarkerColor.White)
+        {
+            if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
+            {
+                Debug.LogWarning("Tile Position was out of bounds");
+                return;
+            }
+
+            var tile = Tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
+            if (tile == null)
+            {
+                Debug.LogWarning("Tile not found at position: " + tilePosition);
+                return;
+            }
+            
+            tile.GetComponentInChildren<TileMarker>().SetMarkerColor(markerColor);
+        }
+
+        public static void ResetHighlightedTiles()
+        {
+            foreach (var tile in Tiles)
+            {
+                tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.None);
+            }
+        }
+
+        public void ResetOccupiedTiles()
+        {
+            foreach (var tile in Tiles)
+            {
+                tile.SetUnit(null);
+            }
+        }
+
+        public Vector2Int GetRandomSpawnZonePosition(Team team)
+        {
+            var positions = settings.GetSpawnZonePositions(team);
+
+            if (positions == null || positions.Count == 0)
+            {
+                Debug.LogWarning("No spawn positions defined for team: " + team);
+                return Vector2Int.zero;
+            }
+
+            var index = Random.Range(0, positions.Count);
+            return positions[index];
+        }
+
+        public Vector3 GridIndexToWorldPosition(Vector2Int gridPosition)
+        {
+            return new Vector3(
+                settings.StartPosition.x + gridPosition.x * settings.HalfTileOffsetX + gridPosition.y * settings.HalfTileOffsetX,
+                settings.StartPosition.y + gridPosition.x * -settings.HalfTileOffsetY + gridPosition.y * settings.HalfTileOffsetY,
+                settings.StartPosition.z
+            );
+        }
+
+        public Vector2Int GetRandomGridPosition()
+        {
+            return GetRandomGridPosition(settings.GridSizeX, settings.GridSizeY);
+        }
+
+        #endregion
+
+        #region Helpers
 
         private List<Tile> GetTilesFromPositions(List<Vector2Int> reachablePositions)
         {
@@ -98,69 +177,9 @@ namespace Runtime.Core.Spawning
             }
         }
 
-        public void HighlightMoveableTiles(Vector2Int startPosition, int range)
-        {
-            GetTilesWithinReach(startPosition, range, out var tiles);
-            FilterForOccupiedTiles(tiles);
-            
-            foreach (var tile in tiles)
-            {
-                HighlightTile(tile.Position);
-            }
-        }
-
         private bool CheckForGridBoundaries(int x, int y)
         {
             return x >= 0 && x < settings.GridSizeX && y >= 0 && y < settings.GridSizeY;
-        }
-
-        public void HighlightTile(Vector2Int tilePosition, MarkerColor markerColor = MarkerColor.White)
-        {
-            if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
-            {
-                Debug.LogWarning("Tile Position was out of bounds");
-                return;
-            }
-
-            var tile = Tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
-            if (tile == null)
-            {
-                Debug.LogWarning("Tile not found at position: " + tilePosition);
-                return;
-            }
-            
-            tile.GetComponentInChildren<TileMarker>().SetMarkerColor(markerColor);
-        }
-  
-        public static void ResetHighlightedTiles()
-        {
-            foreach (var tile in Tiles)
-            {
-                tile.GetComponentInChildren<TileMarker>().SetMarkerColor(MarkerColor.None);
-            }
-        }
-        
-        public void ResetOccupiedTiles()
-        {
-            foreach (var tile in Tiles)
-            {
-                tile.SetUnit(null);
-            }
-        }
-        
-        private void Start()
-        {
-            SpawnGrid();
-        }
-
-        [ContextMenu("Spawn Grid")]
-        private void SpawnGrid()
-        {
-            ClearGrid();
-            
-            for (int x = 0; x < settings.GridSizeX; x++)
-                for (int y = 0; y < settings.GridSizeY; y++)
-                    SpawnTile(x, y);
         }
 
         private void ClearGrid()
@@ -183,43 +202,15 @@ namespace Runtime.Core.Spawning
             tile.Position = new Vector2Int(xIndex, yIndex);
             Tiles.Add(tile);
 
-            ClickableRegistry.RegisterClickable(tile.GetComponent<Clickable>());
-            // selector.RegisterClickable(tile.GetComponent<Clickable>());
+            // ClickableRegistry.RegisterClickable(tile.GetComponent<Clickable>());
+            selector.RegisterClickable(tile.GetComponent<Clickable>());
         }
 
-        public Vector2Int GetRandomGridPosition()
-        {
-            return GetRandomGridPosition(settings.GridSizeX, settings.GridSizeY);
-        }
-        
-        public Vector2Int GetRandomSpawnZonePosition(Team team)
-        {
-            var positions = settings.GetSpawnZonePositions(team);
-
-            if (positions == null || positions.Count == 0)
-            {
-                Debug.LogWarning("No spawn positions defined for team: " + team);
-                return Vector2Int.zero;
-            }
-
-            var index = Random.Range(0, positions.Count);
-            return positions[index];
-        }
-
-        public Vector3 GridIndexToWorldPosition(int xIndex, int yIndex)
+        private Vector3 GridIndexToWorldPosition(int xIndex, int yIndex)
         {
             return new Vector3(
                 settings.StartPosition.x + xIndex * settings.HalfTileOffsetX + yIndex * settings.HalfTileOffsetX,
                 settings.StartPosition.y + xIndex * -settings.HalfTileOffsetY + yIndex * settings.HalfTileOffsetY,
-                settings.StartPosition.z
-            );
-        }
-        
-        public Vector3 GridIndexToWorldPosition(Vector2Int gridPosition)
-        {
-            return new Vector3(
-                settings.StartPosition.x + gridPosition.x * settings.HalfTileOffsetX + gridPosition.y * settings.HalfTileOffsetX,
-                settings.StartPosition.y + gridPosition.x * -settings.HalfTileOffsetY + gridPosition.y * settings.HalfTileOffsetY,
                 settings.StartPosition.z
             );
         }
@@ -230,5 +221,26 @@ namespace Runtime.Core.Spawning
             var y = Random.Range(0, gridSizeY);
             return new Vector2Int(x, y);
         }
+
+        #endregion
+
+        #region Setup
+
+        public void Setup(Selector selectorArg)
+        {
+            selector = selectorArg;
+        }
+
+        [ContextMenu("Spawn Grid")]
+        public void SpawnTiles()
+        {
+            ClearGrid();
+            
+            for (int x = 0; x < settings.GridSizeX; x++)
+            for (int y = 0; y < settings.GridSizeY; y++)
+                SpawnTile(x, y);
+        }
+
+        #endregion
     }
 }

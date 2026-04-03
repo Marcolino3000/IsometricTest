@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Runtime.Core.State
 {
-    public class Direction : IStateChangeHandler
+    public class Direction 
     {
         public static List<Vector2Int> ForwardAndSides
         {
@@ -66,7 +66,12 @@ namespace Runtime.Core.State
             }
         }
 
-        public void HandleStateChange(ChangeEvent changeEvent)
+        public static void Setup(GameStateManager gameStateManager)
+        {
+            gameStateManager.GameStateChanged += HandleStateChange;
+        }
+
+        public static void HandleStateChange(ChangeEvent changeEvent)
         {
             SetContext(changeEvent.newValue);
         }
