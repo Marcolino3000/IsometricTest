@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4048790538827275665, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
       propertyPath: m_Name
-      value: Melee
+      value: Melee Unit
       objectReference: {fileID: 0}
     - target: {fileID: 4351215620135471239, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
       propertyPath: m_LocalPosition.x
@@ -52,6 +52,38 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6269492126551806458, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6269492126551806458, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_EffectColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6269492126551806458, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_EffectColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6269492126551806458, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_EffectColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6269492126551806458, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_EffectColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6269492126551806458, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_UseGraphicAlpha
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6269492126551806458, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_EffectDistance.x
+      value: 3.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6269492126551806458, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_EffectDistance.y
+      value: 5.53
+      objectReference: {fileID: 0}
     - target: {fileID: 6973456096741093380, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
       propertyPath: blueprint
       value: 
@@ -61,9 +93,25 @@ PrefabInstance:
       value: 
       objectReference: {fileID: -61923535, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
     - target: {fileID: 7616597018661060969, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616597018661060969, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616597018661060969, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616597018661060969, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
       propertyPath: m_WasSpriteAssigned
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7616597018661060969, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 270dd058d84d4460095efb3821cc26ca, type: 2}
     - target: {fileID: 8126027339519297793, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
       propertyPath: m_Points.m_Paths.Array.data[0].Array.data[0].x
       value: -0.052057482

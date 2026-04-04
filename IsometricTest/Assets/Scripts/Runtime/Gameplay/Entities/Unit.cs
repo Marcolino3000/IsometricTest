@@ -20,7 +20,8 @@ namespace Runtime.Gameplay.Entities
 
         [Header("References")]
         public UnitTileHighlighter TileHighlighter;
-        
+        public UnitOutline Outline;
+
         [SerializeField] private UnitBlueprint blueprint;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
@@ -45,6 +46,8 @@ namespace Runtime.Gameplay.Entities
             actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile, CheckAttackValid, TryAttackUnit);
             
             TileHighlighter.Setup(currentState, tileSpawner);
+                
+            Outline.Hide();
         }
 
         private void HealthChangedCallback(int newHealth)

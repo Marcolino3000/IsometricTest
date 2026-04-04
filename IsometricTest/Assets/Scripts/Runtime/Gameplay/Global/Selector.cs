@@ -11,7 +11,6 @@ namespace Runtime.Gameplay.Global
     public class Selector : MonoBehaviour
     {
         public event Action<Selection> OnSelectionChanged; 
-        public event Action OnTurnFinished;
         
         [Header("Debug")]
         [SerializeField] private Unit selectedUnit;
@@ -25,8 +24,13 @@ namespace Runtime.Gameplay.Global
 
         private void Awake()
         {
-            // ClickableRegistry.OnClickableSpawned += RegisterClickable;
-            selection.OnSelectionChanged += sel => OnSelectionChanged?.Invoke(sel);
+            selection.OnSelectionChanged += HandleSelectionChanged;
+        }
+
+        private void HandleSelectionChanged(Selection selectionArg)
+        {
+            OnSelectionChanged?.Invoke(selectionArg);
+            
         }
 
         public void RegisterClickable(Clickable clickable)
