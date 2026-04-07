@@ -1,15 +1,21 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Runtime.Gameplay.Entities
 {
     public class UnitOutline : MonoBehaviour
     {
-        [SerializeField] private Color outlineColor = Color.red;
+        [SerializeField] private Color neutralColor = Color.white;
+        [SerializeField] private Color attackColor = Color.red;
         
         private SpriteRenderer _spriteRenderer; 
         private static readonly int OutlineColorProp = Shader.PropertyToID("_OutlineColor");
+        private static readonly int OutlineThicknessProp = Shader.PropertyToID("_OutlineThickness");
+
+        private void OnDestroy()
+        {
+            Debug.Log("Outline Comp destroyed");
+        }
 
         private void Awake()
         {
@@ -24,11 +30,37 @@ namespace Runtime.Gameplay.Entities
             Hide();
         }
 
-        public void Show()
+        public void Show(OutlineColor color, OutlineThickness thickness)
         {
-            if (_spriteRenderer != null && _spriteRenderer.sharedMaterial != null && _spriteRenderer.sharedMaterial.HasProperty(OutlineColorProp))
+            SetColor(color);
+            SetThickness(thickness);
+            
+            _spriteRenderer.material.SetColor(OutlineColorProp, neutralColor);
+        }
+
+        private void SetThickness(OutlineThickness thickness)
+        {
+            switch (thickness)
             {
-                _spriteRenderer.material.SetColor(OutlineColorProp, outlineColor);
+                case OutlineThickness.Thin:
+                    _spriteRenderer.material.SetFloat(OutlineThicknessProp, 0.5f);
+                    break;
+                case OutlineThickness.Thick:
+                    _spriteRenderer.material.SetFloat(OutlineThicknessProp, 1f);
+                    break;
+            }
+        }
+
+        private void SetColor(OutlineColor color)
+        {
+            switch (color)
+            {
+                case OutlineColor.Neutral:
+                    _spriteRenderer.material.SetColor(OutlineColorProp, neutralColor);
+                    break;
+                case OutlineColor.Attack:
+                    _spriteRenderer.material.SetColor(OutlineColorProp, attackColor);
+                    break;
             }
         }
 
@@ -40,5 +72,17 @@ namespace Runtime.Gameplay.Entities
             }
             
         }
+    }
+
+    public enum OutlineColor
+    {
+        Neutral,
+        Attack
+    }
+    
+    public enum OutlineThickness
+    {
+        Thin,
+        Thick
     }
 }

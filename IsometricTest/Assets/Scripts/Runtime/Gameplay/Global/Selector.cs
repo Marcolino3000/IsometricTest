@@ -28,7 +28,6 @@ namespace Runtime.Gameplay.Global
         private void HandleSelectionChanged(Selection selectionArg)
         {
             OnSelectionChanged?.Invoke(selectionArg);
-            
         }
 
         public void RegisterClickable(Clickable clickable)
@@ -68,15 +67,20 @@ namespace Runtime.Gameplay.Global
 
         private void HandleUnitHover(Unit unit)
         {
-            selection.HoveredUnit = unit;
+            if(selection.SelectedUnit != unit)
+                selection.HoveredUnit = unit;
             
             if(CheckIfFriendlyUnit(unit) && selection.SelectedUnit == null)
             {
+                selection.Status = SelectionStatus.NoSelectionFriendlyHover;
                 return;
             }
             
             if (CheckForAttackOnUnit(unit))
+            {
+                selection.Status = SelectionStatus.SelectionEnemyHover;
                 selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
+            }
         }
 
         private void HandleClick(IClickable clickable)
@@ -158,6 +162,7 @@ namespace Runtime.Gameplay.Global
         {
             if (activeTeam != targetUnit.CurrentState.Team && selection.SelectedUnit != null)
             {
+                // selection.Status = SelectionStatus.SelectionEnemyHover;
                 return true;
             }
 
@@ -169,7 +174,7 @@ namespace Runtime.Gameplay.Global
             gameStateManagerArg.OnGameStateChanged += HandleStateChange;
         }
 
-        public void HandleStateChange(ChangeEvent changeEvent)
+        private void HandleStateChange(ChangeEvent changeEvent)
         {
             activeTeam = changeEvent.newValue.Team;
         }
@@ -180,12 +185,15 @@ namespace Runtime.Gameplay.Global
     {
         public event Action<Selection> OnSelectionChanged;
 
+        public SelectionStatus Status;
+
         public Unit SelectedUnit
         {
             get => selectedUnit;
             set
             {
                 selectedUnit = value;
+                UpdateStatus();
                 OnSelectionChanged?.Invoke(this);
             }
         }
@@ -220,9 +228,29 @@ namespace Runtime.Gameplay.Global
             }
         }
 
+        private void UpdateStatus()
+        {
+            switch (selectedUnit, hoveredUnit)
+            {
+                case (null, null):
+                    Status = SelectionStatus.NoSelectionNoHover;
+                    break;
+                
+            }
+        }
+
         private Unit selectedUnit;
         private Unit hoveredUnit;
         private Tile selectedTile;
         private Tile hoveredTile;
+    }
+
+    public enum SelectionStatus
+    {
+        NoSelectionNoHover,
+        NoSelectionFriendlyHover,
+        NoSelectionEnemyHover,
+        SelectionFriendlyHover,
+        SelectionEnemyHover
     }
 }

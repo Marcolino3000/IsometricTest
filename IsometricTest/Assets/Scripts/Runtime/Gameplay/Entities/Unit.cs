@@ -1,3 +1,4 @@
+using System;
 using Data;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
@@ -28,6 +29,11 @@ namespace Runtime.Gameplay.Entities
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private HealthBar healthBar;
         [SerializeField] private ActionExecutor actionExecutor;
+
+        private void OnDestroy()
+        {
+            Debug.Log("Unit Comp destroyed");
+        }
 
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team,
             GameStateManager gameStateManagerArg)
