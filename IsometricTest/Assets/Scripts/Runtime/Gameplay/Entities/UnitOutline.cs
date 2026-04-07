@@ -14,6 +14,14 @@ namespace Runtime.Gameplay.Entities
         private void Awake()
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
+            Setup();
+        }
+
+        private void Setup()
+        {
+            //This needs to be called once at the start to create a new instance of the material for each unit!
+            //Otherwise, the units will share the same material which leads to weird behavior.
+            Hide();
         }
 
         public void Show()

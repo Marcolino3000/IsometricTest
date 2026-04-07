@@ -46,8 +46,6 @@ namespace Runtime.Gameplay.Entities
             actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile, CheckAttackValid, TryAttackUnit);
             
             TileHighlighter.Setup(currentState, tileSpawner);
-                
-            Outline.Hide();
         }
 
         private void HealthChangedCallback(int newHealth)
