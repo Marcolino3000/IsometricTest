@@ -22,9 +22,9 @@ namespace Runtime.Gameplay.Feedback
                 
             selection.SelectedUnit.Outline.Show();
             
-            if(selection.SelectedUnit != lasSelectedUnit)
+            if(selection.SelectedUnit != lasSelectedUnit && lasSelectedUnit != null)
             {
-                lasSelectedUnit?.Outline.Hide();
+                lasSelectedUnit.Outline.Hide();
                 lasSelectedUnit = selection.SelectedUnit;
             }
         }

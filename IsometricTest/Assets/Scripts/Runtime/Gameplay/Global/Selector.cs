@@ -13,10 +13,8 @@ namespace Runtime.Gameplay.Global
         public event Action<Selection> OnSelectionChanged; 
         
         [Header("Debug")]
-        [SerializeField] private Unit selectedUnit;
         [SerializeField] private Selection selection;
         [SerializeField] private Team activeTeam;
-        [SerializeField] private bool isHoveredActionValid;
 
         [Header("References")]
         [SerializeField] private Raycaster raycaster;
@@ -64,21 +62,21 @@ namespace Runtime.Gameplay.Global
         {
             selection.HoveredTile = tile;
             
-            if (selectedUnit != null)
-                isHoveredActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
+            if (selection.SelectedUnit != null)
+                selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
         }
 
         private void HandleUnitHover(Unit unit)
         {
             selection.HoveredUnit = unit;
             
-            if(CheckIfFriendlyUnit(unit) && selectedUnit == null)
+            if(CheckIfFriendlyUnit(unit) && selection.SelectedUnit == null)
             {
                 return;
             }
             
             if (CheckForAttackOnUnit(unit))
-                isHoveredActionValid = selectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
+                selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
         }
 
         private void HandleClick(IClickable clickable)
@@ -101,18 +99,15 @@ namespace Runtime.Gameplay.Global
             if (!executedAction) 
                 return;
             
-            // isHoveredActionValid = false;
-            selectedUnit = null;
             selection.SelectedUnit = null;
-            // OnTurnFinished?.Invoke();
         }
 
         private bool HandleTileClick(Tile tile)
         {
-            if (selectedUnit == null)
+            if (selection.SelectedUnit == null)
                 return false;
             
-            return selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile, null));
+            return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile, null));
         }
 
         private bool HandleUnitClick(Unit unit)
@@ -125,36 +120,22 @@ namespace Runtime.Gameplay.Global
             if (!CheckForAttackOnUnit(unit))
                 return false;
             
-            return selectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
-        }
-        
-
-        private static int ChebyshevDistance(Vector2Int a, Vector2Int b)
-        {
-            int dx = Mathf.Abs(a.x - b.x);
-            int dy = Mathf.Abs(a.y - b.y);
-            return Mathf.Max(dx, dy);
+            return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
         }
 
         private void HandleMouseExit(IClickable clickable)
         {
-            isHoveredActionValid = false;
-            
-            switch (clickable)
+            if (clickable is Unit)
             {
-                case Unit unit:
-                {
-                    selection.HoveredUnit = null;
-                    break;
-                }
-                case Tile tile:
-                {
-                    selection.HoveredTile = null;
-                    break;
-                }
-                default:
-                    Debug.LogError("Clicked object is not a tile or unit");
-                    break;
+                selection.HoveredUnit = null;
+            }
+            else if (clickable is Tile)
+            {
+                selection.HoveredTile = null;
+            }
+            else
+            {
+                Debug.LogError("Clicked object is not a tile or unit");
             }
         }
         
@@ -168,7 +149,6 @@ namespace Runtime.Gameplay.Global
             if(unit.CurrentState.Team != activeTeam)
                 return false;
             
-            selectedUnit = unit;
             selection.SelectedUnit = unit;
             
             return true;
@@ -176,7 +156,7 @@ namespace Runtime.Gameplay.Global
 
         private bool CheckForAttackOnUnit(Unit targetUnit)
         {
-            if (activeTeam != targetUnit.CurrentState.Team && selectedUnit != null)
+            if (activeTeam != targetUnit.CurrentState.Team && selection.SelectedUnit != null)
             {
                 return true;
             }
