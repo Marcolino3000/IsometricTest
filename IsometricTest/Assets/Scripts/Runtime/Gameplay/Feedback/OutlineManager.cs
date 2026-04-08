@@ -51,19 +51,19 @@ namespace Runtime.Gameplay.Feedback
 
         private void HandleHoveredUnits(ChangeEvent<Selection> selection)
         {
-            switch (selection.newValue.Status)
+            switch (selection.NewValue.Status)
             {
                 case SelectionStatus.NoSelectionFriendlyHover:
                 case SelectionStatus.NoSelectionEnemyHover:
                 case SelectionStatus.SelectionFriendlyHover:
-                    selection.newValue.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
+                    selection.NewValue.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
                     break;
                 case SelectionStatus.SelectionEnemyHover:
-                    selection.newValue.HoveredUnit.Outline.Show(OutlineColor.Attack, OutlineThickness.Thin);
+                    selection.NewValue.HoveredUnit.Outline.Show(OutlineColor.Attack, OutlineThickness.Thin);
                     break;
             }
             //
-            // if(selection.newValue.SelectedUnit == null)
+            // if(selection.NewValue.SelectedUnit == null)
             // {
             //     if(selection.HoveredUnit != null)
             //         selection.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
@@ -80,8 +80,8 @@ namespace Runtime.Gameplay.Feedback
             //         selection.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
             // }
             
-            selection.previousValue.HoveredUnit?.Outline.Hide();
-            // lastHoveredUnit = selection.newValue.HoveredUnit;
+            selection.PreviousValue.HoveredUnit?.Outline.Hide();
+            // lastHoveredUnit = selection.NewValue.HoveredUnit;
         }
 
         public void Setup(Selector selector, GameStateManager gameStateManager)

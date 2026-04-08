@@ -5,12 +5,14 @@ using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
 using UnityEngine;
+using UnityEngine.UIElements;
+using Clickable = Runtime.Gameplay.Controls.Clickable;
 
 namespace Runtime.Gameplay.Global
 {
     public class Selector : MonoBehaviour
     {
-        public event Action<ChangeEvent<Selection>> OnSelectionChanged;
+        public event Action<Core.State.ChangeEvent<Selection>> OnSelectionChanged;
         
         [Header("Debug")]
         [SerializeField] private Selection selection;
@@ -20,16 +22,7 @@ namespace Runtime.Gameplay.Global
         [Header("References")]
         [SerializeField] private Raycaster raycaster;
 
-
-        private void Awake()
-        {
-            // selection.OnSelectionChanged += HandleSelectionChanged;
-        }
-
-        // private void HandleSelectionChanged(Selection selectionArg)
-        // {
-        //     OnSelectionChanged?.Invoke(selectionArg);
-        // }
+        #region Setup
 
         public void RegisterClickable(Clickable clickable)
         {
@@ -37,6 +30,19 @@ namespace Runtime.Gameplay.Global
             clickable.OnMouseEnter += HandleMouseEnter;
             clickable.OnMouseExit += HandleMouseExit;
         }
+
+        public void Setup(GameStateManager gameStateManagerArg)
+        {
+            gameStateManagerArg.OnGameStateChanged += HandleStateChange;
+        }
+
+        private void HandleStateChange(Core.State.ChangeEvent<State> changeEvent)
+        {
+            activeTeam = changeEvent.NewValue.Team;
+            selection.ActiveTeam = changeEvent.NewValue.Team;
+        }
+
+        #endregion
 
         private void HandleMouseEnter(IClickable clickable)
         {
@@ -63,8 +69,8 @@ namespace Runtime.Gameplay.Global
             selection.HoveredTile = tile;
             CreateSelectionChangedEvent();
 
-            if (selection.SelectedUnit != null)
-                selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
+            // if (selection.SelectedUnit != null)
+            //     selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
         }
 
         private void HandleUnitHover(Unit unit)
@@ -84,7 +90,7 @@ namespace Runtime.Gameplay.Global
             if (CheckForAttackOnUnit(unit))
             {
                 // selection.Status = SelectionStatus.SelectionEnemyHover;
-                selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
+                // selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
             }
         }
 
@@ -121,8 +127,8 @@ namespace Runtime.Gameplay.Global
 
         private bool HandleUnitClick(Unit unit)
         {
-            selection.SelectedUnit = unit;
-            CreateSelectionChangedEvent();
+            // selection.SelectedUnit = unit;
+            // CreateSelectionChangedEvent();
             
             if (CheckForSelectUnit(unit))
             {
@@ -137,7 +143,7 @@ namespace Runtime.Gameplay.Global
 
         private void CreateSelectionChangedEvent()
         {
-            var changeEvent = new ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
+            var changeEvent = new Core.State.ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
 
             OnSelectionChanged?.Invoke(changeEvent);
 
@@ -170,7 +176,11 @@ namespace Runtime.Gameplay.Global
         private bool CheckForSelectUnit(Unit unit)
         {
             if(unit.CurrentState.Team != activeTeam)
+            {
+                selection.ClickedUnit = unit;
+                CreateSelectionChangedEvent();    
                 return false;
+            }
 
             selection.SelectedUnit = unit;
             CreateSelectionChangedEvent();
@@ -188,37 +198,13 @@ namespace Runtime.Gameplay.Global
 
             return false;
         }
-
-        public void Setup(GameStateManager gameStateManagerArg)
-        {
-            gameStateManagerArg.OnGameStateChanged += HandleStateChange;
-        }
-
-        private void HandleStateChange(ChangeEvent<State> changeEvent)
-        {
-            activeTeam = changeEvent.NewValue.Team;
-            selection.ActiveTeam = changeEvent.NewValue.Team;
-        }
     }
 
     [Serializable]
     public class Selection
     {
-        // public event Action<Selection> OnSelectionChanged;
-
         public Team ActiveTeam;
         public SelectionStatus Status;
-        // public Selection(Selection other)
-        // {
-        //     if (other == null)
-        //         return;
-        //
-        //     Status = other.Status;
-        //     selectedUnit = other.selectedUnit;
-        //     hoveredUnit = other.hoveredUnit;
-        //     selectedTile = other.selectedTile;
-        //     hoveredTile = other.hoveredTile;
-        // }
         
         public Selection Clone()
         {
@@ -232,7 +218,6 @@ namespace Runtime.Gameplay.Global
                 hoveredTile = hoveredTile
             };
         }
-
         public Unit SelectedUnit
         {
             get => selectedUnit;
@@ -242,7 +227,15 @@ namespace Runtime.Gameplay.Global
                 UpdateStatus();
             }
         }
-
+        public Unit ClickedUnit
+        {
+            get => clickedUnit;
+            set
+            {
+                clickedUnit = value;
+                UpdateStatus();
+            }
+        }
         public Unit HoveredUnit
         {
             get => hoveredUnit;
@@ -252,7 +245,6 @@ namespace Runtime.Gameplay.Global
                 UpdateStatus();
             }
         }
-
         public Tile SelectedTile
         {
             get => selectedTile;
@@ -262,7 +254,6 @@ namespace Runtime.Gameplay.Global
                 UpdateStatus();
             }
         }
-
         public Tile HoveredTile
         {
             get => hoveredTile;
@@ -272,33 +263,42 @@ namespace Runtime.Gameplay.Global
                 UpdateStatus();
             }
         }
-
         private void UpdateStatus()
         {
-            switch (selectedUnit, hoveredUnit)
+            switch (selectedUnit, clickedUnit, hoveredUnit)
             {
-                case (null, null):
+                case (null, null, null):
                     Status = SelectionStatus.NoSelectionNoHover;
                     break;
-                case (null, { } hovered) when hovered.CurrentState.Team == ActiveTeam:
+                case (null, null, { } hovered) when hovered.CurrentState.Team == ActiveTeam:
                     Status = SelectionStatus.NoSelectionFriendlyHover;
                     break;
-                case (null, { } hovered) when hovered.CurrentState.Team != ActiveTeam:
+                case (null, null, { } hovered) when hovered.CurrentState.Team != ActiveTeam:
                     Status = SelectionStatus.NoSelectionEnemyHover;
                     break;
-                case ({ } selected, null):
+                case (null, { } clicked, null):
+                    Status = SelectionStatus.NoSelectionEnemyClick;
+                    break;
+                case ({ } selected, null, null):
                     Status = SelectionStatus.SelectionNoHover;
                     break;
-                case ({ } selected, { } hovered) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team == ActiveTeam:
+                case ({ } selected, null, { } hovered) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team == ActiveTeam:
                     Status = SelectionStatus.SelectionFriendlyHover;
                     break;
-                case ({ } selected, { } hovered) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team != ActiveTeam:
+                case ({ } selected, null, { } hovered) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team != ActiveTeam:
                     Status = SelectionStatus.SelectionEnemyHover;
+                    break;
+                case ({ } selected, { } clicked, null):
+                    Status = SelectionStatus.SelectionEnemyClick;
+                    break;
+                default:
+                    Status = SelectionStatus.UnexpectedCase;
                     break;
             }
         }
 
-        private Unit selectedUnit;
+        private Unit selectedUnit; //stays selected until deselected or new selection occurs
+        private Unit clickedUnit; //units that get clicked on but that can't be selected (e.g. enemy units)
         private Unit hoveredUnit;
         private Tile selectedTile;
         private Tile hoveredTile;
@@ -306,11 +306,14 @@ namespace Runtime.Gameplay.Global
 
     public enum SelectionStatus
     {
+        UnexpectedCase,
         NoSelectionNoHover,
         NoSelectionFriendlyHover,
         NoSelectionEnemyHover,
+        NoSelectionEnemyClick,
         SelectionNoHover,
         SelectionFriendlyHover,
-        SelectionEnemyHover
+        SelectionEnemyHover,
+        SelectionEnemyClick,
     }
 }

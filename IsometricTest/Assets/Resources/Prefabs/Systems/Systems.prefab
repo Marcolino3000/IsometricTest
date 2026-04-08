@@ -44,6 +44,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0004d19f840242b0aa032d195fea925c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selection:
+    ActiveTeam: 0
+    Status: 0
+  previousSelection:
+    ActiveTeam: 0
+    Status: 0
   activeTeam: 0
   raycaster: {fileID: 0}
 --- !u!1 &433851073694078129
@@ -185,7 +191,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a8a34d49ff7421f8b177de9c657c977, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Feedback.OutlineManager
-  selector: {fileID: 4304017811601341457}
 --- !u!1 &3582059157211116768
 GameObject:
   m_ObjectHideFlags: 0
@@ -264,6 +269,50 @@ Transform:
   - {fileID: 3815026183987808766}
   m_Father: {fileID: 6161654108688559747}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5494689830264370812
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2053733122403142422}
+  - component: {fileID: 1772559824657402244}
+  m_Layer: 0
+  m_Name: ActionAssigner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2053733122403142422
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5494689830264370812}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 5191948205243843475}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1772559824657402244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5494689830264370812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5b3307aab264a31acde80bba9a54f55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Actions.ActionAssigner
 --- !u!1 &5569924132095987555
 GameObject:
   m_ObjectHideFlags: 0
@@ -444,6 +493,7 @@ Transform:
   - {fileID: 4767413541801619003}
   - {fileID: 3861040590289293053}
   - {fileID: 6822146562003664959}
+  - {fileID: 2053733122403142422}
   m_Father: {fileID: 6161654108688559747}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8961793008856171245
@@ -498,6 +548,8 @@ MonoBehaviour:
   unitSpawner: {fileID: 6164232492054156886}
   raycaster: {fileID: 8605865454578225704}
   selector: {fileID: 4304017811601341457}
+  outlineManager: {fileID: 0}
+  actionAssigner: {fileID: 1772559824657402244}
   nextTurnButton: {fileID: 3454670680114467044}
 --- !u!1 &9075107352804633641
 GameObject:

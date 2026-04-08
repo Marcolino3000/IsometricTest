@@ -1,5 +1,6 @@
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
+using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Global;
 using UI;
@@ -15,6 +16,7 @@ namespace Runtime.Core
         [SerializeField] private Raycaster raycaster;
         [SerializeField] private Selector selector;
         [SerializeField] private OutlineManager outlineManager;
+        [SerializeField] private ActionAssigner actionAssigner;
         
         [Header("UI")]
         [SerializeField] private NextTurnButton nextTurnButton;
@@ -39,6 +41,7 @@ namespace Runtime.Core
             tileSpawner.Setup(selector);
             selector.Setup(gameStateManager);
             outlineManager.Setup(selector, gameStateManager);
+            actionAssigner.Setup(selector);
             Direction.Setup(gameStateManager);
         }
 

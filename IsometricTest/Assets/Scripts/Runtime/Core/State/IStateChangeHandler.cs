@@ -26,20 +26,13 @@ namespace Runtime.Core.State
 
     public class ChangeEvent<T>
     {
-        public T previousValue;
-        public T newValue;
-
-        // Convenience properties (some callers use PascalCase)
-        public T PreviousValue { get => previousValue; set => previousValue = value; }
-        public T NewValue { get => newValue; set => newValue = value; }
-
-        // Construct with previous/new values
-        public ChangeEvent() { }
-
-        public ChangeEvent(T previous, T @new)
+        public ChangeEvent (T previousValue, T newValue)
         {
-            previousValue = previous;
-            newValue = @new;
+            PreviousValue = previousValue;
+            NewValue = newValue;
         }
+
+        public readonly T PreviousValue;
+        public readonly T NewValue;
     }
 }
