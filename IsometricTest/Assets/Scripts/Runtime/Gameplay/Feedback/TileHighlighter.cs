@@ -1,4 +1,5 @@
 using Runtime.Core.Spawning;
+using Runtime.Core.State;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
 using UnityEngine;
@@ -15,15 +16,15 @@ namespace Runtime.Gameplay.Feedback
             selector.OnSelectionChanged += HandleSelectionChanged;
         }
 
-        private void HandleSelectionChanged(Selection selection)
+        private void HandleSelectionChanged(ChangeEvent<Selection> changeEvent)
         {
             TileSpawner.ResetHighlightedTiles();
             
-            if(selection.SelectedUnit != null)
-                HandleUnitSelectedCases(selection);
+            if(changeEvent.NewValue.SelectedUnit != null)
+                HandleUnitSelectedCases(changeEvent.NewValue);
             
             else
-                HandleNoUnitSelectedCases(selection);
+                HandleNoUnitSelectedCases(changeEvent.NewValue);
         }
 
         private void HandleNoUnitSelectedCases(Selection selection)

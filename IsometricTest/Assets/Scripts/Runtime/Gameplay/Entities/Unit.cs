@@ -145,10 +145,10 @@ namespace Runtime.Gameplay.Entities
             selectedTile.SetUnit(this);
         }
 
-        public void HandleStateChange(ChangeEvent changeEvent)
+        public void HandleStateChange(ChangeEvent<State> changeEvent)
         {
-            if(changeEvent.previousValue.Team != changeEvent.newValue.Team)
-                HandleNewTurn(changeEvent.newValue);
+            if(changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
+                HandleNewTurn(changeEvent.NewValue);
         }
 
         private void HandleNewTurn(State newState)

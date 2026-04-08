@@ -69,7 +69,7 @@ namespace Runtime.Core.Spawning
             unit.CurrentState.OnNoActionsLeft += CheckIfNoneHaveActionsLeft;
         }
 
-        private void CheckIfNoneHaveActionsLeft()
+        private void CheckIfNoneHaveActionsLeft() //todo: also check when unit dies
         {
             var noneHaveActionsLeft = units
                 .Where(u => u.CurrentState.Team == gameStateManager.State.Team)

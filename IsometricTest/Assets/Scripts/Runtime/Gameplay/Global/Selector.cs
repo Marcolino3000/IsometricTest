@@ -10,10 +10,11 @@ namespace Runtime.Gameplay.Global
 {
     public class Selector : MonoBehaviour
     {
-        public event Action<Selection> OnSelectionChanged; 
+        public event Action<ChangeEvent<Selection>> OnSelectionChanged;
         
         [Header("Debug")]
         [SerializeField] private Selection selection;
+        [SerializeField] private Selection previousSelection;
         [SerializeField] private Team activeTeam;
 
         [Header("References")]
@@ -22,13 +23,13 @@ namespace Runtime.Gameplay.Global
 
         private void Awake()
         {
-            selection.OnSelectionChanged += HandleSelectionChanged;
+            // selection.OnSelectionChanged += HandleSelectionChanged;
         }
 
-        private void HandleSelectionChanged(Selection selectionArg)
-        {
-            OnSelectionChanged?.Invoke(selectionArg);
-        }
+        // private void HandleSelectionChanged(Selection selectionArg)
+        // {
+        //     OnSelectionChanged?.Invoke(selectionArg);
+        // }
 
         public void RegisterClickable(Clickable clickable)
         {
@@ -60,7 +61,8 @@ namespace Runtime.Gameplay.Global
         private void HandleTileHover(Tile tile)
         {
             selection.HoveredTile = tile;
-            
+            CreateSelectionChangedEvent();
+
             if (selection.SelectedUnit != null)
                 selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
         }
@@ -68,17 +70,20 @@ namespace Runtime.Gameplay.Global
         private void HandleUnitHover(Unit unit)
         {
             if(selection.SelectedUnit != unit)
+            {
                 selection.HoveredUnit = unit;
-            
+                CreateSelectionChangedEvent();
+            }
+
             if(CheckIfFriendlyUnit(unit) && selection.SelectedUnit == null)
             {
-                selection.Status = SelectionStatus.NoSelectionFriendlyHover;
+                // selection.Status = SelectionStatus.NoSelectionFriendlyHover;
                 return;
             }
-            
+
             if (CheckForAttackOnUnit(unit))
             {
-                selection.Status = SelectionStatus.SelectionEnemyHover;
+                // selection.Status = SelectionStatus.SelectionEnemyHover;
                 selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
             }
         }
@@ -103,28 +108,40 @@ namespace Runtime.Gameplay.Global
             if (!executedAction) 
                 return;
             
-            selection.SelectedUnit = null;
+            // selection.SelectedUnit = null;
         }
 
         private bool HandleTileClick(Tile tile)
         {
             if (selection.SelectedUnit == null)
                 return false;
-            
+
             return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile, null));
         }
 
         private bool HandleUnitClick(Unit unit)
         {
+            selection.SelectedUnit = unit;
+            CreateSelectionChangedEvent();
+            
             if (CheckForSelectUnit(unit))
             {
                 return false;
             }
-            
+
             if (!CheckForAttackOnUnit(unit))
                 return false;
-            
+
             return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
+        }
+
+        private void CreateSelectionChangedEvent()
+        {
+            var changeEvent = new ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
+
+            OnSelectionChanged?.Invoke(changeEvent);
+
+            previousSelection = selection.Clone();
         }
 
         private void HandleMouseExit(IClickable clickable)
@@ -132,17 +149,19 @@ namespace Runtime.Gameplay.Global
             if (clickable is Unit)
             {
                 selection.HoveredUnit = null;
+                CreateSelectionChangedEvent();
             }
             else if (clickable is Tile)
             {
                 selection.HoveredTile = null;
+                CreateSelectionChangedEvent();
             }
             else
             {
                 Debug.LogError("Clicked object is not a tile or unit");
             }
         }
-        
+
         private bool CheckIfFriendlyUnit(Unit unit)
         {
             return unit.CurrentState.Team == activeTeam;
@@ -152,9 +171,10 @@ namespace Runtime.Gameplay.Global
         {
             if(unit.CurrentState.Team != activeTeam)
                 return false;
-            
+
             selection.SelectedUnit = unit;
-            
+            CreateSelectionChangedEvent();
+
             return true;
         }
 
@@ -174,18 +194,44 @@ namespace Runtime.Gameplay.Global
             gameStateManagerArg.OnGameStateChanged += HandleStateChange;
         }
 
-        private void HandleStateChange(ChangeEvent changeEvent)
+        private void HandleStateChange(ChangeEvent<State> changeEvent)
         {
-            activeTeam = changeEvent.newValue.Team;
+            activeTeam = changeEvent.NewValue.Team;
+            selection.ActiveTeam = changeEvent.NewValue.Team;
         }
     }
 
     [Serializable]
     public class Selection
     {
-        public event Action<Selection> OnSelectionChanged;
+        // public event Action<Selection> OnSelectionChanged;
 
+        public Team ActiveTeam;
         public SelectionStatus Status;
+        // public Selection(Selection other)
+        // {
+        //     if (other == null)
+        //         return;
+        //
+        //     Status = other.Status;
+        //     selectedUnit = other.selectedUnit;
+        //     hoveredUnit = other.hoveredUnit;
+        //     selectedTile = other.selectedTile;
+        //     hoveredTile = other.hoveredTile;
+        // }
+        
+        public Selection Clone()
+        {
+            return new Selection
+            {
+                Status = Status,
+                ActiveTeam = ActiveTeam,
+                selectedUnit = selectedUnit,
+                hoveredUnit = hoveredUnit,
+                selectedTile = selectedTile,
+                hoveredTile = hoveredTile
+            };
+        }
 
         public Unit SelectedUnit
         {
@@ -194,7 +240,6 @@ namespace Runtime.Gameplay.Global
             {
                 selectedUnit = value;
                 UpdateStatus();
-                OnSelectionChanged?.Invoke(this);
             }
         }
 
@@ -204,7 +249,7 @@ namespace Runtime.Gameplay.Global
             set
             {
                 hoveredUnit = value;
-                OnSelectionChanged?.Invoke(this);
+                UpdateStatus();
             }
         }
 
@@ -214,7 +259,7 @@ namespace Runtime.Gameplay.Global
             set
             {
                 selectedTile = value;
-                OnSelectionChanged?.Invoke(this);
+                UpdateStatus();
             }
         }
 
@@ -224,7 +269,7 @@ namespace Runtime.Gameplay.Global
             set
             {
                 hoveredTile = value;
-                OnSelectionChanged?.Invoke(this);
+                UpdateStatus();
             }
         }
 
@@ -235,7 +280,21 @@ namespace Runtime.Gameplay.Global
                 case (null, null):
                     Status = SelectionStatus.NoSelectionNoHover;
                     break;
-                
+                case (null, { } hovered) when hovered.CurrentState.Team == ActiveTeam:
+                    Status = SelectionStatus.NoSelectionFriendlyHover;
+                    break;
+                case (null, { } hovered) when hovered.CurrentState.Team != ActiveTeam:
+                    Status = SelectionStatus.NoSelectionEnemyHover;
+                    break;
+                case ({ } selected, null):
+                    Status = SelectionStatus.SelectionNoHover;
+                    break;
+                case ({ } selected, { } hovered) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team == ActiveTeam:
+                    Status = SelectionStatus.SelectionFriendlyHover;
+                    break;
+                case ({ } selected, { } hovered) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team != ActiveTeam:
+                    Status = SelectionStatus.SelectionEnemyHover;
+                    break;
             }
         }
 
@@ -250,6 +309,7 @@ namespace Runtime.Gameplay.Global
         NoSelectionNoHover,
         NoSelectionFriendlyHover,
         NoSelectionEnemyHover,
+        SelectionNoHover,
         SelectionFriendlyHover,
         SelectionEnemyHover
     }

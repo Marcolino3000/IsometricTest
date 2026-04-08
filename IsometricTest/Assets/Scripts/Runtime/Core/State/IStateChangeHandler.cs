@@ -3,10 +3,10 @@ using Runtime.Gameplay.Entities;
 
 namespace Runtime.Core.State
 {
-    public interface IStateChangeHandler
-    {
-        public void HandleStateChange(ChangeEvent changeEvent); 
-    }
+    // public interface IStateChangeHandler
+    // {
+    //     public void HandleStateChange(ChangeEvent<T> changeEvent); 
+    // }
     
     [Serializable]
     public class State
@@ -24,9 +24,22 @@ namespace Runtime.Core.State
         }
     }
 
-    public class ChangeEvent
+    public class ChangeEvent<T>
     {
-        public State previousValue;
-        public State newValue;
+        public T previousValue;
+        public T newValue;
+
+        // Convenience properties (some callers use PascalCase)
+        public T PreviousValue { get => previousValue; set => previousValue = value; }
+        public T NewValue { get => newValue; set => newValue = value; }
+
+        // Construct with previous/new values
+        public ChangeEvent() { }
+
+        public ChangeEvent(T previous, T @new)
+        {
+            previousValue = previous;
+            newValue = @new;
+        }
     }
 }

@@ -19,11 +19,11 @@ namespace Runtime.Gameplay.Feedback
         //     _selector.OnSelectionChanged += HandleSelectionChanged;
         // }
 
-        private void HandleSelectionChanged(Selection selection)
+        private void HandleSelectionChanged(ChangeEvent<Selection> changeEvent)
         {
-            HandleHoveredUnits(selection);
+            HandleHoveredUnits(changeEvent);
             
-            HandleSelectedUnits(selection);
+            // HandleSelectedUnits(selection);
             // if (selection.SelectedUnit == lastSelectedUnit)
             //     return;
             //     
@@ -49,27 +49,39 @@ namespace Runtime.Gameplay.Feedback
             lastSelectedUnit = selection.SelectedUnit;
         }
 
-        private void HandleHoveredUnits(Selection selection)
+        private void HandleHoveredUnits(ChangeEvent<Selection> selection)
         {
-            if(selection.SelectedUnit == null)
+            switch (selection.newValue.Status)
             {
-                if(selection.HoveredUnit != null)
-                    selection.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
+                case SelectionStatus.NoSelectionFriendlyHover:
+                case SelectionStatus.NoSelectionEnemyHover:
+                case SelectionStatus.SelectionFriendlyHover:
+                    selection.newValue.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
+                    break;
+                case SelectionStatus.SelectionEnemyHover:
+                    selection.newValue.HoveredUnit.Outline.Show(OutlineColor.Attack, OutlineThickness.Thin);
+                    break;
             }
-
-            if (selection.SelectedUnit != null)
-            {
-                if (selection.HoveredUnit == null || selection.HoveredUnit == selection.SelectedUnit) 
-                    return;
-                
-                if(selection.HoveredUnit.CurrentState.Team != _activeTeam)
-                    selection.HoveredUnit.Outline.Show(OutlineColor.Attack, OutlineThickness.Thin);
-                else
-                    selection.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
-            }
+            //
+            // if(selection.newValue.SelectedUnit == null)
+            // {
+            //     if(selection.HoveredUnit != null)
+            //         selection.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
+            // }
+            //
+            // if (selection.SelectedUnit != null)
+            // {
+            //     if (selection.HoveredUnit == null || selection.HoveredUnit == selection.SelectedUnit) 
+            //         return;
+            //     
+            //     if(selection.HoveredUnit.CurrentState.Team != _activeTeam)
+            //         selection.HoveredUnit.Outline.Show(OutlineColor.Attack, OutlineThickness.Thin);
+            //     else
+            //         selection.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
+            // }
             
-            lastHoveredUnit?.Outline.Hide();
-            lastHoveredUnit = selection.HoveredUnit;
+            selection.previousValue.HoveredUnit?.Outline.Hide();
+            // lastHoveredUnit = selection.newValue.HoveredUnit;
         }
 
         public void Setup(Selector selector, GameStateManager gameStateManager)
@@ -80,9 +92,9 @@ namespace Runtime.Gameplay.Feedback
             
         }
 
-        private void HandleStateChange(ChangeEvent changeEvent)
+        private void HandleStateChange(ChangeEvent<State> changeEvent)
         {
-            _activeTeam = changeEvent.newValue.Team;
+            _activeTeam = changeEvent.NewValue.Team;
         }
     }
 }

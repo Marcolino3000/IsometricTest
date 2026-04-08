@@ -71,9 +71,9 @@ namespace Runtime.Core.State
             gameStateManager.OnGameStateChanged += HandleStateChange;
         }
 
-        public static void HandleStateChange(ChangeEvent changeEvent)
+        public static void HandleStateChange(ChangeEvent<State> changeEvent)
         {
-            SetContext(changeEvent.newValue);
+            SetContext(changeEvent.NewValue);
         }
     }
 }

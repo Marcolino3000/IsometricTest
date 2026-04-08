@@ -8,15 +8,15 @@ namespace UI
     {
         private Button _button;
 
-        private void Highlight(ChangeEvent changeEvent)
+        private void Highlight(Runtime.Core.State.ChangeEvent<State> changeEvent)
         {
-            if(!changeEvent.newValue.UnitsHaveActionsLeft)
+            if(!changeEvent.NewValue.UnitsHaveActionsLeft)
                 _button.AddToClassList("highlighted");   
         }
         
-        private void ResetHighlight(ChangeEvent changeEvent)
+        private void ResetHighlight(Runtime.Core.State.ChangeEvent<State> changeEvent)
         {
-            if(changeEvent.previousValue.Team != changeEvent.newValue.Team)
+            if(changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
                 _button.RemoveFromClassList("highlighted");
         }
         
@@ -26,7 +26,7 @@ namespace UI
             gameStateManager.OnGameStateChanged += HandleStateChange;
         }
 
-        private void HandleStateChange(ChangeEvent changeEvent)
+        private void HandleStateChange(Runtime.Core.State.ChangeEvent<State> changeEvent)
         {
             Highlight(changeEvent);
             ResetHighlight(changeEvent);
