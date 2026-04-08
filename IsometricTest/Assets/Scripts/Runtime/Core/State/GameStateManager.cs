@@ -22,10 +22,10 @@ namespace Runtime.Core.State
         {
             State.UnitsHaveActionsLeft = teamHasActionsLeft;
             
-            HandleStateChangeNew();
+            HandleStateChange();
         }
         
-        private void HandleStateChangeNew()
+        private void HandleStateChange()
         {
             var changeEvent = new ChangeEvent
             {
@@ -48,7 +48,7 @@ namespace Runtime.Core.State
 
             previousState = State.Clone();
             
-            HandleStateChangeNew();
+            HandleStateChange();
             // State.OnStateChanged += HandleStateChange;
         }
         
@@ -58,18 +58,8 @@ namespace Runtime.Core.State
         {
             State.Team = State.Team == Team.Player ? Team.Opponent : Team.Player;
             
-            HandleStateChangeNew();
+            HandleStateChange();
         }
-
-        // private void FindStateChangeHandlers()
-        // {
-        //     stateChangeHandlers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-        //         .OfType<IStateChangeHandler>()
-        //         .ToList();
-        //     
-        //     stateChangeHandlers.Add(new Direction());
-        // }
-
         #endregion
     }
 }
