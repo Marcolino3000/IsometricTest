@@ -34,8 +34,6 @@ namespace Runtime.Gameplay.Entities
         {
             SetColor(color);
             SetThickness(thickness);
-            
-            _spriteRenderer.material.SetColor(OutlineColorProp, neutralColor);
         }
 
         private void SetThickness(OutlineThickness thickness)
