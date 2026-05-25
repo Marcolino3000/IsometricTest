@@ -53,6 +53,7 @@ namespace Runtime.Core.State
         public void ToggleCurrentTeam()
         {
             State.Team = State.Team == Team.Player ? Team.Opponent : Team.Player;
+            State.UnitsHaveActionsLeft = true;
             
             HandleStateChange();
         }
