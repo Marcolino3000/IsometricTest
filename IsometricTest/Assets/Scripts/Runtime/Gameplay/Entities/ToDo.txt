@@ -1,0 +1,10 @@
+- units werden gesteuert von ki bzw spieler
+- events wenn bewegung geplant, bewegt, statusänderung etc
+- unit ist quasi container für components und state
+- action executor übernimmt ausführen der aktionen
+- welche systeme müssen über unit state und (geplante) aktionen bescheid wissen?
+    - unit-ui (healthbar, outline etc)
+        - auch die ui von anderen units zb bei hover
+    - runden-anzeiger
+    - tiles
+    - mauszeiger
