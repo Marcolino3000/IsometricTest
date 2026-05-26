@@ -16,7 +16,7 @@ namespace Runtime.Gameplay.Actions
             switch (selection.NewValue.Status)
             {
                 case SelectionStatus.SelectionEnemyHover:
-                    selection.NewValue.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, selection.NewValue.HoveredUnit));
+                    selection.NewValue.SelectedUnit.ActionExecutor.PlanActions(new ExecuteArgs(null, selection.NewValue.HoveredUnit));
                     break;
                 case SelectionStatus.SelectionEnemyClick:
                     selection.NewValue.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, selection.NewValue.ClickedUnit));

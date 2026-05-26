@@ -1,3 +1,10 @@
+- action points wo setzten? zweite ref von actionData entfernen
+- action points abziehen und path fixen
+- path highlighten
+- plan actions verwenden um moveable tiles zu markieren?
+- taste mit der man actions einzeln ausführen lassen kann anstelle von automatisch in loop
+
+
 - units werden gesteuert von ki bzw spieler
 - events wenn bewegung geplant, bewegt, statusänderung etc
 - unit ist quasi container für components und state
@@ -8,3 +15,8 @@
     - runden-anzeiger
     - tiles
     - mauszeiger
+    
+    
+- MoveActionEffect
+    - tileColor/Symbol
+    - 

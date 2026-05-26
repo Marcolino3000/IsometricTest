@@ -10,8 +10,8 @@ namespace Runtime.Gameplay.Global
             var attackerTile = attacker.CurrentState.Position;
             var targetTile = target.CurrentState.Position;
 
-            if (!attacker.IsTileWithinReach(targetTile, false))
-                return;
+            // if (!attacker.IsTileWithinReach(targetTile, false))
+            //     return;
             
             int distance = GetManhattanDistance(attackerTile, targetTile);
 

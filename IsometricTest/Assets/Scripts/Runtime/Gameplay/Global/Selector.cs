@@ -122,6 +122,7 @@ namespace Runtime.Gameplay.Global
             if (selection.SelectedUnit == null)
                 return false;
 
+            // return true;
             return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile, null));
         }
 
@@ -138,7 +139,8 @@ namespace Runtime.Gameplay.Global
             if (!CheckForAttackOnUnit(unit))
                 return false;
 
-            return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
+            return true;
+            // return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
         }
 
         private void CreateSelectionChangedEvent()

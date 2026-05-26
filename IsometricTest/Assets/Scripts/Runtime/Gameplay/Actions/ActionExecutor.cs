@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Actions;
+using Runtime.Core.Spawning;
 using Runtime.Gameplay.Entities;
 using UI;
 using UnityEngine;
@@ -9,100 +11,89 @@ namespace Runtime.Gameplay.Actions
 {
     public class  ActionExecutor : MonoBehaviour
     {
-        [Header("Debug")]
-        [SerializeField] private Unit unit;
-        [SerializeField] private List<UnitAction> plannedActions = new();
+        [Header("Settings")] 
+        [SerializeField] private AttackActionData attackActionData;
+        [SerializeField] private MoveActionData moveActionData;
 
-        [Header("Settings")]
-        [SerializeField] private Move moveActionData;
-        
         [Header("References")]
         [SerializeField] private ActionsPointsBar actionsPointsBar;
+        [SerializeField] private TileSpawner tileSpawner;
 
-        MoveExecutor _moveMoveExecutor;
-        AttackExecutor _attackMoveExecutor;
+        private Unit unit;
+        private List<IUnitAction> plannedActions = new();
 
-        public bool PlanActionsNew(ExecuteArgs executeArgs)
+        public bool PlanActions(ExecuteArgs executeArgs)
         {
-            var actions = CreateActions(executeArgs);
+            if (executeArgs.TargetTile == null)
+            {
+                Debug.Log("tile was null");
+                return false;
+            }
+
+            Debug.Log("tile was not null");
             
-            var totalCost = GetTotalCost(actions);
+            PlanActionsFromPath(tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile));
             
-            if (totalCost > unit.CurrentState.ActionPoints)
+            if (!TestConditionsForPlannedActions())
                 return false;
 
-            if (!_moveMoveExecutor.CheckActionValidity(actions, executeArgs.TargetTile))
-                return false;
-            
-            if(!_attackMoveExecutor.CheckActionValidity(actions, executeArgs.TargetUnit))
-                return false;
-            
-            plannedActions = actions;
-
-            actionsPointsBar.SetBlobAmount(totalCost);
-            
             return true;
-            
+
         }
 
-        private List<UnitAction> CreateActions(ExecuteArgs executeArgs)
+        private bool TestConditionsForPlannedActions()
         {
-            var actions = new List<UnitAction>();
-            
-            if(executeArgs.TargetTile != null)
-                actions.Add(unit.CurrentState.MoveAction);
-            
-            else if(executeArgs.TargetUnit != null)
-                actions.Add(unit.CurrentState.AttackAction);
+            foreach (var action in plannedActions)
+            {
+                if (!action.TestConditions())
+                {
+                    Debug.LogWarning("planned action is not valid.");
+                    return false;
+                }
+            }
 
-            else
-                Debug.LogError("either both or none execute args were null");
-            
-            return actions;
-        }
-
-        public bool PlanActions(List<UnitAction> actions, ExecuteArgs executeArgs)
-        {
-            plannedActions = actions;
-
-            var totalCost = GetTotalCost(actions);
-            
-            if (totalCost > unit.CurrentState.ActionPoints)
-                return false;
-
-            if (!_moveMoveExecutor.CheckActionValidity(actions, executeArgs.TargetTile))
-                return false;
-            
-            if(!_attackMoveExecutor.CheckActionValidity(actions, executeArgs.TargetUnit))
-                return false;
-
-            actionsPointsBar.SetBlobAmount(totalCost);
-            
             return true;
         }
 
-        private int GetTotalCost(List<UnitAction> actions)
+        private void PlanActionsFromPath(List<Tile> path)
         {
-            var totalCost = actions.Sum(action => action.Cost);
-            return totalCost;
+            plannedActions.Clear();
+
+            var context = new ActionContext()
+            {
+                ActionPoints = unit.CurrentState.ActionPoints,
+            };
+
+            foreach (var tile in path)
+            {
+                if(tile == path.First())
+                    continue;
+
+                context = new ActionContext()
+                {
+                    TargetUnit = unit,
+                    ActionPoints = context.ActionPoints - moveActionData.Condition.Cost,
+                    TargetTile = tile
+                };
+                
+                Debug.Log("Action points: " + context.ActionPoints + " Distance: " + context.Distance + " Target tile: " + context.TargetTile);
+
+                plannedActions.Add(moveActionData.CreateAction(context));
+            }
         }
+        
 
         public bool ExecuteActions(ExecuteArgs executeArgs)
         {
-            if(!PlanActionsNew(executeArgs))
+            if(!PlanActions(executeArgs))
                 return false;
             
             int totalCost = 0;
 
             foreach (var action in plannedActions)
             {
-                totalCost += action.Cost;
-                if(executeArgs.TargetTile != null)
-                    _moveMoveExecutor.Execute(executeArgs.TargetTile);
-                else if(executeArgs.TargetUnit != null)
-                    _attackMoveExecutor.Execute(executeArgs.TargetUnit);
-                else
-                    Debug.LogError("either both or none execute args were null");
+                // totalCost += action.;
+                action.ExecuteEffects();
             }
 
             unit.CurrentState.ActionPoints -= totalCost;
@@ -112,17 +103,10 @@ namespace Runtime.Gameplay.Actions
         }
         
 
-        public void Setup(Unit unit, 
-            Func<Tile, bool> moveActionTestArg, Func<Tile, bool> moveActionArg,
-            Func<Unit, bool> attackActionTestArg, Func<Unit, bool> attackActionArg)
+        public void Setup(Unit unit, TileSpawner tileSpawner)
         {
             this.unit = unit;
-            
-            _moveMoveExecutor = new MoveExecutor(moveActionTestArg, moveActionArg);
-            _attackMoveExecutor = new AttackExecutor(attackActionTestArg, attackActionArg);
-            
-            // moveActionTest = moveActionTestArg;
-            // moveAction = moveActionArg;
+            this.tileSpawner = tileSpawner;
             actionsPointsBar.Setup(unit.CurrentState.ActionPoints); //todo: add max action  points to blueprint
         }
     }

@@ -15,7 +15,7 @@ namespace Runtime.Gameplay.Entities
         public UnitState CurrentState => currentState;
         public UnitBlueprint Blueprint => blueprint;
         public ActionExecutor ActionExecutor => actionExecutor;
-        
+
         [Header("Debug")]
         [SerializeField] private UnitState currentState;
 
@@ -49,7 +49,7 @@ namespace Runtime.Gameplay.Entities
             gameStateManager.OnGameStateChanged += HandleStateChange;
             
             healthBar.Setup(blueprint.DefaultState.Health);
-            actionExecutor.Setup(this, CheckMoveValid, TryMoveToTile, CheckAttackValid, TryAttackUnit);
+            actionExecutor.Setup(this, tileSpawner);
             
             TileHighlighter.Setup(currentState, tileSpawner);
         }
@@ -76,7 +76,7 @@ namespace Runtime.Gameplay.Entities
 
         private bool TryAttackUnit(Unit targetUnit)
         {
-            if (!IsTileWithinReach(targetUnit.CurrentState.Position, false))
+            if (!tileSpawner.IsTileWithinReach(currentState.Position, targetUnit.CurrentState.Position, currentState.Range, false))
                 return false;
             
             AttackUnit(targetUnit);
@@ -90,18 +90,18 @@ namespace Runtime.Gameplay.Entities
 
         private bool CheckMoveValid(Tile selectedTile)
         {
-            return IsTileWithinReach(selectedTile, true);
+            return tileSpawner.IsTileWithinReach(currentState.Position, selectedTile, currentState.Range, true);
         }
         
         private bool CheckAttackValid(Unit selectedUnit)
         {
-            return IsTileWithinReach(selectedUnit.CurrentState.Position, false);
+            return tileSpawner.IsTileWithinReach(currentState.Position, selectedUnit.CurrentState.Position, currentState.Range, false);
         }
 
         public bool TryMoveToTile(Tile selectedTile)
         {
-            if (!IsTileWithinReach(selectedTile, true)) 
-                return false;
+            // if (!tileSpawner.IsTileWithinReach(currentState.Position, selectedTile, currentState.Range, true)) 
+            //     return false;
 
             PlaceOnTile(selectedTile);
             return true;
@@ -111,26 +111,6 @@ namespace Runtime.Gameplay.Entities
         {
             currentState.Position.SetUnit(null);
             unitSpawner.RemoveUnit(this);
-        }
-
-        public bool IsTileWithinReach(Tile selectedTile, bool filterOccupiedTiles)
-        {
-            if (selectedTile == null)
-            {
-                Debug.LogWarning("Selected tile is null");
-                return false;
-            }
-            
-            if (!tileSpawner.GetTilesWithinReach(currentState.Position.Position, currentState.Range, out var reachableTiles))
-                return false;
-            
-            if(filterOccupiedTiles)
-                tileSpawner.FilterForOccupiedTiles(reachableTiles);
-            
-            if(!reachableTiles.Contains(selectedTile))
-                return false;
-            
-            return true;
         }
 
         private void PlaceOnTile(Tile selectedTile)

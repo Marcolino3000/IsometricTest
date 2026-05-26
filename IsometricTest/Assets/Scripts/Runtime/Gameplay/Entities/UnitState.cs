@@ -1,4 +1,5 @@
 using System;
+using Actions;
 using Runtime.Gameplay.Actions;
 using UnityEngine;
 
@@ -31,7 +32,9 @@ namespace Runtime.Gameplay.Entities
 
                 actionPoints = value;
                 
-                hasActionsLeft = actionPoints >= MoveAction.Cost || actionPoints >= AttackAction.Cost;
+                hasActionsLeft = 
+                    actionPoints >= MoveAction.Condition.Cost || 
+                    actionPoints >= AttackAction.Condition.Cost;
                 if(!hasActionsLeft)
                     OnNoActionsLeft?.Invoke();
                     
@@ -41,8 +44,8 @@ namespace Runtime.Gameplay.Entities
         public Tile Position;
         public int Range;
         public Team Team;
-        public Move MoveAction;
-        public Attack AttackAction;
+        public MoveActionData MoveAction;
+        public AttackActionData AttackAction;
         public bool HasActionsLeft => hasActionsLeft; 
 
         [SerializeField] private int health;

@@ -17,8 +17,8 @@ MonoBehaviour:
     Position: {fileID: 0}
     Range: 1
     Team: 0
-    MoveAction: {fileID: 11400000, guid: 1ca0349232ffc43b48694bec5a1b196b, type: 2}
-    AttackAction: {fileID: 11400000, guid: c58265aa44a75443aa223f79c95c60ec, type: 2}
+    MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
+    AttackAction: {fileID: 11400000, guid: db0aa245c745641109f55f8c5816167a, type: 2}
     health: 12
     actionPoints: 3
     hasActionsLeft: 0

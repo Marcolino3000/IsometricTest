@@ -68,7 +68,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61b95ebe92a7433b8699ac468a1f2ec1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.ActionsPointsBar
-  maxElements: 0
+  maxElements: 5
   blopTemplate: {fileID: 9197481963319205126, guid: 8b83cb1ea2eee407c963e3ea3752b8bd, type: 3}
 --- !u!1 &3801719132238461822
 GameObject:
@@ -220,9 +220,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Actions.ActionPointCounter
   unit: {fileID: 0}
-  plannedActions: []
-  moveActionData: {fileID: 0}
+  attackActionData: {fileID: 11400000, guid: db0aa245c745641109f55f8c5816167a, type: 2}
+  moveActionData: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
   actionsPointsBar: {fileID: 3415384219615473639}
+  tileSpawner: {fileID: 0}
 --- !u!114 &8405904222454837858
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,4 +409,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 861e465754db471b98581b4e8088481e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Entities.UnitOutline
-  outlineColor: {r: 1, g: 1, b: 1, a: 0.69411767}
+  neutralColor: {r: 1, g: 1, b: 1, a: 1}
+  attackColor: {r: 1, g: 0, b: 0, a: 1}

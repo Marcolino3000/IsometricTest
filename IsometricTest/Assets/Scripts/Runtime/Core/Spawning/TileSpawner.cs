@@ -17,9 +17,20 @@ namespace Runtime.Core.Spawning
         [SerializeField] private Selector selector;
         
         private static readonly List<Tile> Tiles = new();
+        private static Pathfinder _pathfinder;
 
         #region Services
 
+        // public int GetDistanceBetweenPositions(Vector2Int posA, Vector2Int posB)
+        // {
+        //     return Mathf.Abs(posA.x - posB.x) + Mathf.Abs(posA.y - posB.y);
+        // }
+
+        public List<Tile> GetPath(Tile start, Tile goal, bool ignoreOccupied = false)
+        {
+            return _pathfinder.FindPath(start, goal, ignoreOccupied);
+        }
+        
         public bool GetTilesWithinReach(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
         {
             var reachablePositions = new List<Vector2Int>();
@@ -229,6 +240,7 @@ namespace Runtime.Core.Spawning
         public void Setup(Selector selectorArg)
         {
             selector = selectorArg;
+            _pathfinder = new Pathfinder(this);
         }
 
         [ContextMenu("Spawn Grid")]
@@ -242,5 +254,25 @@ namespace Runtime.Core.Spawning
         }
 
         #endregion
+
+        public bool IsTileWithinReach(Tile startPosition, Tile targetPosition, int range, bool filterOccupiedTiles)
+        {
+            // if (targetPosition == null)
+            // {
+            //     Debug.LogWarning("Selected tile is null");
+            //     return false;
+            // }
+            
+            if (!GetTilesWithinReach(startPosition.Position, range, out var reachableTiles))
+                return false;
+            
+            if(filterOccupiedTiles)
+                FilterForOccupiedTiles(reachableTiles);
+            
+            if(!reachableTiles.Contains(targetPosition))
+                return false;
+            
+            return true;
+        }
     }
 }

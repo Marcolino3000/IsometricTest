@@ -22,7 +22,7 @@ namespace UI
         {
             maxElements = maxBlobs;
             container = GetComponent<UIDocument>().rootVisualElement.Q<VisualElement>("container");
-        
+
             for (int i = 0; i < maxElements; i++)
             {
                 VisualElement blop = blopTemplate.Instantiate().Q("blob");
