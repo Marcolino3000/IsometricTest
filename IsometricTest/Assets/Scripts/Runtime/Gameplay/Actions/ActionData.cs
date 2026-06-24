@@ -15,7 +15,7 @@ namespace Actions
 
     public abstract class ActionCondition : ScriptableObject
     {
-        
+        public int Cost;
     }
     
     public abstract class ActionEffect : ScriptableObject

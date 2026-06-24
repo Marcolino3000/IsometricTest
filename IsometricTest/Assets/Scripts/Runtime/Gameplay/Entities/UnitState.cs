@@ -8,7 +8,8 @@ namespace Runtime.Gameplay.Entities
     [Serializable]
     public class UnitState
     {
-        public event Action OnNoActionsLeft; 
+        public event Action OnNoActionsLeft;
+        // public event Action<int> OnActionPointsChanged;
         public int Health
         {
             get => health;
@@ -31,8 +32,9 @@ namespace Runtime.Gameplay.Entities
                     throw new ArgumentOutOfRangeException(nameof(ActionPoints), "ActionPoints cannot be negative.");
 
                 actionPoints = value;
-                
-                hasActionsLeft = 
+                ActionPointsChangedCallback?.Invoke(actionPoints);
+
+                hasActionsLeft =
                     actionPoints >= MoveAction.Condition.Cost || 
                     actionPoints >= AttackAction.Condition.Cost;
                 if(!hasActionsLeft)
@@ -53,10 +55,12 @@ namespace Runtime.Gameplay.Entities
         [SerializeField] private bool hasActionsLeft;
 
         private Action<int> HealthChangedCallback;
+        private Action<int> ActionPointsChangedCallback;
 
-        public void SetHealthChangedCallback(Action<int> callback)
+        public void SetValueChangedCallbacks(Action<int> healthCallback, Action<int> actionPointsCallback)
         {
-            HealthChangedCallback = callback;
+            HealthChangedCallback = healthCallback;
+            ActionPointsChangedCallback = actionPointsCallback;
         }
 
         public UnitState(UnitState other)

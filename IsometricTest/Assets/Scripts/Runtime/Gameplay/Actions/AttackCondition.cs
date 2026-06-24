@@ -6,6 +6,5 @@ namespace Actions
     public class AttackCondition : ActionCondition
     {
         public int Range;
-        public int Cost;
     }
 }

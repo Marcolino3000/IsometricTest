@@ -15,11 +15,17 @@ namespace Runtime.Gameplay.Actions
         {
             switch (selection.NewValue.Status)
             {
+                case SelectionStatus.SelectionTileHover:
+                    selection.NewValue.SelectedUnit.ActionExecutor.PlanMoveAction(new ExecuteArgs(selection.NewValue.HoveredTile, null));
+                    break;
                 case SelectionStatus.SelectionEnemyHover:
-                    selection.NewValue.SelectedUnit.ActionExecutor.PlanActions(new ExecuteArgs(null, selection.NewValue.HoveredUnit));
+                    selection.NewValue.SelectedUnit.ActionExecutor.PlanAttackAction(new ExecuteArgs(null, selection.NewValue.HoveredUnit));
                     break;
                 case SelectionStatus.SelectionEnemyClick:
                     selection.NewValue.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, selection.NewValue.ClickedUnit));
+                    break;
+                case SelectionStatus.SelectionNoHover:
+                    selection.NewValue.SelectedUnit.ActionExecutor.ClearPreview();
                     break;
             }
         }

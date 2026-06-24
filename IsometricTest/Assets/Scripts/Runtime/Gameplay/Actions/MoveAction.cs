@@ -4,6 +4,7 @@ namespace Actions
 {
     public interface IUnitAction
     {
+        int Cost { get; }
         bool TestConditions();
         void ExecuteEffects();
     }

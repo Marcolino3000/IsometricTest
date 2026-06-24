@@ -42,6 +42,7 @@ namespace Actions
         }
         
         protected ActionContext Context;
+        public int Cost => Condition.Cost;
         public abstract bool TestConditions();
 
         public abstract void ExecuteEffects();

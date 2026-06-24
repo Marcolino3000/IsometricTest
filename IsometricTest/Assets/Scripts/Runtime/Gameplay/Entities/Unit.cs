@@ -40,7 +40,7 @@ namespace Runtime.Gameplay.Entities
         {
             currentState = blueprint.DefaultState;
             currentState.Team = team;
-            currentState.SetHealthChangedCallback(HealthChangedCallback);
+            currentState.SetValueChangedCallbacks(HealthChangedCallback, ActionPointsChangedCallback);
             
             tileSpawner = tileSpawnerArg;
             unitSpawner = unitSpawnerArg;
@@ -54,9 +54,14 @@ namespace Runtime.Gameplay.Entities
             TileHighlighter.Setup(currentState, tileSpawner);
         }
 
-        private void HealthChangedCallback(int newHealth)
+        private void HealthChangedCallback(int amount)
         {
-            healthBar.SetBlobAmount(newHealth);
+            healthBar.SetBlobAmount(amount);
+        }
+        
+        private void ActionPointsChangedCallback(int amount)
+        {
+            actionExecutor.HandleActionPointsChanged(amount);
         }
 
         public bool TryPlaceAtTile(Tile selectedTile)

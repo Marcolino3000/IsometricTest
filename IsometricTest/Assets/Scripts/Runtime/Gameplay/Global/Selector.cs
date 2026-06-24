@@ -104,7 +104,7 @@ namespace Runtime.Gameplay.Global
             }
             else if (clickable is Tile tile)
             {
-                executedAction = HandleTileClick(tile);
+                HandleTileClick(tile);
             }
             else
             {
@@ -267,30 +267,36 @@ namespace Runtime.Gameplay.Global
         }
         private void UpdateStatus()
         {
-            switch (selectedUnit, clickedUnit, hoveredUnit)
+            switch (selectedUnit, clickedUnit, hoveredUnit, hoveredTile)
             {
-                case (null, null, null):
+                case (null, null, null, null):
                     Status = SelectionStatus.NoSelectionNoHover;
                     break;
-                case (null, null, { } hovered) when hovered.CurrentState.Team == ActiveTeam:
+                case(null, null, null, not null):
+                    Status = SelectionStatus.NoSelectionTileHover;
+                    break;
+                case (null, null, { } hovered, not null) when hovered.CurrentState.Team == ActiveTeam:
                     Status = SelectionStatus.NoSelectionFriendlyHover;
                     break;
-                case (null, null, { } hovered) when hovered.CurrentState.Team != ActiveTeam:
+                case (null, null, { } hovered, not null) when hovered.CurrentState.Team != ActiveTeam:
                     Status = SelectionStatus.NoSelectionEnemyHover;
                     break;
-                case (null, { } clicked, null):
+                case (null, { } clicked, null, not null):
                     Status = SelectionStatus.NoSelectionEnemyClick;
                     break;
-                case ({ } selected, null, null):
+                case ({ } selected, null, null,null):
                     Status = SelectionStatus.SelectionNoHover;
                     break;
-                case ({ } selected, null, { } hovered) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team == ActiveTeam:
+                case ({ } selected, null, null,not null):
+                    Status = SelectionStatus.SelectionTileHover;
+                    break;
+                case ({ } selected, null, { } hovered,not null) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team == ActiveTeam:
                     Status = SelectionStatus.SelectionFriendlyHover;
                     break;
-                case ({ } selected, null, { } hovered) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team != ActiveTeam:
+                case ({ } selected, null, { } hovered,null) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team != ActiveTeam:
                     Status = SelectionStatus.SelectionEnemyHover;
                     break;
-                case ({ } selected, { } clicked, null):
+                case ({ } selected, { } clicked, null,not null):
                     Status = SelectionStatus.SelectionEnemyClick;
                     break;
                 default:
@@ -317,5 +323,7 @@ namespace Runtime.Gameplay.Global
         SelectionFriendlyHover,
         SelectionEnemyHover,
         SelectionEnemyClick,
+        NoSelectionTileHover,
+        SelectionTileHover
     }
 }

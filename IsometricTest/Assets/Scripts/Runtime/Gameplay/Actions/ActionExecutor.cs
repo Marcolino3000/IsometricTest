@@ -22,23 +22,19 @@ namespace Runtime.Gameplay.Actions
         private Unit unit;
         private List<IUnitAction> plannedActions = new();
 
-        public bool PlanActions(ExecuteArgs executeArgs)
+        public bool PlanMoveAction(ExecuteArgs executeArgs)
         {
-            if (executeArgs.TargetTile == null)
-            {
-                Debug.Log("tile was null");
-                return false;
-            }
-
-            Debug.Log("tile was not null");
-            
             PlanActionsFromPath(tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile));
             
-            if (!TestConditionsForPlannedActions())
-                return false;
+            PreviewPlannedActions();
+            return TestConditionsForPlannedActions();
+        }
 
-            return true;
-
+        public void PlanAttackAction(ExecuteArgs executeArgs)
+        {
+            PlanActionsFromPath(tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetUnit.CurrentState.Position));
+            
+            PreviewPlannedActions();
         }
 
         private bool TestConditionsForPlannedActions()
@@ -59,55 +55,72 @@ namespace Runtime.Gameplay.Actions
         {
             plannedActions.Clear();
 
-            var context = new ActionContext()
-            {
-                ActionPoints = unit.CurrentState.ActionPoints,
-            };
+            var availableActionPoints = unit.CurrentState.ActionPoints;
 
             foreach (var tile in path)
             {
                 if(tile == path.First())
                     continue;
 
-                context = new ActionContext()
+                var context = new ActionContext()
                 {
                     TargetUnit = unit,
-                    ActionPoints = context.ActionPoints - moveActionData.Condition.Cost,
+                    ActionPoints = availableActionPoints,
                     TargetTile = tile
                 };
-                
+
                 Debug.Log("Action points: " + context.ActionPoints + " Distance: " + context.Distance + " Target tile: " + context.TargetTile);
 
                 plannedActions.Add(moveActionData.CreateAction(context));
+
+                availableActionPoints -= moveActionData.Condition.Cost;
             }
         }
-        
+
 
         public bool ExecuteActions(ExecuteArgs executeArgs)
         {
-            if(!PlanActions(executeArgs))
+            if(!PlanMoveAction(executeArgs))
                 return false;
             
             int totalCost = 0;
 
             foreach (var action in plannedActions)
             {
-                // totalCost += action.;
+                totalCost += action.Cost;
                 action.ExecuteEffects();
             }
 
             unit.CurrentState.ActionPoints -= totalCost;
-            actionsPointsBar.SetBlobAmount(unit.CurrentState.ActionPoints);
 
             return true;
         }
-        
+
 
         public void Setup(Unit unit, TileSpawner tileSpawner)
         {
             this.unit = unit;
             this.tileSpawner = tileSpawner;
             actionsPointsBar.Setup(unit.CurrentState.ActionPoints); //todo: add max action  points to blueprint
+        }
+
+        private int PlannedCost => plannedActions.Sum(action => action.Cost);
+        
+        private void PreviewPlannedActions()
+        {
+            var committed = unit.CurrentState.ActionPoints;
+            var previewCost = Mathf.Min(PlannedCost, committed);
+            actionsPointsBar.SetBlobAmount(committed - previewCost, previewCost);
+        }
+
+        public void ClearPreview()
+        {
+            actionsPointsBar.SetBlobAmount(unit.CurrentState.ActionPoints);
+        }
+
+        public void HandleActionPointsChanged(int newAmount)
+        {
+            actionsPointsBar.SetBlobAmount(newAmount);
         }
     }
     
