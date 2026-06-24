@@ -32,21 +32,28 @@ namespace Runtime.Gameplay.Actions
 
         public bool PlanAttackAction(ExecuteArgs executeArgs)
         {
-            var remainingAP = PlanMoveActionsFromPath(tileSpawner.GetPath(
-                unit.CurrentState.Position, executeArgs.TargetUnit.CurrentState.Position,
-                ignoreGoalOccupied: true, excludeGoal: true));
+            var targetTile = executeArgs.TargetUnit.CurrentState.Position;
+            var range = attackActionData.Condition.Range;
+
+            // Only move close enough that the target lands within attack range,
+            // so ranged units stop short instead of walking right up to it.
+            var pathIntoRange = tileSpawner.GetPathWithinRange(unit.CurrentState.Position, targetTile, range);
+
+            var remainingAP = PlanMoveActionsFromPath(pathIntoRange);
+
+            var attackFromTile = pathIntoRange.LastOrDefault() ?? unit.CurrentState.Position;
 
             var context = new ActionContext()
             {
+                Unit = unit,
                 TargetUnit = executeArgs.TargetUnit,
                 ActionPoints = remainingAP,
-                TargetTile = executeArgs.TargetUnit.CurrentState.Position,
-                Distance = tileSpawner.GetDistanceBetweenTiles(
-                    unit.CurrentState.Position, executeArgs.TargetUnit.CurrentState.Position)
+                TargetTile = targetTile,
+                Distance = tileSpawner.GetDistanceBetweenTiles(attackFromTile, targetTile)
             };
-            
+
             plannedActions.Add(attackActionData.CreateAction(context));
-            
+
             PreviewPlannedActions();
             return TestConditionsForPlannedActions();
         }

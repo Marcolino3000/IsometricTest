@@ -1,4 +1,5 @@
 using Runtime.Gameplay.Actions;
+using Runtime.Gameplay.Global;
 
 namespace Actions
 {
@@ -19,7 +20,7 @@ namespace Actions
 
         public override void ExecuteEffects()
         {
-            Context.TargetUnit.CurrentState.Health -= Effect.Damage;
+            CombatRunner.ResolveCombat(Context.Unit, Context.TargetUnit);
         }
     }
 }

@@ -79,30 +79,6 @@ namespace Runtime.Gameplay.Entities
             return true;
         }
 
-        private bool TryAttackUnit(Unit targetUnit)
-        {
-            if (!tileSpawner.IsTileWithinReach(currentState.Position, targetUnit.CurrentState.Position, currentState.Range, false))
-                return false;
-            
-            AttackUnit(targetUnit);
-            return true;
-        }
-
-        private void AttackUnit(Unit targetUnit)
-        {
-            CombatRunner.ResolveCombat(this, targetUnit);
-        }
-
-        private bool CheckMoveValid(Tile selectedTile)
-        {
-            return tileSpawner.IsTileWithinReach(currentState.Position, selectedTile, currentState.Range, true);
-        }
-        
-        private bool CheckAttackValid(Unit selectedUnit)
-        {
-            return tileSpawner.IsTileWithinReach(currentState.Position, selectedUnit.CurrentState.Position, currentState.Range, false);
-        }
-
         public bool TryMoveToTile(Tile selectedTile)
         {
             // if (!tileSpawner.IsTileWithinReach(currentState.Position, selectedTile, currentState.Range, true)) 

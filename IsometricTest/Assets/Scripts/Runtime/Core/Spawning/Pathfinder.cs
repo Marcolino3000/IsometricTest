@@ -85,6 +85,35 @@ namespace Runtime.Core.Spawning
             return null;
         }
 
+        /// <summary>
+        /// Finds a path toward <paramref name="target"/> but stops as soon as the unit is within
+        /// <paramref name="range"/> (Manhattan) of it, dropping the remaining steps. Lets ranged
+        /// attackers close the distance only enough to reach instead of walking right up to it.
+        /// </summary>
+        public List<Tile> FindPathWithinRange(Tile start, Tile target, int range, bool ignoreOccupied = false)
+        {
+            var path = FindPath(start, target, ignoreOccupied, ignoreGoalOccupied: true, excludeGoal: true);
+            return TruncateWithinRange(path, target, range);
+        }
+
+        private static List<Tile> TruncateWithinRange(List<Tile> path, Tile target, int range)
+        {
+            var result = new List<Tile>();
+
+            if (path == null)
+                return result;
+
+            foreach (var tile in path)
+            {
+                result.Add(tile);
+
+                if (Heuristic(tile.Position, target.Position) <= range)
+                    break;
+            }
+
+            return result;
+        }
+
         private static int Heuristic(Vector2Int a, Vector2Int b)
         {
             return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);

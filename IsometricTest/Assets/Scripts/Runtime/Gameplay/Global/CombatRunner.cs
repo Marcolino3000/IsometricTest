@@ -7,23 +7,20 @@ namespace Runtime.Gameplay.Global
     {
         public static void ResolveCombat(Unit attacker, Unit target)
         {
-            var attackerTile = attacker.CurrentState.Position;
-            var targetTile = target.CurrentState.Position;
-
-            // if (!attacker.IsTileWithinReach(targetTile, false))
-            //     return;
-            
-            int distance = GetManhattanDistance(attackerTile, targetTile);
+            // var attackerTile = attacker.CurrentState.Position;
+            // var targetTile = target.CurrentState.Position;
+            //
+            // // if (!attacker.IsTileWithinReach(targetTile, false))
+            // //     return;
+            //
+            // int distance = GetManhattanDistance(attackerTile, targetTile);
 
             bool targetDied = ApplyDamage(attacker, target);
 
             bool attackerDied = false;
-            if (distance <= target.CurrentState.Range)
-            {
-                attackerDied = ApplyDamage(target, attacker);
-            }
+            
+            attackerDied = ApplyDamage(target, attacker);
 
-            var formerTargetPosition = target.CurrentState.Position;
 
             if (targetDied)
             {
@@ -35,8 +32,6 @@ namespace Runtime.Gameplay.Global
                 attacker.Remove();
                 return;
             }
-
-            attacker.TryMoveToTile(formerTargetPosition);
         }
 
         private static int GetManhattanDistance(Tile attackerTile, Tile targetTile)

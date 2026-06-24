@@ -35,6 +35,11 @@ namespace Runtime.Core.Spawning
         {
             return _pathfinder.FindPath(start, goal, ignoreOccupied, ignoreGoalOccupied, excludeGoal);
         }
+
+        public List<Tile> GetPathWithinRange(Tile start, Tile target, int range, bool ignoreOccupied = false)
+        {
+            return _pathfinder.FindPathWithinRange(start, target, range, ignoreOccupied);
+        }
         
         public bool GetTilesWithinReach(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
         {
