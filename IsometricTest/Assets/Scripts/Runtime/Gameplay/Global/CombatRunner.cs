@@ -7,31 +7,29 @@ namespace Runtime.Gameplay.Global
     {
         public static void ResolveCombat(Unit attacker, Unit target)
         {
-            // var attackerTile = attacker.CurrentState.Position;
-            // var targetTile = target.CurrentState.Position;
-            //
-            // // if (!attacker.IsTileWithinReach(targetTile, false))
-            // //     return;
-            //
-            // int distance = GetManhattanDistance(attackerTile, targetTile);
-
             bool targetDied = ApplyDamage(attacker, target);
 
             bool attackerDied = false;
-            
-            attackerDied = ApplyDamage(target, attacker);
 
+            // The target only strikes back if the attacker is within the targets attack range.
+            if (IsInAttackRange(target, attacker))
+                attackerDied = ApplyDamage(target, attacker);
 
             if (targetDied)
             {
-                target.Remove();    
+                target.Remove();
             }
 
             if (attackerDied)
             {
                 attacker.Remove();
-                return;
             }
+        }
+
+        private static bool IsInAttackRange(Unit attacker, Unit defender)
+        {
+            int distance = GetManhattanDistance(attacker.CurrentState.Position, defender.CurrentState.Position);
+            return distance <= attacker.CurrentState.AttackAction.Condition.Range;
         }
 
         private static int GetManhattanDistance(Tile attackerTile, Tile targetTile)
