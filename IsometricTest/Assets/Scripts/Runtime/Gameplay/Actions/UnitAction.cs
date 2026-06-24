@@ -1,28 +1,3 @@
-// using Runtime.Gameplay.Actions;
-//
-// namespace Actions
-// {
-//     public abstract class UnitAction
-//     {
-//         public ActionCondition Condition;
-//         public ActionEffect Effect;
-//
-//         // public UnitAction(ActionCondition condition, ActionEffect effect)
-//         // {
-//         //     Condition = condition;
-//         //     Effect = effect;
-//         // }
-//         
-//         protected ActionContext Context;
-//         public abstract bool TestConditions(ActionContext context);
-//         public abstract void ExecuteEffects();
-//         
-//     }
-// }
-
-
-
-
 using Runtime.Gameplay.Actions;
 
 namespace Actions

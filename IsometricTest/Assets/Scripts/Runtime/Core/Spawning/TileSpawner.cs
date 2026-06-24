@@ -21,10 +21,15 @@ namespace Runtime.Core.Spawning
 
         #region Services
 
-        // public int GetDistanceBetweenPositions(Vector2Int posA, Vector2Int posB)
-        // {
-        //     return Mathf.Abs(posA.x - posB.x) + Mathf.Abs(posA.y - posB.y);
-        // }
+        public int GetDistanceBetweenPositions(Vector2Int posA, Vector2Int posB)
+        {
+            return Mathf.Abs(posA.x - posB.x) + Mathf.Abs(posA.y - posB.y);
+        }
+
+        public int GetDistanceBetweenTiles(Tile tileA, Tile tileB)
+        {
+            return GetDistanceBetweenPositions(tileA.Position, tileB.Position);
+        }
 
         public List<Tile> GetPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false)
         {

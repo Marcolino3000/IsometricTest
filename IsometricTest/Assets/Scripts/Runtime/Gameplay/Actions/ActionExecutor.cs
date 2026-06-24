@@ -40,7 +40,9 @@ namespace Runtime.Gameplay.Actions
             {
                 TargetUnit = executeArgs.TargetUnit,
                 ActionPoints = remainingAP,
-                TargetTile = executeArgs.TargetUnit.CurrentState.Position
+                TargetTile = executeArgs.TargetUnit.CurrentState.Position,
+                Distance = tileSpawner.GetDistanceBetweenTiles(
+                    unit.CurrentState.Position, executeArgs.TargetUnit.CurrentState.Position)
             };
             
             plannedActions.Add(attackActionData.CreateAction(context));
