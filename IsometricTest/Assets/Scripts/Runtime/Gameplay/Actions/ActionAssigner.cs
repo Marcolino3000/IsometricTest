@@ -21,14 +21,14 @@ namespace Runtime.Gameplay.Actions
                 case SelectionStatus.SelectionEnemyHover:
                     selection.NewValue.SelectedUnit.ActionExecutor.PlanAttackAction(new ExecuteArgs(null, selection.NewValue.HoveredUnit));
                     break;
+                case SelectionStatus.SelectionTileClick:
+                    selection.NewValue.SelectedUnit.ActionExecutor.ExecuteMoveActions(new ExecuteArgs(selection.NewValue.ClickedTile, null));
+                    break;
                 case SelectionStatus.SelectionEnemyClick:
-                    selection.NewValue.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, selection.NewValue.ClickedUnit));
+                    selection.NewValue.SelectedUnit.ActionExecutor.ExecuteAttackAction(new ExecuteArgs(null, selection.NewValue.ClickedUnit));
                     break;
                 case SelectionStatus.SelectionNoHover:
                     selection.NewValue.SelectedUnit.ActionExecutor.ClearPreview();
-                    break;
-                case SelectionStatus.SelectionTileClick:
-                    selection.NewValue.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(selection.NewValue.ClickedTile, null));
                     break;
             }
         }

@@ -26,9 +26,9 @@ namespace Runtime.Core.Spawning
         //     return Mathf.Abs(posA.x - posB.x) + Mathf.Abs(posA.y - posB.y);
         // }
 
-        public List<Tile> GetPath(Tile start, Tile goal, bool ignoreOccupied = false)
+        public List<Tile> GetPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false)
         {
-            return _pathfinder.FindPath(start, goal, ignoreOccupied);
+            return _pathfinder.FindPath(start, goal, ignoreOccupied, ignoreGoalOccupied, excludeGoal);
         }
         
         public bool GetTilesWithinReach(Vector2Int startPosition, int range, out List<Tile> reachableTiles)

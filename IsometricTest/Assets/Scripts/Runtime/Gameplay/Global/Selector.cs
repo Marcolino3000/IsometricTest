@@ -130,7 +130,7 @@ namespace Runtime.Gameplay.Global
 
         private void CreateSelectionChangedEvent()
         {
-            var changeEvent = new Core.State.ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
+            var changeEvent = new ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
 
             OnSelectionChanged?.Invoke(changeEvent);
 
@@ -143,7 +143,8 @@ namespace Runtime.Gameplay.Global
     {
         public Team ActiveTeam;
         public SelectionStatus Status;
-        
+
+    #region helpers
         public Selection Clone()
         {
             return new Selection
@@ -154,7 +155,8 @@ namespace Runtime.Gameplay.Global
                 hoveredUnit = hoveredUnit,
                 selectedTile = selectedTile,
                 hoveredTile = hoveredTile,
-                clickedTile = clickedTile
+                clickedTile = clickedTile,
+                clickedUnit = clickedUnit
             };
         }
         public Unit SelectedUnit
@@ -211,14 +213,18 @@ namespace Runtime.Gameplay.Global
                 UpdateStatus();
             }
         }
+    #endregion   
         private void UpdateStatus()
-        {
-            if (clickedTile != null)
+        {       
+            // Debug.Log($"SelectedUnit: {selectedUnit != null}, ClickedUnit: {clickedUnit != null}, HoveredUnit: {hoveredUnit != null}, HoveredTile: {hoveredTile != null}");
+            
+            if (selectedUnit != null && clickedTile != null)
             {
                 Status = SelectionStatus.SelectionTileClick;
                 return;
             }
 
+            
             switch (selectedUnit, clickedUnit, hoveredUnit, hoveredTile)
             {
                 case (null, null, null, null):
@@ -248,7 +254,7 @@ namespace Runtime.Gameplay.Global
                 case ({ } selected, null, { } hovered,null) when hovered.CurrentState.Team != ActiveTeam:
                     Status = SelectionStatus.SelectionEnemyHover;
                     break;
-                case ({ } selected, { } clicked, null,not null):
+                case ({ } selected, { } clicked, not null,null):
                     Status = SelectionStatus.SelectionEnemyClick;
                     break;
                 default:

@@ -24,17 +24,29 @@ namespace Runtime.Gameplay.Actions
 
         public bool PlanMoveAction(ExecuteArgs executeArgs)
         {
-            PlanActionsFromPath(tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile));
+            PlanMoveActionsFromPath(tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile));
             
             PreviewPlannedActions();
             return TestConditionsForPlannedActions();
         }
 
-        public void PlanAttackAction(ExecuteArgs executeArgs)
+        public bool PlanAttackAction(ExecuteArgs executeArgs)
         {
-            PlanActionsFromPath(tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetUnit.CurrentState.Position));
+            var remainingAP = PlanMoveActionsFromPath(tileSpawner.GetPath(
+                unit.CurrentState.Position, executeArgs.TargetUnit.CurrentState.Position,
+                ignoreGoalOccupied: true, excludeGoal: true));
+
+            var context = new ActionContext()
+            {
+                TargetUnit = executeArgs.TargetUnit,
+                ActionPoints = remainingAP,
+                TargetTile = executeArgs.TargetUnit.CurrentState.Position
+            };
+            
+            plannedActions.Add(attackActionData.CreateAction(context));
             
             PreviewPlannedActions();
+            return TestConditionsForPlannedActions();
         }
 
         private bool TestConditionsForPlannedActions()
@@ -51,7 +63,7 @@ namespace Runtime.Gameplay.Actions
             return true;
         }
 
-        private void PlanActionsFromPath(List<Tile> path)
+        private int PlanMoveActionsFromPath(List<Tile> path)
         {
             plannedActions.Clear();
 
@@ -69,20 +81,35 @@ namespace Runtime.Gameplay.Actions
                     TargetTile = tile
                 };
 
-                Debug.Log("Action points: " + context.ActionPoints + " Distance: " + context.Distance + " Target tile: " + context.TargetTile);
+                // Debug.Log("Action points: " + context.ActionPoints + " Distance: " + context.Distance + " Target tile: " + context.TargetTile);
 
                 plannedActions.Add(moveActionData.CreateAction(context));
 
                 availableActionPoints -= moveActionData.Condition.Cost;
             }
+
+            return availableActionPoints;
         }
 
 
-        public bool ExecuteActions(ExecuteArgs executeArgs)
+        public void ExecuteMoveActions(ExecuteArgs executeArgs)
         {
             if(!PlanMoveAction(executeArgs))
-                return false;
+                return;
             
+            ExecutePlannedActions();
+        }
+        
+        public void ExecuteAttackAction(ExecuteArgs executeArgs)
+        {
+            if(!PlanAttackAction(executeArgs))
+                return;
+
+            ExecutePlannedActions();
+        }
+
+        private void ExecutePlannedActions()
+        {
             int totalCost = 0;
 
             foreach (var action in plannedActions)
@@ -92,8 +119,6 @@ namespace Runtime.Gameplay.Actions
             }
 
             unit.CurrentState.ActionPoints -= totalCost;
-
-            return true;
         }
 
 

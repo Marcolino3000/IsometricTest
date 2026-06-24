@@ -23,7 +23,6 @@ namespace Actions
 
         public override void ExecuteEffects()
         {
-            // Context.TargetUnit.CurrentState.Position = Context.TargetTile;
             Context.TargetUnit.TryMoveToTile(Context.TargetTile);
         }
     }

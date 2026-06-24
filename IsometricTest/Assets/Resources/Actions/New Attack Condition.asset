@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2347708a46e64010a0f007b26abcb175, type: 3}
   m_Name: New Attack Condition
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackCondition
+  Cost: 2
   Range: 1
-  Cost: 1

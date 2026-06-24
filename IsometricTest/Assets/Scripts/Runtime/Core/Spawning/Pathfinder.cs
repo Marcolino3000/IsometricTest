@@ -7,8 +7,9 @@ namespace Runtime.Core.Spawning
 {
     /// <summary>
     /// Simple grid pathfinder using A* (Manhattan heuristic) for 4-direction movement.
-    /// By default occupied tiles are treated as blocked; set ignoreOccupied=true to ignore occupancy.
-    /// If ignoreOccupied==false the algorithm will still allow reaching the goal tile even when it's occupied.
+    /// By default occupied tiles are treated as blocked; set ignoreOccupied=true to ignore occupancy entirely.
+    /// The goal tile may only be reached when it is unoccupied, unless ignoreGoalOccupied==true.
+    /// Set excludeGoal=true to drop the goal tile from the returned path (e.g. to stop next to a target).
     /// </summary>
     public class Pathfinder
     {
@@ -19,14 +20,10 @@ namespace Runtime.Core.Spawning
             _tileSpawner = tileSpawner;
         }
 
-        public List<Tile> FindPath(Tile start, Tile goal, bool ignoreOccupied = false)
+        public List<Tile> FindPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false)
         {
-            if (start == null || goal == null || _tileSpawner == null)
-                return null;
-
-            // fast path
-            if (start == goal)
-                return new List<Tile> { start };
+            if (start == null || goal == null || _tileSpawner == null || goal.IsOccupied && !ignoreGoalOccupied)
+                return new List<Tile>();
 
             var startPos = start.Position;
             var goalPos = goal.Position;
@@ -43,7 +40,12 @@ namespace Runtime.Core.Spawning
                 var current = openSet.OrderBy(p => fScore.ContainsKey(p) ? fScore[p] : int.MaxValue).First();
 
                 if (current == goalPos)
-                    return ReconstructPath(cameFrom, current);
+                {
+                    var path = ReconstructPath(cameFrom, current);
+                    if (excludeGoal && path.Count > 0)
+                        path.RemoveAt(path.Count - 1);
+                    return path;
+                }
 
                 openSet.Remove(current);
 
@@ -58,11 +60,10 @@ namespace Runtime.Core.Spawning
                     var neighborTile = _tileSpawner.GetTileAtPosition(neighbor);
                     if (neighborTile == null)
                         continue;
-
-                    // occupancy check
+                    
                     if (!ignoreOccupied)
                     {
-                        // allow reaching the goal even if occupied, but do not traverse through occupied tiles
+                        //do not traverse through occupied tiles
                         if (neighbor != goalPos && neighborTile.IsOccupied)
                             continue;
                     }
