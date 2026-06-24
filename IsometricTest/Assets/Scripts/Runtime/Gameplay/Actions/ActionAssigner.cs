@@ -27,6 +27,9 @@ namespace Runtime.Gameplay.Actions
                 case SelectionStatus.SelectionNoHover:
                     selection.NewValue.SelectedUnit.ActionExecutor.ClearPreview();
                     break;
+                case SelectionStatus.SelectionTileClick:
+                    selection.NewValue.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(selection.NewValue.ClickedTile, null));
+                    break;
             }
         }
     }

@@ -1,11 +1,8 @@
 using System;
-using Runtime.Core.Spawning;
 using Runtime.Core.State;
-using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Clickable = Runtime.Gameplay.Controls.Clickable;
 
 namespace Runtime.Gameplay.Global
@@ -64,94 +61,6 @@ namespace Runtime.Gameplay.Global
             }
         }
 
-        private void HandleTileHover(Tile tile)
-        {
-            selection.HoveredTile = tile;
-            CreateSelectionChangedEvent();
-
-            // if (selection.SelectedUnit != null)
-            //     selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(tile, null));
-        }
-
-        private void HandleUnitHover(Unit unit)
-        {
-            if(selection.SelectedUnit != unit)
-            {
-                selection.HoveredUnit = unit;
-                CreateSelectionChangedEvent();
-            }
-
-            if(CheckIfFriendlyUnit(unit) && selection.SelectedUnit == null)
-            {
-                // selection.Status = SelectionStatus.NoSelectionFriendlyHover;
-                return;
-            }
-
-            if (CheckForAttackOnUnit(unit))
-            {
-                // selection.Status = SelectionStatus.SelectionEnemyHover;
-                // selection.SelectedUnit.ActionExecutor.PlanActionsNew(new ExecuteArgs(null, unit));
-            }
-        }
-
-        private void HandleClick(IClickable clickable)
-        {
-            bool executedAction = false;
-            
-            if (clickable is Unit unit)
-            {
-                executedAction = HandleUnitClick(unit);
-            }
-            else if (clickable is Tile tile)
-            {
-                HandleTileClick(tile);
-            }
-            else
-            {
-                Debug.LogError("Clicked object is not a tile or unit");
-            }
-
-            if (!executedAction) 
-                return;
-            
-            // selection.SelectedUnit = null;
-        }
-
-        private bool HandleTileClick(Tile tile)
-        {
-            if (selection.SelectedUnit == null)
-                return false;
-
-            // return true;
-            return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(tile, null));
-        }
-
-        private bool HandleUnitClick(Unit unit)
-        {
-            // selection.SelectedUnit = unit;
-            // CreateSelectionChangedEvent();
-            
-            if (CheckForSelectUnit(unit))
-            {
-                return false;
-            }
-
-            if (!CheckForAttackOnUnit(unit))
-                return false;
-
-            return true;
-            // return selection.SelectedUnit.ActionExecutor.ExecuteActions(new ExecuteArgs(null, unit));
-        }
-
-        private void CreateSelectionChangedEvent()
-        {
-            var changeEvent = new Core.State.ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
-
-            OnSelectionChanged?.Invoke(changeEvent);
-
-            previousSelection = selection.Clone();
-        }
-
         private void HandleMouseExit(IClickable clickable)
         {
             if (clickable is Unit)
@@ -170,35 +79,62 @@ namespace Runtime.Gameplay.Global
             }
         }
 
-        private bool CheckIfFriendlyUnit(Unit unit)
+        private void HandleClick(IClickable clickable)
         {
-            return unit.CurrentState.Team == activeTeam;
+            switch (clickable)
+            {
+                case Unit unit:
+                    HandleUnitClick(unit);
+                    break;
+                case Tile tile:
+                    HandleTileClick(tile);
+                    break;
+                default:
+                    Debug.LogError("Clicked object is not a tile or unit");
+                    break;
+            }
         }
 
-        private bool CheckForSelectUnit(Unit unit)
+        private void HandleTileHover(Tile tile)
         {
-            if(unit.CurrentState.Team != activeTeam)
-            {
-                selection.ClickedUnit = unit;
-                CreateSelectionChangedEvent();    
-                return false;
-            }
-
-            selection.SelectedUnit = unit;
+            selection.HoveredTile = tile;
             CreateSelectionChangedEvent();
-
-            return true;
         }
 
-        private bool CheckForAttackOnUnit(Unit targetUnit)
+        private void HandleUnitHover(Unit unit)
         {
-            if (activeTeam != targetUnit.CurrentState.Team && selection.SelectedUnit != null)
-            {
-                // selection.Status = SelectionStatus.SelectionEnemyHover;
-                return true;
-            }
+            if (selection.SelectedUnit == unit) 
+                return;
+            
+            selection.HoveredUnit = unit;
+            CreateSelectionChangedEvent();
+        }
 
-            return false;
+        private void HandleTileClick(Tile tile)
+        {
+            selection.ClickedTile = tile;
+            CreateSelectionChangedEvent();
+            selection.ClickedTile = null;
+        }
+
+        private void HandleUnitClick(Unit unit)
+        {
+            if (unit.CurrentState.Team == activeTeam)
+                selection.SelectedUnit = unit;
+            else
+                selection.ClickedUnit = unit;
+
+            CreateSelectionChangedEvent();
+            selection.ClickedUnit = null;
+        }
+
+        private void CreateSelectionChangedEvent()
+        {
+            var changeEvent = new Core.State.ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
+
+            OnSelectionChanged?.Invoke(changeEvent);
+
+            previousSelection = selection.Clone();
         }
     }
 
@@ -217,7 +153,8 @@ namespace Runtime.Gameplay.Global
                 selectedUnit = selectedUnit,
                 hoveredUnit = hoveredUnit,
                 selectedTile = selectedTile,
-                hoveredTile = hoveredTile
+                hoveredTile = hoveredTile,
+                clickedTile = clickedTile
             };
         }
         public Unit SelectedUnit
@@ -256,6 +193,15 @@ namespace Runtime.Gameplay.Global
                 UpdateStatus();
             }
         }
+        public Tile ClickedTile
+        {
+            get => clickedTile;
+            set
+            {
+                clickedTile = value;
+                UpdateStatus();
+            }
+        }
         public Tile HoveredTile
         {
             get => hoveredTile;
@@ -267,6 +213,12 @@ namespace Runtime.Gameplay.Global
         }
         private void UpdateStatus()
         {
+            if (clickedTile != null)
+            {
+                Status = SelectionStatus.SelectionTileClick;
+                return;
+            }
+
             switch (selectedUnit, clickedUnit, hoveredUnit, hoveredTile)
             {
                 case (null, null, null, null):
@@ -290,10 +242,10 @@ namespace Runtime.Gameplay.Global
                 case ({ } selected, null, null,not null):
                     Status = SelectionStatus.SelectionTileHover;
                     break;
-                case ({ } selected, null, { } hovered,not null) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team == ActiveTeam:
+                case ({ } selected, null, { } hovered,not null) when hovered.CurrentState.Team == ActiveTeam:
                     Status = SelectionStatus.SelectionFriendlyHover;
                     break;
-                case ({ } selected, null, { } hovered,null) when selected.CurrentState.Team == ActiveTeam && hovered.CurrentState.Team != ActiveTeam:
+                case ({ } selected, null, { } hovered,null) when hovered.CurrentState.Team != ActiveTeam:
                     Status = SelectionStatus.SelectionEnemyHover;
                     break;
                 case ({ } selected, { } clicked, null,not null):
@@ -309,6 +261,7 @@ namespace Runtime.Gameplay.Global
         private Unit clickedUnit; //units that get clicked on but that can't be selected (e.g. enemy units)
         private Unit hoveredUnit;
         private Tile selectedTile;
+        private Tile clickedTile; //tiles clicked to command the selected unit (e.g. move target)
         private Tile hoveredTile;
     }
 
@@ -324,6 +277,7 @@ namespace Runtime.Gameplay.Global
         SelectionEnemyHover,
         SelectionEnemyClick,
         NoSelectionTileHover,
-        SelectionTileHover
+        SelectionTileHover,
+        SelectionTileClick
     }
 }
