@@ -19,32 +19,57 @@ namespace Runtime.Gameplay.Feedback
         private void HandleSelectionChanged(ChangeEvent<Selection> changeEvent)
         {
             TileSpawner.ResetHighlightedTiles();
-            
-            if(changeEvent.NewValue.SelectedUnit != null)
-                HandleUnitSelectedCases(changeEvent.NewValue);
-            
-            else
-                HandleNoUnitSelectedCases(changeEvent.NewValue);
-        }
 
-        private void HandleNoUnitSelectedCases(Selection selection)
-        {
-            if(selection.HoveredUnit != null)
-                selection.HoveredUnit.TileHighlighter.HighlightMoveableTiles();
-        }
+            var selection = changeEvent.NewValue;
 
-        private void HandleUnitSelectedCases(Selection selection)
-        {
-            selection.SelectedUnit.TileHighlighter.HighlightMoveableTiles();
-            
-            if(selection.HoveredUnit != null && 
-               selection.HoveredUnit.CurrentState.Team != selection.SelectedUnit.CurrentState.Team)
-                ShowAttackIndicatorTile(selection.HoveredUnit.CurrentState.Position);
+            switch (selection.Status)
+            {
+                case SelectionStatus.NoSelectionFriendlyHover:
+                case SelectionStatus.NoSelectionEnemyHover:
+                    selection.HoveredUnit.TileHighlighter.HighlightMoveableTiles();
+                    break;
+
+                case SelectionStatus.SelectionNoHover:
+                case SelectionStatus.SelectionFriendlyHover:
+                case SelectionStatus.SelectionEnemyClick:
+                case SelectionStatus.SelectionTileClick:
+                    selection.SelectedUnit.TileHighlighter.HighlightMoveableTiles();
+                    break;
+
+                case SelectionStatus.SelectionEnemyHover:
+                    selection.SelectedUnit.TileHighlighter.HighlightMoveableTiles();
+                    ShowAttackIndicatorTile(selection.HoveredUnit.CurrentState.Position);
+                    break;
+
+                case SelectionStatus.SelectionTileHover:
+                    selection.SelectedUnit.TileHighlighter.HighlightMoveableTiles();
+                    // ShowMovePath(selection.SelectedUnit, selection.HoveredTile);
+                    break;
+            }
         }
 
         private void ShowAttackIndicatorTile(Tile tile)
         {
             tileSpawner.HighlightTile(tile.Position, MarkerColor.Orange);
+        }
+
+        // Marks every tile the unit would walk through to reach the hovered tile.
+        // Tiles within the unit's movement range are solid green; any path tiles beyond
+        // what it can move are transparent green.
+        private void ShowMovePath(Unit unit, Tile target)
+        {
+            var path = tileSpawner.GetPath(unit.CurrentState.Position, target);
+            if (path == null)
+                return;
+
+            var range = unit.CurrentState.Range;
+
+            // path[0] is the unit's current tile, so the index equals the number of steps.
+            for (var step = 1; step < path.Count; step++)
+            {
+                var markerColor = step <= range ? MarkerColor.Green : MarkerColor.Blue;
+                tileSpawner.HighlightTile(path[step].Position, markerColor);
+            }
         }
     }
 }

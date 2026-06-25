@@ -12,6 +12,9 @@ namespace Runtime.Gameplay.Feedback
         
         public void SetMarkerColor(MarkerColor color)
         {
+            var fullOpacity = Color.white;
+            var semiTransparent = new Color(1f, 1f, 1f, 0.5f);
+            
             switch (color)
             {
                 case MarkerColor.None:
@@ -19,12 +22,31 @@ namespace Runtime.Gameplay.Feedback
                     break;
                 case MarkerColor.Green:
                     spriteRenderer.sprite = greenMarker;
+                    spriteRenderer.color = fullOpacity;
                     break;
                 case MarkerColor.Orange:
                     spriteRenderer.sprite = OrangeMarker;
+                    spriteRenderer.color = fullOpacity;
                     break;
                 case MarkerColor.White:
                     spriteRenderer.sprite = WhiteMarker;
+                    spriteRenderer.color = fullOpacity;
+                    break;
+                case MarkerColor.Blue:
+                    spriteRenderer.sprite = WhiteMarker;
+                    spriteRenderer.color = Color.blue;
+                    break;
+                case MarkerColor.TransparentOrange:
+                    spriteRenderer.sprite = OrangeMarker;
+                    spriteRenderer.color = semiTransparent;
+                    break;
+                case MarkerColor.TransparentWhite:
+                    spriteRenderer.sprite = WhiteMarker;
+                    spriteRenderer.color = semiTransparent;
+                    break;
+                case MarkerColor.TransparentBlue:
+                    spriteRenderer.sprite = WhiteMarker;
+                    spriteRenderer.color = Color.lightBlue;
                     break;
             }
         }
@@ -41,6 +63,10 @@ namespace Runtime.Gameplay.Feedback
         None,
         Green,
         Orange,
-        White
+        White,
+        Blue,
+        TransparentOrange,
+        TransparentWhite,
+        TransparentBlue
     }
 }

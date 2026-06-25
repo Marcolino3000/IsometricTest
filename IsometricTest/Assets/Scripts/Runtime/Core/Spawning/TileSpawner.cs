@@ -80,11 +80,11 @@ namespace Runtime.Core.Spawning
 
         public void HighlightTile(Vector2Int tilePosition, MarkerColor markerColor = MarkerColor.White)
         {
-            if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
-            {
-                Debug.LogWarning("Tile Position was out of bounds");
-                return;
-            }
+            // if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
+            // {
+            //     Debug.LogWarning("Tile Position was out of bounds");
+            //     return;
+            // }
 
             var tile = Tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
             if (tile == null)

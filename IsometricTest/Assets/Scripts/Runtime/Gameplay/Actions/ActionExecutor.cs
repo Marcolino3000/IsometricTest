@@ -12,8 +12,8 @@ namespace Runtime.Gameplay.Actions
     public class  ActionExecutor : MonoBehaviour
     {
         [Header("Settings")] 
-        [SerializeField] private AttackActionData attackActionData;
-        [SerializeField] private MoveActionData moveActionData;
+        // [SerializeField] private AttackActionData attackActionData;
+        // [SerializeField] private MoveActionData moveActionData;
 
         [Header("References")]
         [SerializeField] private ActionsPointsBar actionsPointsBar;
@@ -22,18 +22,23 @@ namespace Runtime.Gameplay.Actions
         private Unit unit;
         private List<IUnitAction> plannedActions = new();
 
-        public bool PlanMoveAction(ExecuteArgs executeArgs)
+        public ConditionTestResult PlanMoveAction(ExecuteArgs executeArgs)
         {
-            PlanMoveActionsFromPath(tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile));
+            var path = tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile);
             
-            PreviewPlannedActions();
-            return TestConditionsForPlannedActions();
+            PlanMoveActionsFromPath(path);
+            var result = TestConditionsForPlannedActions();
+            
+            SetActionsPointsBar();
+            unit.TileHighlighter.HighlightTilesAlongPath(path, result.FailedConditionIndex);
+
+            return result;
         }
 
-        public bool PlanAttackAction(ExecuteArgs executeArgs)
+        public ConditionTestResult PlanAttackAction(ExecuteArgs executeArgs)
         {
             var targetTile = executeArgs.TargetUnit.CurrentState.Position;
-            var range = attackActionData.Condition.Range;
+            var range = unit.CurrentState.AttackAction.Condition.Range;
 
             // Only move close enough that the target lands within attack range,
             // so ranged units stop short instead of walking right up to it.
@@ -52,24 +57,27 @@ namespace Runtime.Gameplay.Actions
                 Distance = tileSpawner.GetDistanceBetweenTiles(attackFromTile, targetTile)
             };
 
-            plannedActions.Add(attackActionData.CreateAction(context));
+            plannedActions.Add(unit.CurrentState.AttackAction.CreateAction(context));
 
-            PreviewPlannedActions();
+            SetActionsPointsBar();
             return TestConditionsForPlannedActions();
         }
 
-        private bool TestConditionsForPlannedActions()
+        private ConditionTestResult TestConditionsForPlannedActions()
         {
-            foreach (var action in plannedActions)
+            int failedConditionIndex = -1;
+            
+            for (int i = 0; i < plannedActions.Count; i++)
             {
-                if (!action.TestConditions())
+                if (!plannedActions[i].TestConditions())
                 {
                     Debug.LogWarning("planned action is not valid.");
-                    return false;
+                    failedConditionIndex = i;
+                    return new ConditionTestResult(false, failedConditionIndex);
                 }
             }
 
-            return true;
+            return new ConditionTestResult(true, failedConditionIndex);
         }
 
         private int PlanMoveActionsFromPath(List<Tile> path)
@@ -92,9 +100,9 @@ namespace Runtime.Gameplay.Actions
 
                 // Debug.Log("Action points: " + context.ActionPoints + " Distance: " + context.Distance + " Target tile: " + context.TargetTile);
 
-                plannedActions.Add(moveActionData.CreateAction(context));
+                plannedActions.Add(unit.CurrentState.MoveAction.CreateAction(context));
 
-                availableActionPoints -= moveActionData.Condition.Cost;
+                availableActionPoints -= unit.CurrentState.MoveAction.Condition.Cost;
             }
 
             return availableActionPoints;
@@ -103,7 +111,7 @@ namespace Runtime.Gameplay.Actions
 
         public void ExecuteMoveActions(ExecuteArgs executeArgs)
         {
-            if(!PlanMoveAction(executeArgs))
+            if(!PlanMoveAction(executeArgs).IsValid)
                 return;
             
             ExecutePlannedActions();
@@ -111,7 +119,7 @@ namespace Runtime.Gameplay.Actions
         
         public void ExecuteAttackAction(ExecuteArgs executeArgs)
         {
-            if(!PlanAttackAction(executeArgs))
+            if(!PlanAttackAction(executeArgs).IsValid)
                 return;
 
             ExecutePlannedActions();
@@ -140,7 +148,7 @@ namespace Runtime.Gameplay.Actions
 
         private int PlannedCost => plannedActions.Sum(action => action.Cost);
         
-        private void PreviewPlannedActions()
+        private void SetActionsPointsBar()
         {
             var committed = unit.CurrentState.ActionPoints;
             var previewCost = Mathf.Min(PlannedCost, committed);
@@ -155,6 +163,18 @@ namespace Runtime.Gameplay.Actions
         public void HandleActionPointsChanged(int newAmount)
         {
             actionsPointsBar.SetBlobAmount(newAmount);
+        }
+
+        public struct ConditionTestResult
+        {
+            public readonly bool IsValid;
+            public readonly int FailedConditionIndex;
+
+            public ConditionTestResult(bool isValid, int failedConditionIndex)
+            {
+                IsValid = isValid;
+                FailedConditionIndex = failedConditionIndex;
+            }
         }
     }
     
