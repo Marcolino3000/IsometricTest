@@ -73,9 +73,9 @@ namespace Runtime.Gameplay.Entities
                 return false;
             }
 
-            if (selectedTile.IsOccupied)
+            if (selectedTile.IsOccupied || !selectedTile.IsPassable)
                 return false;
-            
+
             PlaceOnTile(selectedTile);
             return true;
         }
@@ -102,8 +102,8 @@ namespace Runtime.Gameplay.Entities
                 currentTile.SetUnit(null);
 
             currentState.Position = selectedTile;
-            transform.position = unitSpawner.GridToWorldPosition(selectedTile.Position);
-            
+            transform.position = unitSpawner.GridToWorldPosition(selectedTile.Position) + Vector3.up * selectedTile.HeightOffset;
+
             selectedTile.SetUnit(this);
         }
 

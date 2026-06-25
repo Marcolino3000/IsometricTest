@@ -100,9 +100,11 @@ namespace Runtime.Gameplay.Actions
 
                 // Debug.Log("Action points: " + context.ActionPoints + " Distance: " + context.Distance + " Target tile: " + context.TargetTile);
 
-                plannedActions.Add(unit.CurrentState.MoveAction.CreateAction(context));
+                var action = unit.CurrentState.MoveAction.CreateAction(context);
+                plannedActions.Add(action);
 
-                availableActionPoints -= unit.CurrentState.MoveAction.Condition.Cost;
+                // use the action's own cost so difficult terrain (hills) is accounted for per step
+                availableActionPoints -= action.Cost;
             }
 
             return availableActionPoints;

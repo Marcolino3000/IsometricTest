@@ -20,3 +20,31 @@ MonoBehaviour:
   GridSizeX: 5
   GridSizeY: 5
   SpawnZoneSize: 2
+  AllowMovementInAllDirections: 0
+  FlatTerrain:
+    Type: 0
+    Passable: 1
+    ExtraMoveCost: 0
+    HeightOffset: 0
+    OverrideColor: 0
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    OverrideSprite: {fileID: 0}
+  HillTerrain:
+    Type: 1
+    Passable: 1
+    ExtraMoveCost: 1
+    HeightOffset: 0.1
+    OverrideColor: 0
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    OverrideSprite: {fileID: 0}
+  MountainTerrain:
+    Type: 2
+    Passable: 0
+    ExtraMoveCost: 0
+    HeightOffset: 0.2
+    OverrideColor: 0
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    OverrideSprite: {fileID: -402664073, guid: 510239b11da99442c80051e1aa316c0e, type: 3}
+  HillPositions: []
+  MountainPositions:
+  - {x: 1, y: 1}

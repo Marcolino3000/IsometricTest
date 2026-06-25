@@ -18,6 +18,7 @@ namespace Runtime.Core.Spawning
         
         private readonly List<Tile> Tiles = new();
         private Pathfinder _pathfinder;
+        private Dictionary<Vector2Int, TerrainProfile> _terrainMap = new();
 
         #region Services
 
@@ -224,10 +225,18 @@ namespace Runtime.Core.Spawning
             
             var tile = instance.GetComponent<Tile>();
             tile.Position = new Vector2Int(xIndex, yIndex);
+            tile.ApplyTerrain(GetTerrainProfile(tile.Position));
             Tiles.Add(tile);
 
             // ClickableRegistry.RegisterClickable(tile.GetComponent<Clickable>());
             selector.RegisterClickable(tile.GetComponent<Clickable>());
+        }
+
+        private TerrainProfile GetTerrainProfile(Vector2Int position)
+        {
+            return _terrainMap != null && _terrainMap.TryGetValue(position, out var profile)
+                ? profile
+                : settings.FlatTerrain;
         }
 
         private Vector3 GridIndexToWorldPosition(int xIndex, int yIndex)
@@ -260,7 +269,9 @@ namespace Runtime.Core.Spawning
         public void SpawnTiles()
         {
             ClearGrid();
-            
+
+            _terrainMap = settings.BuildTerrainMap();
+
             for (int x = 0; x < settings.GridSizeX; x++)
             for (int y = 0; y < settings.GridSizeY; y++)
                 SpawnTile(x, y);

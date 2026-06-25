@@ -16,9 +16,6 @@ namespace Runtime.Gameplay.Global
         [SerializeField] private Selection previousSelection;
         [SerializeField] private Team activeTeam;
 
-        [Header("References")]
-        [SerializeField] private Raycaster raycaster;
-
         #region Setup
 
         public void RegisterClickable(Clickable clickable)
@@ -28,9 +25,10 @@ namespace Runtime.Gameplay.Global
             clickable.OnMouseExit += HandleMouseExit;
         }
 
-        public void Setup(GameStateManager gameStateManagerArg)
+        public void Setup(GameStateManager gameStateManagerArg, Raycaster raycaster)
         {
             gameStateManagerArg.OnGameStateChanged += HandleStateChange;
+            raycaster.OnClickedNothing += HandleClickNothing;
         }
 
         /// <summary>
@@ -109,6 +107,18 @@ namespace Runtime.Gameplay.Global
                     Debug.LogError("Clicked object is not a tile or unit");
                     break;
             }
+        }
+
+        /// <summary>
+        /// Clicking empty space (neither a tile nor a unit) clears the current unit selection.
+        /// </summary>
+        private void HandleClickNothing()
+        {
+            if (selection.SelectedUnit == null)
+                return;
+
+            selection.SelectedUnit = null;
+            CreateSelectionChangedEvent();
         }
 
         private void HandleTileHover(Tile tile)

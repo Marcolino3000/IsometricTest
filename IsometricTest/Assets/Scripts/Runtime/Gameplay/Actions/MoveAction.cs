@@ -13,11 +13,14 @@ namespace Actions
     {
         public MoveAction(MoveCondition condition, MoveEffect effect, ActionContext context) : base(condition, effect, context) { }
 
+        // Stepping onto difficult terrain (e.g. hills) costs extra action points on top of the base move cost.
+        public override int Cost => Condition.Cost + (Context.TargetTile != null ? Context.TargetTile.ExtraMoveCost : 0);
+
         public override bool TestConditions()
         {
-            if(Condition.Cost > Context.ActionPoints) 
+            if(Cost > Context.ActionPoints)
                 return false;
-            
+
             return true;
         }
 

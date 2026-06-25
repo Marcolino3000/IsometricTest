@@ -87,8 +87,10 @@ namespace Runtime.Core.Spawning
             
             while(!unit.TryPlaceAtTile(tileSpawner.GetTileAtPosition(gridPosition)))
                 gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);
-            
-            unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition);
+
+            var tile = tileSpawner.GetTileAtPosition(gridPosition);
+            unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition)
+                                      + Vector3.up * (tile != null ? tile.HeightOffset : 0f);
         }
 
         public Vector3 GridToWorldPosition(Vector2Int gridPosition)

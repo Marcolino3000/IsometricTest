@@ -22,7 +22,7 @@ namespace Runtime.Core.Spawning
 
         public List<Tile> FindPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false)
         {
-            if (start == null || goal == null || _tileSpawner == null || goal.IsOccupied && !ignoreGoalOccupied)
+            if (start == null || goal == null || _tileSpawner == null || !goal.IsPassable || goal.IsOccupied && !ignoreGoalOccupied)
                 return new List<Tile>();
 
             var startPos = start.Position;
@@ -60,7 +60,11 @@ namespace Runtime.Core.Spawning
                     var neighborTile = _tileSpawner.GetTileAtPosition(neighbor);
                     if (neighborTile == null)
                         continue;
-                    
+
+                    // impassable terrain (e.g. mountains) can never be entered, not even as the goal
+                    if (!neighborTile.IsPassable)
+                        continue;
+
                     if (!ignoreOccupied)
                     {
                         //do not traverse through occupied tiles
@@ -68,7 +72,9 @@ namespace Runtime.Core.Spawning
                             continue;
                     }
 
-                    var tentativeG = gScore.ContainsKey(current) ? gScore[current] + 1 : int.MaxValue;
+                    // base step cost of 1, plus any extra cost for difficult terrain (e.g. hills)
+                    var stepCost = 1 + neighborTile.ExtraMoveCost;
+                    var tentativeG = gScore.ContainsKey(current) ? gScore[current] + stepCost : int.MaxValue;
 
                     if (!gScore.ContainsKey(neighbor) || tentativeG < gScore[neighbor])
                     {
@@ -81,8 +87,8 @@ namespace Runtime.Core.Spawning
                 }
             }
 
-            // no path found
-            return null;
+            // no path found (e.g. the goal is walled off by mountains or occupied tiles)
+            return new List<Tile>();
         }
 
         /// <summary>

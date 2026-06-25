@@ -8,6 +8,9 @@ namespace Runtime.Gameplay.Global
 {
     public class Raycaster : MonoBehaviour
     {
+        /// <summary>Raised when a click hits neither a unit nor a tile (i.e. empty space).</summary>
+        public event Action OnClickedNothing;
+
         [SerializeField] private LayerMask unitLayerMask;
         [SerializeField] private LayerMask tileLayerMask;
 
@@ -29,7 +32,12 @@ namespace Runtime.Gameplay.Global
         {
             var ray = GetRay();
 
-            CheckForClickable(ray)?.Click();
+            var clickable = CheckForClickable(ray);
+
+            if (clickable != null)
+                clickable.Click();
+            else
+                OnClickedNothing?.Invoke();
         }
 
         private void DoHoverRaycast()
