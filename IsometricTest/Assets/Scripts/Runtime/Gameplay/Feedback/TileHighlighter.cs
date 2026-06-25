@@ -43,7 +43,6 @@ namespace Runtime.Gameplay.Feedback
 
                 case SelectionStatus.SelectionTileHover:
                     selection.SelectedUnit.TileHighlighter.HighlightMoveableTiles();
-                    // ShowMovePath(selection.SelectedUnit, selection.HoveredTile);
                     break;
             }
         }
@@ -51,25 +50,6 @@ namespace Runtime.Gameplay.Feedback
         private void ShowAttackIndicatorTile(Tile tile)
         {
             tileSpawner.HighlightTile(tile.Position, MarkerColor.Orange);
-        }
-
-        // Marks every tile the unit would walk through to reach the hovered tile.
-        // Tiles within the unit's movement range are solid green; any path tiles beyond
-        // what it can move are transparent green.
-        private void ShowMovePath(Unit unit, Tile target)
-        {
-            var path = tileSpawner.GetPath(unit.CurrentState.Position, target);
-            if (path == null)
-                return;
-
-            var range = unit.CurrentState.Range;
-
-            // path[0] is the unit's current tile, so the index equals the number of steps.
-            for (var step = 1; step < path.Count; step++)
-            {
-                var markerColor = step <= range ? MarkerColor.Green : MarkerColor.Blue;
-                tileSpawner.HighlightTile(path[step].Position, markerColor);
-            }
         }
     }
 }

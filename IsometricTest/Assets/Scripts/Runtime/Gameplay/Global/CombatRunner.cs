@@ -49,7 +49,8 @@ namespace Runtime.Gameplay.Global
 
         private static int CalculateDamage(Unit attacker, Unit target)
         {
-            return attacker.Blueprint.Attack - target.Blueprint.Defense;
+            //subtract target's defense
+            return attacker.CurrentState.AttackAction.Effect.Damage;
         }
     }
 }

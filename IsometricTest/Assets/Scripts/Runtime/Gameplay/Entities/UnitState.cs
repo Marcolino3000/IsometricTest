@@ -44,7 +44,7 @@ namespace Runtime.Gameplay.Entities
         }
         
         public Tile Position;
-        public int Range;
+        // public int Range;
         public Team Team;
         public MoveActionData MoveAction;
         public AttackActionData AttackAction;
@@ -70,7 +70,7 @@ namespace Runtime.Gameplay.Entities
             Health = other.Health;
             Position = null;
             ActionPoints = other.ActionPoints;
-            Range = other.Range;
+            // Range = other.Range;
             Team = other.Team;
         }
     }

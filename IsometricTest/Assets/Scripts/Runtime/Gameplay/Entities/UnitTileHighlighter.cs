@@ -14,7 +14,7 @@ namespace Runtime.Gameplay.Entities
 
         public void HighlightMoveableTiles()
         {
-            _tileSpawner.HighlightMoveableTiles(state.Position.Position, state.Range);
+            // _tileSpawner.HighlightMoveableTiles(state.Position.Position, state.Range);
         }
         
         public void HighlightTilesAlongPath(List<Tile> path, int movementLimitReachedIndex)
