@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Data;
-using Runtime.Core.State;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Feedback;
@@ -23,15 +22,9 @@ namespace Runtime.Core.Spawning
         private Dictionary<Vector2Int, TerrainProfile> _terrainMap = new();
 
         #region Services
-
-        public int GetDistanceBetweenPositions(Vector2Int posA, Vector2Int posB)
-        {
-            return Mathf.Abs(posA.x - posB.x) + Mathf.Abs(posA.y - posB.y);
-        }
-
         public int GetDistanceBetweenTiles(Tile tileA, Tile tileB)
         {
-            return GetDistanceBetweenPositions(tileA.Position, tileB.Position);
+            return Mathf.Abs(tileA.Position.x - tileB.Position.x) + Mathf.Abs(tileA.Position.y - tileB.Position.y);
         }
 
         public List<Tile> GetPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false)
@@ -43,26 +36,7 @@ namespace Runtime.Core.Spawning
         {
             return _pathfinder.FindPathWithinRange(start, target, range, ignoreOccupied);
         }
-
-        private bool GetTilesWithinReach(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
-        {
-            var reachablePositions = new List<Vector2Int>();
-            
-            CheckMoveDirections(startPosition, range, reachablePositions);
-
-            reachableTiles = GetTilesFromPositions(reachablePositions); 
-            
-            return reachableTiles.Count > 0;
-        }
-
-        public void FilterForOccupiedTiles(List<Tile> reachableTiles)
-        {
-            if (reachableTiles == null || reachableTiles.Count == 0)
-                return;
-
-            reachableTiles.RemoveAll(t => t.IsOccupied);
-        }
-        
+      
         public Tile GetTileAtPosition(Vector2Int position)
         {
             return Tiles.Find(t => t.Position == position);
@@ -173,33 +147,9 @@ namespace Runtime.Core.Spawning
             );
         }
 
-        public Vector2Int GetRandomGridPosition()
-        {
-            return GetRandomGridPosition(settings.GridSizeX, settings.GridSizeY);
-        }
-
         #endregion
 
         #region Helpers
-
-        private List<Tile> GetTilesFromPositions(List<Vector2Int> reachablePositions)
-        {
-            var result = new List<Tile>();
-
-            if (reachablePositions == null || reachablePositions.Count == 0)
-                return result;
-
-            foreach (var pos in reachablePositions)
-            {
-                var tile = Tiles.Find(t => t.Position == pos);
-                if (tile != null)
-                {
-                    result.Add(tile);
-                }
-            }
-
-            return result;
-        }
 
         /// <summary>
         /// Total movement cost of walking <paramref name="path"/> (excluding the start tile): the unit's
@@ -211,46 +161,6 @@ namespace Runtime.Core.Spawning
             for (var i = 1; i < path.Count; i++)
                 cost += moveCost + path[i].ExtraMoveCost;
             return cost;
-        }
-
-        private void CheckMoveDirections(Vector2Int startPosition, int range, List<Vector2Int> tiles)
-        {
-            for (int dx = -range; dx <= range; dx++)
-            {
-                for (int dy = -range; dy <= range; dy++)
-                {
-                    // skip own tile
-                    if (dx == 0 && dy == 0)
-                        continue;
-
-                    // only keep tiles inside the diamond (Manhattan distance)
-                    if (Mathf.Abs(dx) + Mathf.Abs(dy) > range)
-                        continue;
-
-                    var offset = new Vector2Int(dx, dy);
-
-                    // filter to "forward and sides" half-space:
-                    // dot(offset, forward) >= 0 => not behind the unit
-                    if(settings.AllowMovementInAllDirections)
-                    {
-                        float dot = Vector2.Dot(offset, Direction.Forward);
-                        if (dot < 0f)
-                            continue;
-                    }
-
-                    var position = startPosition + offset;
-
-                    if (!CheckForGridBoundaries(position.x, position.y))
-                        continue;
-
-                    tiles.Add(position);
-                }
-            }
-        }
-
-        private bool CheckForGridBoundaries(int x, int y)
-        {
-            return x >= 0 && x < settings.GridSizeX && y >= 0 && y < settings.GridSizeY;
         }
 
         private void ClearGrid()
@@ -277,7 +187,6 @@ namespace Runtime.Core.Spawning
             tile.ApplyTerrain(GetTerrainProfile(tile.Position));
             Tiles.Add(tile);
 
-            // ClickableRegistry.RegisterClickable(tile.GetComponent<Clickable>());
             selector.RegisterClickable(tile.GetComponent<Clickable>());
         }
 
@@ -295,13 +204,6 @@ namespace Runtime.Core.Spawning
                 settings.StartPosition.y + xIndex * -settings.HalfTileOffsetY + yIndex * settings.HalfTileOffsetY,
                 settings.StartPosition.z
             );
-        }
-
-        private Vector2Int GetRandomGridPosition(int gridSizeX, int gridSizeY)
-        {
-            var x = Random.Range(0, gridSizeX);
-            var y = Random.Range(0, gridSizeY);
-            return new Vector2Int(x, y);
         }
 
         #endregion
@@ -327,25 +229,5 @@ namespace Runtime.Core.Spawning
         }
 
         #endregion
-
-        public bool IsTileWithinReach(Tile startPosition, Tile targetPosition, int range, bool filterOccupiedTiles)
-        {
-            // if (targetPosition == null)
-            // {
-            //     Debug.LogWarning("Selected tile is null");
-            //     return false;
-            // }
-            
-            if (!GetTilesWithinReach(startPosition.Position, range, out var reachableTiles))
-                return false;
-            
-            if(filterOccupiedTiles)
-                FilterForOccupiedTiles(reachableTiles);
-            
-            if(!reachableTiles.Contains(targetPosition))
-                return false;
-            
-            return true;
-        }
     }
 }
