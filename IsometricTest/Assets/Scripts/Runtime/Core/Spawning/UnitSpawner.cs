@@ -4,6 +4,7 @@ using Data;
 using Runtime.Core.State;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
 using UnityEngine;
 
@@ -13,12 +14,15 @@ namespace Runtime.Core.Spawning
     {
         [Header("Debug")]
         [SerializeField] private List<Unit> units;
-        
+
+        public IReadOnlyList<Unit> AllUnits => units;
+
         [Header("References")]
         [SerializeField] private UnitSpawnerSettings settings;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private Selector selector;
         [SerializeField] private GameStateManager gameStateManager;
+        [SerializeField] private FogOfWar fogOfWar;
 
         public void RemoveUnit(Unit unit)
         {
@@ -46,7 +50,7 @@ namespace Runtime.Core.Spawning
                 spriteRenderer.sprite = prefab.Blueprint.Sprite;
                 
                 var unit = instance.GetComponentInChildren<Unit>();
-                unit.Init(tileSpawner, this, team, gameStateManager);
+                unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar);
                 
                 PlaceUnit(unit, team);
 
@@ -114,10 +118,11 @@ namespace Runtime.Core.Spawning
 
         #region Setup
 
-        public void Setup(GameStateManager gameStateManagerArg, Selector selectorArg)
+        public void Setup(GameStateManager gameStateManagerArg, Selector selectorArg, FogOfWar fogOfWarArg)
         {
             gameStateManager = gameStateManagerArg;
             selector = selectorArg;
+            fogOfWar = fogOfWarArg;
         }
 
         [ContextMenu("Spawn Units")]

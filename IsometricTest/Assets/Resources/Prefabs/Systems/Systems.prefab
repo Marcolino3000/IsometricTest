@@ -51,7 +51,6 @@ MonoBehaviour:
     ActiveTeam: 0
     Status: 0
   activeTeam: 0
-  raycaster: {fileID: 0}
 --- !u!1 &433851073694078129
 GameObject:
   m_ObjectHideFlags: 0
@@ -101,6 +100,7 @@ MonoBehaviour:
   tileSpawner: {fileID: 1090123498142972224}
   selector: {fileID: 0}
   gameStateManager: {fileID: 0}
+  fogOfWar: {fileID: 6967780869941050052}
 --- !u!1 &1014679833672591487
 GameObject:
   m_ObjectHideFlags: 0
@@ -191,6 +191,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a8a34d49ff7421f8b177de9c657c977, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Feedback.OutlineManager
+--- !u!1 &3503548699691150265
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3830958164093829374}
+  - component: {fileID: 6967780869941050052}
+  m_Layer: 0
+  m_Name: FogOfWar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3830958164093829374
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3503548699691150265}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 5191948205243843475}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6967780869941050052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3503548699691150265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b3e86386c9cb4e6c8e815b66d757625, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Fog.FogOfWarManager
+  exploredTint: {r: 0.45, g: 0.45, b: 0.55, a: 1}
+  hiddenTint: {r: 0.12, g: 0.12, b: 0.16, a: 1}
 --- !u!1 &3582059157211116768
 GameObject:
   m_ObjectHideFlags: 0
@@ -494,6 +540,7 @@ Transform:
   - {fileID: 3861040590289293053}
   - {fileID: 6822146562003664959}
   - {fileID: 2053733122403142422}
+  - {fileID: 3830958164093829374}
   m_Father: {fileID: 6161654108688559747}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8961793008856171245
@@ -548,8 +595,9 @@ MonoBehaviour:
   unitSpawner: {fileID: 6164232492054156886}
   raycaster: {fileID: 8605865454578225704}
   selector: {fileID: 4304017811601341457}
-  outlineManager: {fileID: 0}
+  outlineManager: {fileID: 5883553019526828611}
   actionAssigner: {fileID: 1772559824657402244}
+  fogOfWar: {fileID: 6967780869941050052}
   nextTurnButton: {fileID: 3454670680114467044}
 --- !u!1 &9075107352804633641
 GameObject:

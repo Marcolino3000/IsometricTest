@@ -18,6 +18,8 @@ namespace Runtime.Core.Spawning
         
         private readonly List<Tile> Tiles = new();
         private Pathfinder _pathfinder;
+
+        public IReadOnlyList<Tile> AllTiles => Tiles;
         private Dictionary<Vector2Int, TerrainProfile> _terrainMap = new();
 
         #region Services
@@ -41,16 +43,14 @@ namespace Runtime.Core.Spawning
         {
             return _pathfinder.FindPathWithinRange(start, target, range, ignoreOccupied);
         }
-        
-        public bool GetTilesWithinReach(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
+
+        private bool GetTilesWithinReach(Vector2Int startPosition, int range, out List<Tile> reachableTiles)
         {
             var reachablePositions = new List<Vector2Int>();
             
             CheckMoveDirections(startPosition, range, reachablePositions);
 
             reachableTiles = GetTilesFromPositions(reachablePositions); 
-            
-            // FilterForOccupiedTiles(reachableTiles);
             
             return reachableTiles.Count > 0;
         }
@@ -68,25 +68,62 @@ namespace Runtime.Core.Spawning
             return Tiles.Find(t => t.Position == position);
         }
 
-        public void HighlightMoveableTiles(Vector2Int startPosition, int range)
+        /// <summary>
+        /// All existing tiles within a circular (Euclidean) radius of <paramref name="center"/>,
+        /// including the centre tile. Used for fog-of-war sight; ignores terrain and occupancy.
+        /// </summary>
+        public IEnumerable<Tile> GetTilesInSightRange(Vector2Int center, int range)
         {
-            GetTilesWithinReach(startPosition, range, out var tiles);
-            FilterForOccupiedTiles(tiles);
-            
-            foreach (var tile in tiles)
+            for (int dx = -range; dx <= range; dx++)
+            for (int dy = -range; dy <= range; dy++)
             {
-                HighlightTile(tile.Position);
+                if (dx * dx + dy * dy > range * range)
+                    continue;
+
+                var tile = GetTileAtPosition(center + new Vector2Int(dx, dy));
+                if (tile != null)
+                    yield return tile;
             }
+        }
+
+        /// <summary>
+        /// Returns every tile the unit at <paramref name="startPosition"/> can reach within the given
+        /// <paramref name="actionPoints"/> budget, using the pathfinder so impassable terrain, occupied
+        /// tiles and difficult-terrain costs are all respected (not just straight-line distance).
+        /// Per-step cost is the unit's base <paramref name="moveCost"/> plus the destination tile's
+        /// extra terrain cost.
+        /// </summary>
+        public List<Tile> GetMoveableTiles(Vector2Int startPosition, int actionPoints, int moveCost)
+        {
+            var moveableTiles = new List<Tile>();
+
+            var start = GetTileAtPosition(startPosition);
+            if (start == null)
+                return moveableTiles;
+
+            foreach (var tile in Tiles)
+            {
+                if (tile == start)
+                    continue;
+
+                // Each step costs at least moveCost, so a tile whose minimum step count already blows
+                // the budget can never be reached - skip it before paying for a pathfinding search.
+                if (GetDistanceBetweenTiles(start, tile) * moveCost > actionPoints)
+                    continue;
+
+                var path = _pathfinder.FindPath(start, tile);
+                if (path.Count == 0)
+                    continue;
+
+                if (GetPathCost(path, moveCost) <= actionPoints)
+                    moveableTiles.Add(tile);
+            }
+
+            return moveableTiles;
         }
 
         public void HighlightTile(Vector2Int tilePosition, MarkerColor markerColor = MarkerColor.White)
         {
-            // if (!CheckForGridBoundaries(tilePosition.x, tilePosition.y))
-            // {
-            //     Debug.LogWarning("Tile Position was out of bounds");
-            //     return;
-            // }
-
             var tile = Tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
             if (tile == null)
             {
@@ -162,6 +199,18 @@ namespace Runtime.Core.Spawning
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Total movement cost of walking <paramref name="path"/> (excluding the start tile): the unit's
+        /// base <paramref name="moveCost"/> per step plus each destination tile's extra terrain cost.
+        /// </summary>
+        private static int GetPathCost(List<Tile> path, int moveCost)
+        {
+            var cost = 0;
+            for (var i = 1; i < path.Count; i++)
+                cost += moveCost + path[i].ExtraMoveCost;
+            return cost;
         }
 
         private void CheckMoveDirections(Vector2Int startPosition, int range, List<Vector2Int> tiles)

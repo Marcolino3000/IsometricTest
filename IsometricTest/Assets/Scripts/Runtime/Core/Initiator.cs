@@ -2,6 +2,7 @@ using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Feedback;
+using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
 using UI;
 using UnityEngine;
@@ -17,7 +18,8 @@ namespace Runtime.Core
         [SerializeField] private Selector selector;
         [SerializeField] private OutlineManager outlineManager;
         [SerializeField] private ActionAssigner actionAssigner;
-        
+        [SerializeField] private FogOfWar fogOfWar;
+
         [Header("UI")]
         [SerializeField] private NextTurnButton nextTurnButton;
 
@@ -40,6 +42,7 @@ namespace Runtime.Core
         {
             selector.ResetSelection();
             gameStateManager.Setup();
+            fogOfWar.ResetExploration();
             SpawnEntities();
             StartGame();
         }
@@ -52,11 +55,12 @@ namespace Runtime.Core
         private void SetupReferences()
         {
             gameStateManager.Setup();
-            unitSpawner.Setup(gameStateManager, selector);
+            unitSpawner.Setup(gameStateManager, selector, fogOfWar);
             tileSpawner.Setup(selector);
             selector.Setup(gameStateManager, raycaster);
             outlineManager.Setup(selector);
             actionAssigner.Setup(selector);
+            fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager);
             Direction.Setup(gameStateManager);
         }
 

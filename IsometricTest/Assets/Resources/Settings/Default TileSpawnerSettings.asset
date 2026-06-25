@@ -45,6 +45,12 @@ MonoBehaviour:
     OverrideColor: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     OverrideSprite: {fileID: -402664073, guid: 510239b11da99442c80051e1aa316c0e, type: 3}
-  HillPositions: []
+  RandomTerrainPlacement: 1
+  RandomHillCount: 3
+  RandomMountainCount: 3
+  HillPositions:
+  - {x: 0, y: 0}
+  - {x: 1, y: 0}
+  - {x: 2, y: 1}
   MountainPositions:
   - {x: 1, y: 1}

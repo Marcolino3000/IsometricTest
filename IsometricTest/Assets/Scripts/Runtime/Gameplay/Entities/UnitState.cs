@@ -9,7 +9,6 @@ namespace Runtime.Gameplay.Entities
     public class UnitState
     {
         public event Action OnNoActionsLeft;
-        // public event Action<int> OnActionPointsChanged;
         public int Health
         {
             get => health;
@@ -44,8 +43,8 @@ namespace Runtime.Gameplay.Entities
         }
         
         public Tile Position;
-        // public int Range;
         public Team Team;
+        public int SightRange;
         public MoveActionData MoveAction;
         public AttackActionData AttackAction;
         public bool HasActionsLeft => hasActionsLeft; 
@@ -70,8 +69,8 @@ namespace Runtime.Gameplay.Entities
             Health = other.Health;
             Position = null;
             ActionPoints = other.ActionPoints;
-            // Range = other.Range;
             Team = other.Team;
+            SightRange = other.SightRange;
         }
     }
 

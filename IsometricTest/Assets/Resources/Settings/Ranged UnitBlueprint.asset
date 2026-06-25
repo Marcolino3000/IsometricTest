@@ -15,15 +15,10 @@ MonoBehaviour:
   Sprite: {fileID: -331967165, guid: 9695c82f379a74793a23c4c0505d74b2, type: 3}
   defaultState:
     Position: {fileID: 0}
-    Range: 2
     Team: 0
+    SightRange: 3
     MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
     AttackAction: {fileID: 11400000, guid: c0e747be1401e4a289b7ae18e0773dc5, type: 2}
     health: 10
     actionPoints: 3
     hasActionsLeft: 0
-  Speed: 1
-  Attack: 5
-  Defense: 0
-  MovementInitiative: 1
-  CombatInitiative: 1

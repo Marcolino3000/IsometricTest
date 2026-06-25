@@ -1,5 +1,6 @@
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Feedback;
+using Runtime.Gameplay.Fog;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Entities
@@ -14,8 +15,19 @@ namespace Runtime.Gameplay.Entities
         public int ExtraMoveCost { get; private set; }
         public float HeightOffset { get; private set; }
 
+        // Defaults to Visible so the board renders normally when no FogOfWarManager is driving it.
+        public TileVisibility Visibility { get; private set; } = TileVisibility.Visible;
+
         [SerializeField] private Unit unit;
         [SerializeField] private TileMarker marker;
+
+        private SpriteRenderer spriteRenderer;
+        private Color baseTerrainColor = Color.white;
+
+        private void Awake()
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
 
         public void SetUnit(Unit unit)
         {
@@ -39,7 +51,6 @@ namespace Runtime.Gameplay.Entities
 
             transform.position += Vector3.up * profile.HeightOffset;
 
-            var spriteRenderer = GetComponent<SpriteRenderer>();
             if (spriteRenderer != null)
             {
                 if (profile.OverrideSprite != null)
@@ -47,17 +58,53 @@ namespace Runtime.Gameplay.Entities
 
                 if (profile.OverrideColor)
                     spriteRenderer.color = profile.Color;
+
+                // Remember the lit colour so fog tinting can multiply against it (and restore it later).
+                baseTerrainColor = spriteRenderer.color;
             }
+        }
+
+        /// <summary>
+        /// Applies a fog state to the tile: tints the terrain sprite and hides the tile marker
+        /// (e.g. the "occupied" highlight) unless the tile is currently visible, so enemy
+        /// positions don't leak through fog.
+        /// </summary>
+        public void SetVisibility(TileVisibility visibility, Color exploredTint, Color hiddenTint)
+        {
+            Visibility = visibility;
+
+            if (spriteRenderer != null)
+            {
+                var tint = visibility switch
+                {
+                    TileVisibility.Visible => Color.white,
+                    TileVisibility.Explored => exploredTint,
+                    _ => hiddenTint
+                };
+                spriteRenderer.color = baseTerrainColor * tint;
+            }
+
+            RefreshMarker();
         }
 
         private void SetOccupied(bool occupied)
         {
             IsOccupied = occupied;
-            
-            if(occupied)
-                marker.SetMarkerColor(MarkerColor.Orange);
-            else
-                marker.SetMarkerColor(MarkerColor.None);
+            RefreshMarker();
+        }
+
+        /// <summary>
+        /// Shows the "occupied" marker only on currently visible tiles, so an enemy standing on a
+        /// hidden or explored tile is not given away by its marker.
+        /// </summary>
+        private void RefreshMarker()
+        {
+            if (marker == null)
+                return;
+
+            marker.SetMarkerColor(Visibility == TileVisibility.Visible && IsOccupied
+                ? MarkerColor.Orange
+                : MarkerColor.None);
         }
     }
 }

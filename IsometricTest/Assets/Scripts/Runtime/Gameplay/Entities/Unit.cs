@@ -1,12 +1,12 @@
-using System;
 using Data;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Controls;
-using Runtime.Gameplay.Global;
+using Runtime.Gameplay.Fog;
 using UI;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Runtime.Gameplay.Entities
 {
@@ -27,6 +27,7 @@ namespace Runtime.Gameplay.Entities
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private GameStateManager gameStateManager;
+        [SerializeField] private FogOfWar fogOfWar;
         [SerializeField] private HealthBar healthBar;
         [SerializeField] private ActionExecutor actionExecutor;
 
@@ -37,15 +38,16 @@ namespace Runtime.Gameplay.Entities
         }
 
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team,
-            GameStateManager gameStateManagerArg)
+            GameStateManager gameStateManagerArg, FogOfWar fogOfWarArg)
         {
             currentState = blueprint.DefaultState;
             currentState.Team = team;
             currentState.SetValueChangedCallbacks(HealthChangedCallback, ActionPointsChangedCallback);
-            
+
             tileSpawner = tileSpawnerArg;
             unitSpawner = unitSpawnerArg;
-            
+            fogOfWar = fogOfWarArg;
+
             gameStateManager = gameStateManagerArg;
             gameStateManager.OnGameStateChanged += HandleStateChange;
             
@@ -105,9 +107,34 @@ namespace Runtime.Gameplay.Entities
             transform.position = unitSpawner.GridToWorldPosition(selectedTile.Position) + Vector3.up * selectedTile.HeightOffset;
 
             selectedTile.SetUnit(this);
+
+            //auch via state-change handlen?
+            fogOfWar.Recompute();
         }
 
-        public void HandleStateChange(ChangeEvent<State> changeEvent)
+        /// <summary>
+        /// Shows or hides the unit's visuals for fog of war. Friendly units are always revealed;
+        /// enemy units are hidden unless they stand on a tile the viewing team can currently see.
+        /// Toggling the sprite object also disables its collider, so hidden units can't be hovered or clicked.
+        /// </summary>
+        public void SetRevealed(bool revealed)
+        {
+            // Outline lives on the "Sprite" child alongside the SpriteRenderer, collider and Clickable.
+            if (Outline != null)
+                Outline.gameObject.SetActive(revealed);
+
+            // Health bar and action-point bar are UIDocuments; hide them so an out-of-sight enemy
+            // isn't given away by floating UI. Toggle the root element's display rather than the
+            // GameObject: disabling a UIDocument rebuilds its visual tree from the source asset,
+            // which would wipe the blobs HealthBar/ActionsPointsBar add once at Setup.
+            foreach (var document in GetComponentsInChildren<UIDocument>(true))
+            {
+                if (document.rootVisualElement != null)
+                    document.rootVisualElement.style.display = revealed ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+        }
+
+        public void HandleStateChange(Runtime.Core.State.ChangeEvent<State> changeEvent)
         {
             if(changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
                 HandleNewTurn(changeEvent.NewValue);
