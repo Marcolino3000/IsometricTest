@@ -55,7 +55,7 @@ namespace Runtime.Core
             unitSpawner.Setup(gameStateManager, selector);
             tileSpawner.Setup(selector);
             selector.Setup(gameStateManager, raycaster);
-            outlineManager.Setup(selector, gameStateManager);
+            outlineManager.Setup(selector);
             actionAssigner.Setup(selector);
             Direction.Setup(gameStateManager);
         }

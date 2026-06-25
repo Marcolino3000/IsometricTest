@@ -108,16 +108,15 @@ namespace Runtime.Gameplay.Global
                     break;
             }
         }
-
-        /// <summary>
-        /// Clicking empty space (neither a tile nor a unit) clears the current unit selection.
-        /// </summary>
+        
         private void HandleClickNothing()
         {
-            if (selection.SelectedUnit == null)
-                return;
-
             selection.SelectedUnit = null;
+            selection.HoveredUnit = null;
+            selection.HoveredTile = null;
+            selection.ClickedTile = null;
+            selection.SelectedTile = null;
+            
             CreateSelectionChangedEvent();
         }
 
@@ -259,10 +258,10 @@ namespace Runtime.Gameplay.Global
                 case(null, null, null, not null):
                     Status = SelectionStatus.NoSelectionTileHover;
                     break;
-                case (null, null, { } hovered, not null) when hovered.CurrentState.Team == ActiveTeam:
+                case (null, null, { } hovered, null) when hovered.CurrentState.Team == ActiveTeam:
                     Status = SelectionStatus.NoSelectionFriendlyHover;
                     break;
-                case (null, null, { } hovered, not null) when hovered.CurrentState.Team != ActiveTeam:
+                case (null, null, { } hovered, null) when hovered.CurrentState.Team != ActiveTeam:
                     Status = SelectionStatus.NoSelectionEnemyHover;
                     break;
                 case (null, { } clicked, null, not null):
@@ -274,7 +273,7 @@ namespace Runtime.Gameplay.Global
                 case ({ } selected, null, null,not null):
                     Status = SelectionStatus.SelectionTileHover;
                     break;
-                case ({ } selected, null, { } hovered,not null) when hovered.CurrentState.Team == ActiveTeam:
+                case ({ } selected, null, { } hovered,null) when hovered.CurrentState.Team == ActiveTeam:
                     Status = SelectionStatus.SelectionFriendlyHover;
                     break;
                 case ({ } selected, null, { } hovered,null) when hovered.CurrentState.Team != ActiveTeam:

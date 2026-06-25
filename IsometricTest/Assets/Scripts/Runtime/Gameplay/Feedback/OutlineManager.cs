@@ -9,12 +9,10 @@ namespace Runtime.Gameplay.Feedback
     {
         private Unit lastSelectedUnit;
         private Unit lastHoveredUnit;
-        private Team _activeTeam;
 
-        public void Setup(Selector selector, GameStateManager gameStateManager)
+        public void Setup(Selector selector)
         {
             selector.OnSelectionChanged += HandleSelectionChanged;
-            gameStateManager.OnGameStateChanged += HandleStateChange;
         }
 
         private void HandleSelectionChanged(ChangeEvent<Selection> changeEvent)
@@ -22,12 +20,11 @@ namespace Runtime.Gameplay.Feedback
             var selection = changeEvent.NewValue;
 
             UpdateSelectedOutline(selection.SelectedUnit);
-            UpdateHoveredOutline(selection.SelectedUnit, selection.HoveredUnit);
+            UpdateHoveredOutline(selection);
         }
 
-        /// <summary>
-        /// The selected unit keeps a white outline until a different unit is selected or it is deselected.
-        /// </summary>
+
+        // The selected unit keeps a white outline until a different unit is selected or it is deselected.
         private void UpdateSelectedOutline(Unit selectedUnit)
         {
             if (lastSelectedUnit == selectedUnit)
@@ -41,33 +38,28 @@ namespace Runtime.Gameplay.Feedback
             if (selectedUnit != null)
                 selectedUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thick);
         }
-
-        /// <summary>
-        /// Hovering a unit gives it a white outline (red when a selected unit is hovering an enemy it
-        /// could attack). The selected unit is left untouched so it keeps its own outline.
-        /// </summary>
-        private void UpdateHoveredOutline(Unit selectedUnit, Unit hoveredUnit)
+        
+        private void UpdateHoveredOutline(Selection selection)
         {
-            if (lastHoveredUnit == hoveredUnit)
+            if (lastHoveredUnit == selection.HoveredUnit)
                 return;
 
-            if (lastHoveredUnit != null && lastHoveredUnit != selectedUnit)
+            if (lastHoveredUnit != null && lastHoveredUnit != selection.SelectedUnit)
                 lastHoveredUnit.Outline.Hide();
 
-            lastHoveredUnit = hoveredUnit;
+            lastHoveredUnit = selection.HoveredUnit;
 
-            if (hoveredUnit == null || hoveredUnit == selectedUnit)
-                return;
-
-            var isAttackTarget = selectedUnit != null && hoveredUnit.CurrentState.Team != _activeTeam;
-            var color = isAttackTarget ? OutlineColor.Attack : OutlineColor.Neutral;
-
-            hoveredUnit.Outline.Show(color, OutlineThickness.Thin);
-        }
-
-        private void HandleStateChange(ChangeEvent<State> changeEvent)
-        {
-            _activeTeam = changeEvent.NewValue.Team;
+            switch (selection.Status)
+            {
+                case SelectionStatus.NoSelectionFriendlyHover:
+                case SelectionStatus.NoSelectionEnemyHover:
+                case SelectionStatus.SelectionFriendlyHover:
+                    selection.HoveredUnit.Outline.Show(OutlineColor.Neutral, OutlineThickness.Thin);
+                    break;
+                case SelectionStatus.SelectionEnemyHover:
+                    selection.HoveredUnit.Outline.Show(OutlineColor.Attack, OutlineThickness.Thin);
+                    break;
+            }
         }
     }
 }
