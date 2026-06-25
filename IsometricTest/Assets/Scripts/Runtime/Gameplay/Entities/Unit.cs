@@ -32,7 +32,8 @@ namespace Runtime.Gameplay.Entities
 
         private void OnDestroy()
         {
-            Debug.Log("Unit Comp destroyed");
+            if (gameStateManager != null)
+                gameStateManager.OnGameStateChanged -= HandleStateChange;
         }
 
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team,

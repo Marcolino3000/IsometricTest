@@ -8,9 +8,11 @@ namespace UI
     public class NextTurnButton : MonoBehaviour
     {
         private Button _button;
+        private GameStateManager _gameStateManager;
 
         public void Setup(GameStateManager gameStateManager)
         {
+            _gameStateManager = gameStateManager;
             _button.clicked += gameStateManager.ToggleCurrentTeam;
             gameStateManager.OnGameStateChanged += HandleStateChange;
         }
@@ -35,6 +37,13 @@ namespace UI
         private void Awake()
         {
             _button = GetComponent<UIDocument>().rootVisualElement.Q<Button>("nextTurnButton");
+        }
+
+        private void OnDestroy()
+        {
+            if (_gameStateManager == null) return;
+            _gameStateManager.OnGameStateChanged -= HandleStateChange;
+            if (_button != null) _button.clicked -= _gameStateManager.ToggleCurrentTeam;
         }
     }
 }

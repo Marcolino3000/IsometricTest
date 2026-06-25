@@ -9,7 +9,7 @@ namespace Runtime.Gameplay.Global
 {
     public class Selector : MonoBehaviour
     {
-        public event Action<Core.State.ChangeEvent<Selection>> OnSelectionChanged;
+        public event Action<ChangeEvent<Selection>> OnSelectionChanged;
         
         [Header("Debug")]
         [SerializeField] private Selection selection;
@@ -33,10 +33,26 @@ namespace Runtime.Gameplay.Global
             gameStateManagerArg.OnGameStateChanged += HandleStateChange;
         }
 
+        /// <summary>
+        /// Clears any selection/hover state so it no longer references units or tiles that are
+        /// about to be destroyed (e.g. on game restart), then notifies listeners of the empty selection.
+        /// </summary>
+        public void ResetSelection()
+        {
+            selection = new Selection { ActiveTeam = activeTeam };
+            selection.HoveredTile = null; // touch a setter so Status recomputes to NoSelectionNoHover
+            previousSelection = selection.Clone();
+
+            CreateSelectionChangedEvent();
+        }
+
         private void HandleStateChange(Core.State.ChangeEvent<State> changeEvent)
         {
             activeTeam = changeEvent.NewValue.Team;
             selection.ActiveTeam = changeEvent.NewValue.Team;
+
+            if (changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
+                ResetSelection();
         }
 
         #endregion

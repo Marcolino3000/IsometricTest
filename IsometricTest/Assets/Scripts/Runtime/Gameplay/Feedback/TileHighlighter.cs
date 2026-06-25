@@ -18,7 +18,7 @@ namespace Runtime.Gameplay.Feedback
 
         private void HandleSelectionChanged(ChangeEvent<Selection> changeEvent)
         {
-            TileSpawner.ResetHighlightedTiles();
+            tileSpawner.ResetHighlightedTiles();
 
             var selection = changeEvent.NewValue;
 

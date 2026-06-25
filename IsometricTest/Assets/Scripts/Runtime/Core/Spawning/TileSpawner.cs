@@ -16,8 +16,8 @@ namespace Runtime.Core.Spawning
         [SerializeField] private TileSpawnerSettings settings;
         [SerializeField] private Selector selector;
         
-        private static readonly List<Tile> Tiles = new();
-        private static Pathfinder _pathfinder;
+        private readonly List<Tile> Tiles = new();
+        private Pathfinder _pathfinder;
 
         #region Services
 
@@ -96,7 +96,7 @@ namespace Runtime.Core.Spawning
             tile.GetComponentInChildren<TileMarker>().SetMarkerColor(markerColor);
         }
 
-        public static void ResetHighlightedTiles()
+        public void ResetHighlightedTiles()
         {
             foreach (var tile in Tiles)
             {
@@ -207,8 +207,11 @@ namespace Runtime.Core.Spawning
         {
             foreach (var tile in Tiles)
             {
-                Destroy(tile);
+                if (tile != null)
+                    Destroy(tile.gameObject);
             }
+
+            Tiles.Clear();
         }
 
         private void SpawnTile(int xIndex, int yIndex)

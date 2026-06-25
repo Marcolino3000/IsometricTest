@@ -29,6 +29,21 @@ namespace Runtime.Core
             StartGame();
         }
 
+        /// <summary>
+        /// Resets the match to its starting conditions at runtime: clears the current selection,
+        /// resets game state, then despawns and respawns all tiles and units.
+        /// Deliberately skips <see cref="SetupReferences"/> and <see cref="SetupUI"/> so the
+        /// persistent singletons (selector, outline manager, UI, ...) don't re-subscribe to events.
+        /// </summary>
+        [ContextMenu("Restart")]
+        public void Restart()
+        {
+            selector.ResetSelection();
+            gameStateManager.Setup();
+            SpawnEntities();
+            StartGame();
+        }
+
         private void SetupUI()
         {
             nextTurnButton.Setup(gameStateManager);

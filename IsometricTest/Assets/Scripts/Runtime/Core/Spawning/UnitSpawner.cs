@@ -22,6 +22,7 @@ namespace Runtime.Core.Spawning
 
         public void RemoveUnit(Unit unit)
         {
+            unit.CurrentState.OnNoActionsLeft -= CheckIfNoneHaveActionsLeft;
             units.Remove(unit);
             Destroy(unit.gameObject);
         }
@@ -99,8 +100,14 @@ namespace Runtime.Core.Spawning
         {
             foreach (var unit in units)
             {
-                Destroy(unit);
+                if (unit == null)
+                    continue;
+
+                unit.CurrentState.OnNoActionsLeft -= CheckIfNoneHaveActionsLeft;
+                Destroy(unit.gameObject);
             }
+
+            units.Clear();
         }
 
         #region Setup
