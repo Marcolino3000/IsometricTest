@@ -3,11 +3,6 @@ using Runtime.Gameplay.Entities;
 
 namespace Runtime.Core.State
 {
-    // public interface IStateChangeHandler
-    // {
-    //     public void HandleStateChange(ChangeEvent<T> changeEvent); 
-    // }
-    
     [Serializable]
     public class State
     { 

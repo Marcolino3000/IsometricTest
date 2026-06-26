@@ -14,7 +14,7 @@ namespace UI
         {
             _gameStateManager = gameStateManager;
             _button.clicked += gameStateManager.ToggleCurrentTeam;
-            gameStateManager.OnGameStateChanged += HandleStateChange;
+            gameStateManager.GameStateChanged += HandleStateChange;
         }
 
         private void HandleStateChange(Runtime.Core.State.ChangeEvent<State> changeEvent)
@@ -42,7 +42,7 @@ namespace UI
         private void OnDestroy()
         {
             if (_gameStateManager == null) return;
-            _gameStateManager.OnGameStateChanged -= HandleStateChange;
+            _gameStateManager.GameStateChanged -= HandleStateChange;
             if (_button != null) _button.clicked -= _gameStateManager.ToggleCurrentTeam;
         }
     }

@@ -68,10 +68,10 @@ namespace Runtime.Core.State
 
         public static void Setup(GameStateManager gameStateManager)
         {
-            gameStateManager.OnGameStateChanged += HandleStateChange;
+            gameStateManager.TurnReset += HandleTurnReset;
         }
 
-        public static void HandleStateChange(ChangeEvent<State> changeEvent)
+        public static void HandleTurnReset(ChangeEvent<State> changeEvent)
         {
             SetContext(changeEvent.NewValue);
         }

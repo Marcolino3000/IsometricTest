@@ -8,9 +8,27 @@ namespace Runtime.Core.State
 {
     public class GameStateManager : MonoBehaviour
     {
-        public event Action<ChangeEvent<State>> OnGameStateChanged;
+        /// <summary>
+        /// Phase 1 of a turn change: prepares per-turn world state for the new active team — units
+        /// refresh action points, fog and direction recompute, selection clears. Everything the turn's
+        /// actor (the AI) depends on subscribes here, so it is ready before <see cref="TurnStarted"/>.
+        /// Fires only on an actual team change, not on mid-turn updates such as SetActionsLeft.
+        /// </summary>
+        public event Action<ChangeEvent<State>> TurnReset;
 
-        [Header("Current State")] 
+        /// <summary>
+        /// Phase 2: the prepared turn is now live and its actor may act (the AI plays its units).
+        /// Fires only on an actual team change, immediately after <see cref="TurnReset"/>.
+        /// </summary>
+        public event Action<ChangeEvent<State>> TurnStarted;
+
+        /// <summary>
+        /// Any state change, including mid-turn ones such as SetActionsLeft. For observers that mirror
+        /// state regardless of turn boundaries (e.g. the next-turn button).
+        /// </summary>
+        public event Action<ChangeEvent<State>> GameStateChanged;
+
+        [Header("Current State")]
         public State State { get; private set; }
        
         [Header("References")] 
@@ -28,8 +46,15 @@ namespace Runtime.Core.State
         private void HandleStateChange()
         {
             var changeEvent = new ChangeEvent<State>(previousState.Clone(), State.Clone());
-            
-            OnGameStateChanged?.Invoke(changeEvent);
+
+            if (changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
+            {
+                TurnReset?.Invoke(changeEvent);
+
+                TurnStarted?.Invoke(changeEvent);
+            }
+
+            GameStateChanged?.Invoke(changeEvent);
 
             previousState = State.Clone();
         }
@@ -45,7 +70,6 @@ namespace Runtime.Core.State
             previousState = State.Clone();
             
             HandleStateChange();
-            // State.OnStateChanged += HandleStateChange;
         }
         
         #region Helpers

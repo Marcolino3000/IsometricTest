@@ -32,6 +32,7 @@ namespace Runtime.Gameplay.Fog
         private UnitSpawner _unitSpawner;
         private Team _activeTeam;
         private readonly Dictionary<Team, HashSet<Vector2Int>> _exploredTiles = new();
+        private HashSet<Vector2Int> _visiblePositions = new();
 
         public void Setup(TileSpawner tileSpawner, UnitSpawner unitSpawner, GameStateManager gameStateManager)
         {
@@ -40,14 +41,8 @@ namespace Runtime.Gameplay.Fog
 
             ResetExploration();
 
-            gameStateManager.OnGameStateChanged += HandleStateChange;
+            gameStateManager.TurnReset += HandleTurnReset;
         }
-
-        // private void OnDestroy()
-        // {
-        //     if (_gameStateManager != null)
-        //         _gameStateManager.OnGameStateChanged -= HandleStateChange;
-        // }
 
         public void ResetExploration()
         {
@@ -55,15 +50,7 @@ namespace Runtime.Gameplay.Fog
             _exploredTiles[Team.Opponent] = new HashSet<Vector2Int>();
         }
 
-        // public void RecomputeForActiveTeam()
-        // {
-        //     if (_gameStateManager == null || _gameStateManager.State == null)
-        //         return;
-        //
-        //     Recompute(_gameStateManager.State.Team);
-        // }
-
-        private void HandleStateChange(ChangeEvent<State> changeEvent)
+        private void HandleTurnReset(ChangeEvent<State> changeEvent)
         {
             _activeTeam = changeEvent.NewValue.Team;
             Recompute();
@@ -72,6 +59,7 @@ namespace Runtime.Gameplay.Fog
         public void Recompute()
         {
             var visible = CollectVisiblePositions();
+            _visiblePositions = visible;
 
             if (!_exploredTiles.TryGetValue(_activeTeam, out var explored))
                 explored = _exploredTiles[_activeTeam] = new HashSet<Vector2Int>();
@@ -79,6 +67,16 @@ namespace Runtime.Gameplay.Fog
 
             ApplyTileVisibility(visible, explored);
             ApplyUnitVisibility(new InClassName(visible));
+        }
+
+        public bool IsExplored(Team team, Vector2Int position)
+        {
+            return _exploredTiles.TryGetValue(team, out var explored) && explored.Contains(position);
+        }
+        
+        public bool IsVisible(Vector2Int position)
+        {
+            return _visiblePositions.Contains(position);
         }
 
         private HashSet<Vector2Int> CollectVisiblePositions()

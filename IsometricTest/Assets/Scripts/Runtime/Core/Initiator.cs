@@ -1,6 +1,7 @@
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Actions;
+using Runtime.Gameplay.AI;
 using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
@@ -19,6 +20,7 @@ namespace Runtime.Core
         [SerializeField] private OutlineManager outlineManager;
         [SerializeField] private ActionAssigner actionAssigner;
         [SerializeField] private FogOfWar fogOfWar;
+        [SerializeField] private AiController aiController;
 
         [Header("UI")]
         [SerializeField] private NextTurnButton nextTurnButton;
@@ -61,6 +63,7 @@ namespace Runtime.Core
             outlineManager.Setup(selector);
             actionAssigner.Setup(selector);
             fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager);
+            aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar);
             Direction.Setup(gameStateManager);
         }
 

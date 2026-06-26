@@ -27,14 +27,10 @@ namespace Runtime.Gameplay.Global
 
         public void Setup(GameStateManager gameStateManagerArg, Raycaster raycaster)
         {
-            gameStateManagerArg.OnGameStateChanged += HandleStateChange;
+            gameStateManagerArg.TurnReset += HandleTurnReset;
             raycaster.OnClickedNothing += HandleClickNothing;
         }
-
-        /// <summary>
-        /// Clears any selection/hover state so it no longer references units or tiles that are
-        /// about to be destroyed (e.g. on game restart), then notifies listeners of the empty selection.
-        /// </summary>
+        
         public void ResetSelection()
         {
             selection = new Selection { ActiveTeam = activeTeam };
@@ -44,13 +40,10 @@ namespace Runtime.Gameplay.Global
             CreateSelectionChangedEvent();
         }
 
-        private void HandleStateChange(Core.State.ChangeEvent<State> changeEvent)
+        private void HandleTurnReset(ChangeEvent<State> changeEvent)
         {
             activeTeam = changeEvent.NewValue.Team;
-            selection.ActiveTeam = changeEvent.NewValue.Team;
-
-            if (changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
-                ResetSelection();
+            ResetSelection();
         }
 
         #endregion
@@ -241,8 +234,6 @@ namespace Runtime.Gameplay.Global
     #endregion   
         private void UpdateStatus()
         {       
-            // Debug.Log($"SelectedUnit: {selectedUnit != null}, ClickedUnit: {clickedUnit != null}, HoveredUnit: {hoveredUnit != null}, HoveredTile: {hoveredTile != null}");
-            
             if (selectedUnit != null && clickedTile != null)
             {
                 Status = SelectionStatus.SelectionTileClick;
@@ -288,11 +279,11 @@ namespace Runtime.Gameplay.Global
             }
         }
 
-        private Unit selectedUnit; //stays selected until deselected or new selection occurs
-        private Unit clickedUnit; //units that get clicked on but that can't be selected (e.g. enemy units)
+        private Unit selectedUnit;
+        private Unit clickedUnit; 
         private Unit hoveredUnit;
         private Tile selectedTile;
-        private Tile clickedTile; //tiles clicked to command the selected unit (e.g. move target)
+        private Tile clickedTile; 
         private Tile hoveredTile;
     }
 

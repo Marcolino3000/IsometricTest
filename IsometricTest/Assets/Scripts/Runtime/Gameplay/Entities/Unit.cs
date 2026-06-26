@@ -34,7 +34,7 @@ namespace Runtime.Gameplay.Entities
         private void OnDestroy()
         {
             if (gameStateManager != null)
-                gameStateManager.OnGameStateChanged -= HandleStateChange;
+                gameStateManager.TurnReset -= HandleTurnReset;
         }
 
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team,
@@ -49,7 +49,7 @@ namespace Runtime.Gameplay.Entities
             fogOfWar = fogOfWarArg;
 
             gameStateManager = gameStateManagerArg;
-            gameStateManager.OnGameStateChanged += HandleStateChange;
+            gameStateManager.TurnReset += HandleTurnReset;
             
             healthBar.Setup(blueprint.DefaultState.Health);
             actionExecutor.Setup(this, tileSpawner);
@@ -84,9 +84,6 @@ namespace Runtime.Gameplay.Entities
 
         public bool TryMoveToTile(Tile selectedTile)
         {
-            // if (!tileSpawner.IsTileWithinReach(currentState.Position, selectedTile, currentState.Range, true)) 
-            //     return false;
-
             PlaceOnTile(selectedTile);
             return true;
         }
@@ -108,7 +105,6 @@ namespace Runtime.Gameplay.Entities
 
             selectedTile.SetUnit(this);
 
-            //auch via state-change handlen?
             fogOfWar.Recompute();
         }
 
@@ -133,16 +129,10 @@ namespace Runtime.Gameplay.Entities
                     document.rootVisualElement.style.display = revealed ? DisplayStyle.Flex : DisplayStyle.None;
             }
         }
-
-        public void HandleStateChange(Runtime.Core.State.ChangeEvent<State> changeEvent)
+        
+        private void HandleTurnReset(Runtime.Core.State.ChangeEvent<State> changeEvent)
         {
-            if(changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
-                HandleNewTurn(changeEvent.NewValue);
-        }
-
-        private void HandleNewTurn(State newState)
-        {
-            if(newState.Team == currentState.Team)
+            if (changeEvent.NewValue.Team == currentState.Team)
                 currentState.ActionPoints = blueprint.DefaultState.ActionPoints;
         }
     }
