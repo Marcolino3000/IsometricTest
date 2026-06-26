@@ -14,18 +14,17 @@ namespace Runtime.Gameplay.Global
         [SerializeField] private LayerMask unitLayerMask;
         [SerializeField] private LayerMask tileLayerMask;
 
-        private InputAction clickAction;
         private Clickable _currentHovered;
         private Camera cam;
+
+        public void Setup(InputHandler inputHandler)
+        {
+            inputHandler.LeftClicked += DoClickRaycast;
+        }
 
         private void Update()
         {
             DoHoverRaycast();
-        }
-
-        private void OnClickPerformed(InputAction.CallbackContext ctx)
-        {
-            DoClickRaycast();
         }
 
         private void DoClickRaycast()
@@ -126,22 +125,6 @@ namespace Runtime.Gameplay.Global
         private void OnEnable()
         {
             cam = Camera.main;
-            
-            clickAction = new InputAction(
-                type: InputActionType.Button,
-                binding: "<Mouse>/leftButton");
-
-            clickAction.performed += OnClickPerformed;
-            clickAction.Enable();
-        }
-
-        private void OnDisable()
-        {
-            if (clickAction != null)
-            {
-                clickAction.performed -= OnClickPerformed;
-                clickAction.Disable();
-            }
         }
     }
 }

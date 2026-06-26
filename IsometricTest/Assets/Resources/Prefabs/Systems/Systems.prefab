@@ -404,7 +404,7 @@ MonoBehaviour:
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
-  m_PanelSettings: {fileID: 11400000, guid: dd0f4100653ff47528bf1c277c871d26, type: 2}
+  m_PanelSettings: {fileID: 11400000, guid: dab021771eed41b7bb2164cf73210e88, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 919b060ec316d438696f2ac923795141, type: 3}
   m_SortingOrder: 0

@@ -15,6 +15,7 @@ namespace Runtime.Core
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
+        [SerializeField] private InputHandler inputHandler;
         [SerializeField] private Raycaster raycaster;
         [SerializeField] private Selector selector;
         [SerializeField] private OutlineManager outlineManager;
@@ -60,6 +61,7 @@ namespace Runtime.Core
             unitSpawner.Setup(gameStateManager, selector, fogOfWar);
             tileSpawner.Setup(selector);
             selector.Setup(gameStateManager, raycaster);
+            raycaster.Setup(inputHandler);
             outlineManager.Setup(selector);
             actionAssigner.Setup(selector);
             fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager);

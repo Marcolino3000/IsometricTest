@@ -192,8 +192,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentState:
     Position: {fileID: 0}
-    Range: 0
     Team: 0
+    SightRange: 0
     MoveAction: {fileID: 0}
     AttackAction: {fileID: 0}
     health: 0
@@ -205,6 +205,7 @@ MonoBehaviour:
   tileSpawner: {fileID: 0}
   unitSpawner: {fileID: 0}
   gameStateManager: {fileID: 0}
+  fogOfWar: {fileID: 0}
   healthBar: {fileID: 8233212973314276433}
   actionExecutor: {fileID: 5349758326273555319}
 --- !u!114 &5349758326273555319
@@ -219,9 +220,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1911448f9bbf4e75b966b333a43535b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Actions.ActionPointCounter
-  unit: {fileID: 0}
-  attackActionData: {fileID: 11400000, guid: db0aa245c745641109f55f8c5816167a, type: 2}
-  moveActionData: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
   actionsPointsBar: {fileID: 3415384219615473639}
   tileSpawner: {fileID: 0}
 --- !u!114 &8405904222454837858
