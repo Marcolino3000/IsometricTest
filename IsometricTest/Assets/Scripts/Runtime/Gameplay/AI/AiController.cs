@@ -21,6 +21,11 @@ namespace Runtime.Gameplay.AI
         [Header("Settings")]
         [SerializeField] private Team aiTeam = Team.Opponent;
 
+        [Tooltip("When off, the AI never takes its team's turn and you can command its units manually. " +
+                 "Can be toggled live: switching off (incl. mid-turn) hands the rest of the turn to you; " +
+                 "use SetEnabled/ToggleEnabled to switch on and have the AI take over.")]
+        [SerializeField] private bool aiEnabled = true;
+
         [Tooltip("Seconds to wait between individual unit actions so the player can follow the AI's moves.")]
         [SerializeField] private float actionDelay = 0.35f;
 
@@ -34,6 +39,41 @@ namespace Runtime.Gameplay.AI
         [SerializeField] private FogOfWar fogOfWar;
 
         private bool _running;
+
+        /// <summary>
+        /// Whether the AI drives its team. When false the team's turn is left to the player.
+        /// Setting this is equivalent to <see cref="SetEnabled"/>.
+        /// </summary>
+        public bool Enabled
+        {
+            get => aiEnabled;
+            set => SetEnabled(value);
+        }
+
+        [ContextMenu("Toggle AI")]
+        public void ToggleEnabled() => SetEnabled(!aiEnabled);
+
+        /// <summary>
+        /// Enables or disables the AI at runtime. Switching off lets a turn in progress finish in the
+        /// player's hands (the coroutine stops and does not auto-advance). Switching on while it is
+        /// already this team's turn makes the AI take over the remainder immediately.
+        /// </summary>
+        public void SetEnabled(bool value)
+        {
+            if (aiEnabled == value)
+                return;
+
+            aiEnabled = value;
+
+            // Re-enabled during my own turn (player was controlling): take over what's left now.
+            // When disabled, the running coroutine notices and stops itself, so nothing to do here.
+            if (aiEnabled && !_running
+                && gameStateManager != null && gameStateManager.State != null
+                && gameStateManager.State.Team == aiTeam)
+            {
+                StartCoroutine(RunTurn());
+            }
+        }
 
         public void Setup(GameStateManager gameStateManagerArg, UnitSpawner unitSpawnerArg,
             TileSpawner tileSpawnerArg, FogOfWar fogOfWarArg)
@@ -54,7 +94,7 @@ namespace Runtime.Gameplay.AI
 
         private void HandleTurnStarted(ChangeEvent<State> changeEvent)
         {
-            if (!_running && changeEvent.NewValue.Team == aiTeam)
+            if (aiEnabled && !_running && changeEvent.NewValue.Team == aiTeam)
                 StartCoroutine(RunTurn());
         }
 
@@ -69,6 +109,9 @@ namespace Runtime.Gameplay.AI
 
             foreach (var unit in myUnits)
             {
+                if (!aiEnabled)
+                    break; // switched off mid-turn: hand the remaining units to the player
+
                 if (unit == null)
                     continue;
 
@@ -76,19 +119,26 @@ namespace Runtime.Gameplay.AI
             }
 
             _running = false;
-            gameStateManager.ToggleCurrentTeam();
+
+            // Only auto-advance if the AI actually played the turn out. If it was switched off
+            // mid-turn, leave the turn for the player to finish and end via the Next Turn button.
+            if (aiEnabled)
+                gameStateManager.ToggleCurrentTeam();
         }
 
         private IEnumerator ActUnit(Unit unit)
         {
             for (var i = 0; i < maxActionsPerUnit; i++)
             {
-                if (unit == null || !unit.CurrentState.HasActionsLeft)
+                if (!aiEnabled || unit == null || !unit.CurrentState.HasActionsLeft)
                     yield break;
 
                 // Pause before every action — including each unit's first, and the turn's very first —
                 // so the player can follow along instead of the opening move snapping in instantly.
                 yield return new WaitForSeconds(actionDelay);
+
+                if (!aiEnabled)
+                    yield break; // switched off during the pause: stop before acting
 
                 if (!TryActOnce(unit))
                     yield break; // nothing productive left for this unit this turn
