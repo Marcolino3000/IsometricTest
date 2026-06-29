@@ -17,8 +17,8 @@ MonoBehaviour:
   HalfTileOffsetX: 0.5
   HalfTileOffsetY: 0.25
   StartPosition: {x: -1, y: -1, z: 0}
-  GridSizeX: 5
-  GridSizeY: 5
+  GridSizeX: 6
+  GridSizeY: 6
   SpawnZoneSize: 2
   AllowMovementInAllDirections: 0
   FlatTerrain:

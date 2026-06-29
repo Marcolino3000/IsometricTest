@@ -154,7 +154,8 @@ namespace Editor.WatchDashboard
 
         // A project asset can't store a reference to a scene/runtime object, so scene
         // objects are watched in the dashboard window's session list instead of a board.
-        private static void Route(Object target, string path, string label)
+        // Internal so the Odin context-menu drawer (WatchOdinContextMenuDrawer) can route too.
+        internal static void Route(Object target, string path, string label)
         {
             if (EditorUtility.IsPersistent(target))
             {
