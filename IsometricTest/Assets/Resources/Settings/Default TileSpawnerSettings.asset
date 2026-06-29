@@ -17,8 +17,8 @@ MonoBehaviour:
   HalfTileOffsetX: 0.5
   HalfTileOffsetY: 0.25
   StartPosition: {x: -1, y: -1, z: 0}
-  GridSizeX: 10
-  GridSizeY: 10
+  GridSizeX: 5
+  GridSizeY: 5
   SpawnZoneSize: 2
   AllowMovementInAllDirections: 0
   FlatTerrain:
@@ -29,6 +29,7 @@ MonoBehaviour:
     OverrideColor: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     OverrideSprite: {fileID: 0}
+    Traits: []
   HillTerrain:
     Type: 1
     Passable: 1
@@ -37,6 +38,9 @@ MonoBehaviour:
     OverrideColor: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     OverrideSprite: {fileID: 0}
+    Traits:
+    - {fileID: 11400000, guid: 97a23ea35c5f4f92baa5c040cb1a6511, type: 2}
+    - {fileID: 11400000, guid: 16db3596278448759e4f87a9c40fdbf3, type: 2}
   MountainTerrain:
     Type: 2
     Passable: 0
@@ -45,12 +49,9 @@ MonoBehaviour:
     OverrideColor: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     OverrideSprite: {fileID: -402664073, guid: 510239b11da99442c80051e1aa316c0e, type: 3}
+    Traits: []
   RandomTerrainPlacement: 1
-  RandomHillCount: 3
+  RandomHillCount: 10
   RandomMountainCount: 3
-  HillPositions:
-  - {x: 0, y: 0}
-  - {x: 1, y: 0}
-  - {x: 2, y: 1}
-  MountainPositions:
-  - {x: 1, y: 1}
+  HillPositions: []
+  MountainPositions: []

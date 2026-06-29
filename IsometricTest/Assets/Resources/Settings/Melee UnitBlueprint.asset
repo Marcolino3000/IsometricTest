@@ -20,6 +20,9 @@ MonoBehaviour:
     Team: 0
     MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
     AttackAction: {fileID: 11400000, guid: db0aa245c745641109f55f8c5816167a, type: 2}
+    Traits:
+    - {fileID: 11400000, guid: 3c6d6cf24c5246358d4b7e7541aaf7a6, type: 2}
+    - {fileID: 11400000, guid: e39ef3961e384f18a5424164e0b6b823, type: 2}
     health: 12
     actionPoints: 3
     hasActionsLeft: 0

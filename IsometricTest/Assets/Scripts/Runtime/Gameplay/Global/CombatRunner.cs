@@ -7,13 +7,13 @@ namespace Runtime.Gameplay.Global
     {
         public static void ResolveCombat(Unit attacker, Unit target)
         {
-            bool targetDied = ApplyDamage(attacker, target);
+            bool targetDied = ApplyDamage(attacker, target, isRetaliation: false);
 
             bool attackerDied = false;
 
             // The target only strikes back if the attacker is within the targets attack range.
             if (IsInAttackRange(target, attacker))
-                attackerDied = ApplyDamage(target, attacker);
+                attackerDied = ApplyDamage(target, attacker, isRetaliation: true);
 
             if (targetDied)
             {
@@ -29,7 +29,8 @@ namespace Runtime.Gameplay.Global
         private static bool IsInAttackRange(Unit attacker, Unit defender)
         {
             int distance = GetManhattanDistance(attacker.CurrentState.Position, defender.CurrentState.Position);
-            return distance <= attacker.CurrentState.AttackAction.Condition.Range;
+            // Effective range so a ranged unit retaliating from a hill benefits from its terrain bonus.
+            return distance <= CombatRules.GetEffectiveAttackRange(attacker);
         }
 
         private static int GetManhattanDistance(Tile attackerTile, Tile targetTile)
@@ -40,17 +41,13 @@ namespace Runtime.Gameplay.Global
         }
 
 
-        private static bool ApplyDamage(Unit attacker, Unit target)
+        private static bool ApplyDamage(Unit attacker, Unit target, bool isRetaliation)
         {
-            target.CurrentState.Health -= CalculateDamage(attacker, target);
+            // Damage is resolved through CombatRules so unit and terrain traits (defence, crits,
+            // terrain damage bonuses) are all folded in consistently.
+            target.CurrentState.Health -= CombatRules.CalculateDamage(attacker, target, isRetaliation);
 
             return target.CurrentState.Health <= 0;
-        }
-
-        private static int CalculateDamage(Unit attacker, Unit target)
-        {
-            //subtract target's defense
-            return attacker.CurrentState.AttackAction.Effect.Damage;
         }
     }
 }

@@ -1,6 +1,9 @@
+using System;
+using System.Collections.Generic;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Fog;
+using Runtime.Gameplay.Traits;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Entities
@@ -14,6 +17,9 @@ namespace Runtime.Gameplay.Entities
         public bool IsPassable { get; private set; } = true;
         public int ExtraMoveCost { get; private set; }
         public float HeightOffset { get; private set; }
+
+        // Traits this tile's terrain grants to the unit standing on it (e.g. hill defence/range).
+        public IReadOnlyList<TerrainTrait> Traits { get; private set; } = Array.Empty<TerrainTrait>();
 
         // Defaults to Visible so the board renders normally when no FogOfWarManager is driving it.
         public TileVisibility Visibility { get; private set; } = TileVisibility.Visible;
@@ -48,6 +54,7 @@ namespace Runtime.Gameplay.Entities
             IsPassable = profile.Passable;
             ExtraMoveCost = profile.ExtraMoveCost;
             HeightOffset = profile.HeightOffset;
+            Traits = profile.Traits ?? (IReadOnlyList<TerrainTrait>)Array.Empty<TerrainTrait>();
 
             transform.position += Vector3.up * profile.HeightOffset;
 

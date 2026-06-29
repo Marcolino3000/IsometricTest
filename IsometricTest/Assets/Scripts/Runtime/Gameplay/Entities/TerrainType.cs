@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Runtime.Gameplay.Traits;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Entities
@@ -20,7 +22,7 @@ namespace Runtime.Gameplay.Entities
     {
         public TerrainType Type;
 
-        [Tooltip("Whether units are allowed to move onto this terrain. Mountains are impassable.")]
+        [Tooltip("Whether units are allowed to move onto this terrain.")]
         public bool Passable = true;
 
         [Tooltip("Extra action points required to step onto this terrain, on top of the base move cost.")]
@@ -36,5 +38,8 @@ namespace Runtime.Gameplay.Entities
 
         [Tooltip("Optional sprite that replaces the default tile sprite for this terrain (e.g. a rocky tile for mountains). Leave empty to keep the prefab's sprite.")]
         public Sprite OverrideSprite;
+
+        [Tooltip("Traits granted to whichever unit is occupying this terrain (e.g. extra defence or range on hills). Drag terrain trait assets here.")]
+        public List<TerrainTrait> Traits = new();
     }
 }

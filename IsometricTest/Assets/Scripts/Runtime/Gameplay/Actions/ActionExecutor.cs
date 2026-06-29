@@ -4,6 +4,7 @@ using System.Linq;
 using Actions;
 using Runtime.Core.Spawning;
 using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Global;
 using UI;
 using UnityEngine;
 
@@ -38,7 +39,8 @@ namespace Runtime.Gameplay.Actions
         public ConditionTestResult PlanAttackAction(ExecuteArgs executeArgs)
         {
             var targetTile = executeArgs.TargetUnit.CurrentState.Position;
-            var range = unit.CurrentState.AttackAction.Condition.Range;
+            // Effective range includes terrain bonuses, so a unit on a hill plans to stop further out.
+            var range = CombatRules.GetEffectiveAttackRange(unit);
 
             // Only move close enough that the target lands within attack range,
             // so ranged units stop short instead of walking right up to it.

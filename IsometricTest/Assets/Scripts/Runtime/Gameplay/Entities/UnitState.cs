@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using Actions;
 using Runtime.Gameplay.Actions;
+using Runtime.Gameplay.Traits;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Entities
@@ -47,7 +49,11 @@ namespace Runtime.Gameplay.Entities
         public int SightRange;
         public MoveActionData MoveAction;
         public AttackActionData AttackAction;
-        public bool HasActionsLeft => hasActionsLeft; 
+
+        [Tooltip("Traits carried by this unit (e.g. critical hits, or extra damage from flat ground). Drag unit trait assets here.")]
+        public List<UnitTrait> Traits = new();
+
+        public bool HasActionsLeft => hasActionsLeft;
 
         [SerializeField] private int health;
         [SerializeField] private int actionPoints;
@@ -71,6 +77,8 @@ namespace Runtime.Gameplay.Entities
             ActionPoints = other.ActionPoints;
             Team = other.Team;
             SightRange = other.SightRange;
+            // Copy into a fresh list so per-unit runtime state never aliases the blueprint's list.
+            Traits = other.Traits != null ? new List<UnitTrait>(other.Traits) : new List<UnitTrait>();
         }
     }
 

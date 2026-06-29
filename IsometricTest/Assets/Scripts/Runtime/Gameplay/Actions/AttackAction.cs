@@ -9,12 +9,13 @@ namespace Actions
 
         public override bool TestConditions()
         {
-            if(Condition.Cost > Context.ActionPoints) 
+            if(Condition.Cost > Context.ActionPoints)
                 return false;
-            
-            if(Condition.Range < Context.Distance)
+
+            // Effective range includes terrain bonuses (e.g. a ranged unit on a hill reaches further).
+            if(CombatRules.GetEffectiveAttackRange(Context.Unit) < Context.Distance)
                 return false;
-            
+
             return true;
         }
 
