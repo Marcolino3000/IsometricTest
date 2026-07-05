@@ -31,6 +31,8 @@ namespace Runtime.Gameplay.Entities
         [SerializeField] private HealthBar healthBar;
         [SerializeField] private ActionExecutor actionExecutor;
 
+        private int lastHealth;
+
         private void OnDestroy()
         {
             if (gameStateManager != null)
@@ -42,6 +44,7 @@ namespace Runtime.Gameplay.Entities
         {
             currentState = blueprint.DefaultState;
             currentState.Team = team;
+            lastHealth = currentState.Health;
             currentState.SetValueChangedCallbacks(HealthChangedCallback, ActionPointsChangedCallback);
 
             tileSpawner = tileSpawnerArg;
@@ -60,6 +63,13 @@ namespace Runtime.Gameplay.Entities
         private void HealthChangedCallback(int amount)
         {
             healthBar.SetBlobAmount(amount);
+
+            int delta = amount - lastHealth;
+            lastHealth = amount;
+
+            // Popups reuse the health bar's world-space panel settings so they render like the unit bars.
+            if (delta < 0)
+                FloatingText.ShowDamage(delta, transform.position, healthBar.GetComponent<UIDocument>().panelSettings);
         }
         
         private void ActionPointsChangedCallback(int amount)
