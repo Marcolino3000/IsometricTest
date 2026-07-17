@@ -137,8 +137,11 @@ namespace Runtime.Gameplay.AI
                 // so the player can follow along instead of the opening move snapping in instantly.
                 yield return new WaitForSeconds(actionDelay);
 
-                if (!aiEnabled)
-                    yield break; // switched off during the pause: stop before acting
+                // Re-check the unit too: Destroy() only takes effect at end of frame, so a unit that
+                // died to retaliation in its own previous action still passed the check above and
+                // only reads as null after this pause.
+                if (!aiEnabled || unit == null)
+                    yield break; // switched off or unit died during the pause: stop before acting
 
                 if (!TryActOnce(unit))
                     yield break; // nothing productive left for this unit this turn

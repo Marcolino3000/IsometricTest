@@ -63,10 +63,22 @@ namespace Runtime.Core
             selector.Setup(gameStateManager, raycaster);
             raycaster.Setup(inputHandler);
             outlineManager.Setup(selector);
+            CreateAttackPreview();
             actionAssigner.Setup(selector);
             fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager);
             aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar);
             Direction.Setup(gameStateManager);
+        }
+
+        /// <summary>
+        /// The attack preview (ghost + red attack line) is created at runtime like the floating
+        /// text popups, so the Systems prefab needs no extra scene object. Unparented on purpose:
+        /// the ghost copies world-space unit scales, which a scaled parent would distort.
+        /// </summary>
+        private void CreateAttackPreview()
+        {
+            var attackPreview = new GameObject("AttackPreview").AddComponent<AttackPreview>();
+            attackPreview.Setup(selector, tileSpawner);
         }
 
         private void SpawnEntities()

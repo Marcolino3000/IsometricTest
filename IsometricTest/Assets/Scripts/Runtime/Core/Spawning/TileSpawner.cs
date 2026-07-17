@@ -36,6 +36,18 @@ namespace Runtime.Core.Spawning
         {
             return _pathfinder.FindPathWithinRange(start, target, range, ignoreOccupied);
         }
+
+        /// <summary>
+        /// The path a unit would walk to bring <paramref name="targetTile"/> within its effective
+        /// attack range (terrain bonuses included, so a unit on a hill stops further out). Starts at
+        /// the unit's own tile and contains just that tile when it can already attack from where it
+        /// stands. Shared by the attack planner and the attack preview so they always agree.
+        /// </summary>
+        public List<Tile> GetAttackApproachPath(Unit attacker, Tile targetTile)
+        {
+            var range = CombatRules.GetEffectiveAttackRange(attacker);
+            return GetPathWithinRange(attacker.CurrentState.Position, targetTile, range);
+        }
       
         public Tile GetTileAtPosition(Vector2Int position)
         {

@@ -25,6 +25,12 @@ namespace Runtime.Gameplay.Actions
 
         public ConditionTestResult PlanMoveAction(ExecuteArgs executeArgs)
         {
+            // Callers can hold on to a unit past its death (stale selection, an AI loop in the frame
+            // its unit died — Destroy() is deferred to end of frame). Everything below transform access
+            // is plain C#, so without this guard a destroyed unit would still plan and act.
+            if (unit == null)
+                return new ConditionTestResult(false, -1);
+
             var path = tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile);
             
             PlanMoveActionsFromPath(path);
@@ -38,13 +44,15 @@ namespace Runtime.Gameplay.Actions
 
         public ConditionTestResult PlanAttackAction(ExecuteArgs executeArgs)
         {
+            // Same guard as PlanMoveAction: a destroyed attacker (or target) must not produce a plan.
+            if (unit == null || executeArgs.TargetUnit == null)
+                return new ConditionTestResult(false, -1);
+
             var targetTile = executeArgs.TargetUnit.CurrentState.Position;
-            // Effective range includes terrain bonuses, so a unit on a hill plans to stop further out.
-            var range = CombatRules.GetEffectiveAttackRange(unit);
 
             // Only move close enough that the target lands within attack range,
             // so ranged units stop short instead of walking right up to it.
-            var pathIntoRange = tileSpawner.GetPathWithinRange(unit.CurrentState.Position, targetTile, range);
+            var pathIntoRange = tileSpawner.GetAttackApproachPath(unit, targetTile);
 
             var remainingAP = PlanMoveActionsFromPath(pathIntoRange);
 
