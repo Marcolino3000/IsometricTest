@@ -1,0 +1,24 @@
+{
+  "name": "com.duxaeternus.imtoolkit",
+  "version": "0.1.0",
+  "displayName": "IM Toolkit",
+  "description": "Immediate-mode debug UI on top of UI Toolkit. Call IM.Label / IM.Button / IM.Slider from any Update() — no UXML, no PanelSettings asset, no scene setup. A drop-in replacement for OnGUI/GUILayout overlays.",
+  "unity": "6000.0",
+  "author": {
+    "name": "DuxAeternus"
+  },
+  "keywords": [
+    "ui",
+    "ui-toolkit",
+    "imgui",
+    "immediate-mode",
+    "debug"
+  ],
+  "samples": [
+    {
+      "displayName": "Basic Overlay",
+      "description": "A demo window showing every widget, plus a plain top-left overlay panel.",
+      "path": "Samples~/BasicOverlay"
+    }
+  ]
+}
