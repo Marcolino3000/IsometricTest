@@ -1,7 +1,5 @@
 using System;
 using Runtime.Gameplay.Entities;
-using Runtime.Gameplay.Global;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Runtime.Core.State
@@ -30,9 +28,6 @@ namespace Runtime.Core.State
 
         [Header("Current State")]
         public State State { get; private set; }
-       
-        [Header("References")] 
-        [SerializeField] private Selector selector;
 
         private State previousState;
 

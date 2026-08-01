@@ -6,16 +6,6 @@ using UnityEngine;
 
 namespace Runtime.Gameplay.Fog
 {
-    public class InClassName
-    {
-        public InClassName(HashSet<Vector2Int> visible)
-        {
-            Visible = visible;
-        }
-
-        public HashSet<Vector2Int> Visible { get; private set; }
-    }
-
     /// <summary>
     /// Owns per-team visibility. On every turn change (and whenever a unit moves) it recomputes
     /// which tiles the active team can see — the union of its units' sight ranges — and pushes that
@@ -107,7 +97,7 @@ namespace Runtime.Gameplay.Fog
                 _exploredChanged = true;
 
             ApplyTileVisibility(visible, explored);
-            ApplyUnitVisibility(new InClassName(visible));
+            ApplyUnitVisibility(visible);
         }
 
         public bool IsExplored(Team team, Vector2Int position)
@@ -153,7 +143,7 @@ namespace Runtime.Gameplay.Fog
             }
         }
 
-        private void ApplyUnitVisibility(InClassName inClassName)
+        private void ApplyUnitVisibility(HashSet<Vector2Int> visible)
         {
             foreach (var unit in _unitSpawner.AllUnits)
             {
@@ -161,7 +151,7 @@ namespace Runtime.Gameplay.Fog
                     continue;
 
                 var tile = unit.CurrentState.Position;
-                var onVisibleTile = tile != null && inClassName.Visible.Contains(tile.Position);
+                var onVisibleTile = tile != null && visible.Contains(tile.Position);
 
                 // Your own units are always shown; enemies only when standing on a visible tile.
                 unit.SetRevealed(unit.CurrentState.Team == _activeTeam || onVisibleTile);
