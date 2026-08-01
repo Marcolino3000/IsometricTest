@@ -16,7 +16,7 @@ MonoBehaviour:
   defaultState:
     Position: {fileID: 0}
     Team: 0
-    SightRange: 3
+    SightRange: 4
     MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
     AttackAction: {fileID: 11400000, guid: c0e747be1401e4a289b7ae18e0773dc5, type: 2}
     Traits:

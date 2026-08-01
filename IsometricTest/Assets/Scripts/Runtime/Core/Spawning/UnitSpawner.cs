@@ -15,7 +15,14 @@ namespace Runtime.Core.Spawning
         [Header("Debug")]
         [SerializeField] private List<Unit> units;
 
+        // Units that were removed from play. They are kept (hidden) rather than destroyed so undo can
+        // put them back on the board; a respawn clears them out for good.
+        [SerializeField] private List<Unit> removedUnits = new();
+
         public IReadOnlyList<Unit> AllUnits => units;
+
+        /// <summary>Every unit of this match, in play or removed. Used to snapshot the board.</summary>
+        public IEnumerable<Unit> AllSpawnedUnits => units.Concat(removedUnits);
 
         [Header("References")]
         [SerializeField] private UnitSpawnerSettings settings;
@@ -24,11 +31,30 @@ namespace Runtime.Core.Spawning
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private FogOfWar fogOfWar;
 
+        /// <summary>
+        /// Takes a unit out of play. It is hidden instead of destroyed - that keeps it, and every
+        /// reference to it, intact so <see cref="RestoreUnit"/> can bring it back when the action that
+        /// killed it is undone.
+        /// </summary>
         public void RemoveUnit(Unit unit)
         {
+            if (unit == null || !units.Remove(unit))
+                return;
+
             unit.CurrentState.OnNoActionsLeft -= CheckIfNoneHaveActionsLeft;
-            units.Remove(unit);
-            Destroy(unit.gameObject);
+            removedUnits.Add(unit);
+            unit.SetInPlay(false);
+        }
+
+        /// <summary>Puts a previously removed unit back into play. Does nothing for a living unit.</summary>
+        public void RestoreUnit(Unit unit)
+        {
+            if (unit == null || !removedUnits.Remove(unit))
+                return;
+
+            units.Add(unit);
+            unit.SetInPlay(true);
+            SubscribeToStateEvents(unit);
         }
 
         private void SpawnUnitsForTeam(Team team)
@@ -104,7 +130,7 @@ namespace Runtime.Core.Spawning
 
         private void ClearUnits()
         {
-            foreach (var unit in units)
+            foreach (var unit in AllSpawnedUnits.ToList())
             {
                 if (unit == null)
                     continue;
@@ -114,6 +140,7 @@ namespace Runtime.Core.Spawning
             }
 
             units.Clear();
+            removedUnits.Clear();
         }
 
         #region Setup

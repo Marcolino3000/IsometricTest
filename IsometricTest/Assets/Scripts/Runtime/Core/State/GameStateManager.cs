@@ -43,6 +43,27 @@ namespace Runtime.Core.State
             HandleStateChange();
         }
         
+        /// <summary>
+        /// Puts the manager back into a turn state undo/redo recorded earlier. Raises
+        /// <see cref="TurnReset"/> when the active team changes, so per-turn world state (fog owner,
+        /// facing, selection) is rebuilt, but never <see cref="TurnStarted"/>: the turn's actor has
+        /// already played this turn once and must not play it again.
+        /// </summary>
+        public void RestoreTurn(Team team, bool unitsHaveActionsLeft)
+        {
+            State.Team = team;
+            State.UnitsHaveActionsLeft = unitsHaveActionsLeft;
+
+            var changeEvent = new ChangeEvent<State>(previousState.Clone(), State.Clone());
+
+            if (changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
+                TurnReset?.Invoke(changeEvent);
+
+            GameStateChanged?.Invoke(changeEvent);
+
+            previousState = State.Clone();
+        }
+
         private void HandleStateChange()
         {
             var changeEvent = new ChangeEvent<State>(previousState.Clone(), State.Clone());

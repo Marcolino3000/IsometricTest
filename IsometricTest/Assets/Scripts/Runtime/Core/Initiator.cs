@@ -5,6 +5,7 @@ using Runtime.Gameplay.AI;
 using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
+using Runtime.Gameplay.History;
 using UI;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ namespace Runtime.Core
 {
     public class Initiator : MonoBehaviour
     {
+        [Header("References")]
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private UnitSpawner unitSpawner;
@@ -22,15 +24,17 @@ namespace Runtime.Core
         [SerializeField] private ActionAssigner actionAssigner;
         [SerializeField] private FogOfWar fogOfWar;
         [SerializeField] private AiController aiController;
+        [SerializeField] private ActionHistory actionHistory;
 
         [Header("UI")]
         [SerializeField] private NextTurnButton nextTurnButton;
-
+        
         private void Awake()
         {
             SetupReferences();
             SpawnEntities();
             SetupUI();
+            actionHistory.Begin();
             StartGame();
         }
 
@@ -47,6 +51,8 @@ namespace Runtime.Core
             gameStateManager.Setup();
             fogOfWar.ResetExploration();
             SpawnEntities();
+            // A restart replaces every unit the recorded snapshots refer to, so the history starts over.
+            actionHistory.Begin();
             StartGame();
         }
 
@@ -64,12 +70,13 @@ namespace Runtime.Core
             raycaster.Setup(inputHandler);
             outlineManager.Setup(selector);
             CreateAttackPreview();
+            actionHistory.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, aiController, selector);
             actionAssigner.Setup(selector);
             fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager);
             aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar);
             Direction.Setup(gameStateManager);
         }
-
+        
         /// <summary>
         /// The attack preview (ghost + red attack line) is created at runtime like the floating
         /// text popups, so the Systems prefab needs no extra scene object. Unparented on purpose:

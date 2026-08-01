@@ -34,6 +34,11 @@ namespace Runtime.Gameplay.Fog
         private readonly Dictionary<Team, HashSet<Vector2Int>> _exploredTiles = new();
         private HashSet<Vector2Int> _visiblePositions = new();
 
+        // Copy of the explored map handed to history snapshots, reused until the map actually changes:
+        // explored ground grows on few actions, and copying the whole map per recorded action adds up.
+        private readonly Dictionary<Team, HashSet<Vector2Int>> _exploredForSnapshots = new();
+        private bool _exploredChanged = true;
+
         public void Setup(TileSpawner tileSpawner, UnitSpawner unitSpawner, GameStateManager gameStateManager)
         {
             _tileSpawner = tileSpawner;
@@ -48,6 +53,37 @@ namespace Runtime.Gameplay.Fog
         {
             _exploredTiles[Team.Player] = new HashSet<Vector2Int>();
             _exploredTiles[Team.Opponent] = new HashSet<Vector2Int>();
+            _exploredChanged = true;
+        }
+
+        /// <summary>
+        /// The explored map per team, for a history snapshot. The returned sets are never mutated
+        /// afterwards, so callers may hold on to them; they must not write to them either.
+        /// </summary>
+        public IReadOnlyDictionary<Team, HashSet<Vector2Int>> CaptureExplored()
+        {
+            if (_exploredChanged)
+            {
+                _exploredForSnapshots.Clear();
+                foreach (var pair in _exploredTiles)
+                    _exploredForSnapshots[pair.Key] = new HashSet<Vector2Int>(pair.Value);
+
+                _exploredChanged = false;
+            }
+
+            return _exploredForSnapshots;
+        }
+
+        /// <summary>
+        /// Restores a previously captured explored map (undo/redo). Copies the sets, since play
+        /// continues to grow them and the snapshot they came from must stay untouched.
+        /// </summary>
+        public void RestoreExplored(IReadOnlyDictionary<Team, HashSet<Vector2Int>> explored)
+        {
+            ResetExploration();
+
+            foreach (var pair in explored)
+                _exploredTiles[pair.Key] = new HashSet<Vector2Int>(pair.Value);
         }
 
         private void HandleTurnReset(ChangeEvent<State> changeEvent)
@@ -63,7 +99,12 @@ namespace Runtime.Gameplay.Fog
 
             if (!_exploredTiles.TryGetValue(_activeTeam, out var explored))
                 explored = _exploredTiles[_activeTeam] = new HashSet<Vector2Int>();
+
+            var exploredCount = explored.Count;
             explored.UnionWith(visible);
+
+            if (explored.Count != exploredCount)
+                _exploredChanged = true;
 
             ApplyTileVisibility(visible, explored);
             ApplyUnitVisibility(new InClassName(visible));

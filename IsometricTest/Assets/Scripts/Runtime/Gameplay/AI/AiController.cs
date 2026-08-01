@@ -66,13 +66,37 @@ namespace Runtime.Gameplay.AI
             aiEnabled = value;
 
             // Re-enabled during my own turn (player was controlling): take over what's left now.
-            // When disabled, the running coroutine notices and stops itself, so nothing to do here.
+            // When disabled, the running coroutine notices and stops itself, so this does nothing.
+            ResumeTurn();
+        }
+
+        /// <summary>
+        /// Takes over the rest of the current turn if it is the AI's and nothing is playing it out.
+        /// Used when the AI is switched on mid-turn, and to hand a turn back to it after undo/redo
+        /// cancelled it.
+        /// </summary>
+        public void ResumeTurn()
+        {
             if (aiEnabled && !_running
                 && gameStateManager != null && gameStateManager.State != null
                 && gameStateManager.State.Team == aiTeam)
             {
                 StartCoroutine(RunTurn());
             }
+        }
+
+        /// <summary>
+        /// Drops a turn that is being played out. Undo/redo replaces the world under the AI's feet,
+        /// so the units it still had queued - and its end-of-turn handover - refer to a state that no
+        /// longer exists.
+        /// </summary>
+        public void CancelTurn()
+        {
+            if (!_running)
+                return;
+
+            StopAllCoroutines();
+            _running = false;
         }
 
         public void Setup(GameStateManager gameStateManagerArg, UnitSpawner unitSpawnerArg,
@@ -102,9 +126,9 @@ namespace Runtime.Gameplay.AI
         {
             _running = true;
             
-            // Snapshot: units can be destroyed mid-turn (combat retaliation), so iterate a copy and null-check.
+            // Snapshot: units can die mid-turn (combat retaliation), so iterate a copy and re-check.
             var myUnits = unitSpawner.AllUnits
-                .Where(u => u != null && u.CurrentState.Team == aiTeam)
+                .Where(u => u != null && u.IsAlive && u.CurrentState.Team == aiTeam)
                 .ToList();
 
             foreach (var unit in myUnits)
@@ -112,7 +136,7 @@ namespace Runtime.Gameplay.AI
                 if (!aiEnabled)
                     break; // switched off mid-turn: hand the remaining units to the player
 
-                if (unit == null)
+                if (unit == null || !unit.IsAlive)
                     continue;
 
                 yield return ActUnit(unit);
@@ -130,18 +154,17 @@ namespace Runtime.Gameplay.AI
         {
             for (var i = 0; i < maxActionsPerUnit; i++)
             {
-                if (!aiEnabled || unit == null || !unit.CurrentState.HasActionsLeft)
+                if (!aiEnabled || unit == null || !unit.IsAlive || !unit.CurrentState.HasActionsLeft)
                     yield break;
 
                 // Pause before every action — including each unit's first, and the turn's very first —
                 // so the player can follow along instead of the opening move snapping in instantly.
                 yield return new WaitForSeconds(actionDelay);
 
-                // Re-check the unit too: Destroy() only takes effect at end of frame, so a unit that
-                // died to retaliation in its own previous action still passed the check above and
-                // only reads as null after this pause.
-                if (!aiEnabled || unit == null)
-                    yield break; // switched off or unit died during the pause: stop before acting
+                // Re-check the unit too: it may have died to retaliation in its own previous action,
+                // or been taken off the board by an undo during this pause.
+                if (!aiEnabled || unit == null || !unit.IsAlive)
+                    yield break; // switched off or unit gone: stop before acting
 
                 if (!TryActOnce(unit))
                     yield break; // nothing productive left for this unit this turn

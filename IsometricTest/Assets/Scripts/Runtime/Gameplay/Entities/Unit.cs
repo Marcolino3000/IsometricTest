@@ -16,6 +16,13 @@ namespace Runtime.Gameplay.Entities
         public UnitBlueprint Blueprint => blueprint;
         public ActionExecutor ActionExecutor => actionExecutor;
 
+        /// <summary>
+        /// False once the unit has been removed from play. Removed units are kept around hidden
+        /// instead of destroyed so undo can put them back (see <see cref="SetInPlay"/>), which is why
+        /// callers have to ask this rather than null-check the reference.
+        /// </summary>
+        public bool IsAlive { get; private set; } = true;
+
         [Header("Debug")]
         [SerializeField] private UnitState currentState;
 
@@ -33,6 +40,10 @@ namespace Runtime.Gameplay.Entities
 
         private int lastHealth;
 
+        // Set while undo/redo puts recorded values back, so replaying a hit does not replay its
+        // damage popup.
+        private bool restoringSnapshot;
+
         private void OnDestroy()
         {
             if (gameStateManager != null)
@@ -45,6 +56,7 @@ namespace Runtime.Gameplay.Entities
             currentState = blueprint.DefaultState;
             currentState.Team = team;
             lastHealth = currentState.Health;
+            IsAlive = true;
             currentState.SetValueChangedCallbacks(HealthChangedCallback, ActionPointsChangedCallback);
 
             tileSpawner = tileSpawnerArg;
@@ -68,7 +80,7 @@ namespace Runtime.Gameplay.Entities
             lastHealth = amount;
 
             // Popups reuse the health bar's world-space panel settings so they render like the unit bars.
-            if (delta < 0)
+            if (delta < 0 && !restoringSnapshot)
                 FloatingText.ShowDamage(delta, transform.position, healthBar.GetComponent<UIDocument>().panelSettings);
         }
         
@@ -104,6 +116,49 @@ namespace Runtime.Gameplay.Entities
             unitSpawner.RemoveUnit(this);
         }
 
+        /// <summary>
+        /// Takes the unit off the board or puts it back. A removed unit is kept around - hidden and
+        /// unclickable - rather than destroyed, so undo can bring it back with every reference to it
+        /// still intact. It is hidden through <see cref="SetRevealed"/> instead of by deactivating the
+        /// GameObject on purpose: disabling a UIDocument rebuilds its visual tree from the source
+        /// asset, which would wipe the blobs the health and action point bars build once at setup.
+        /// </summary>
+        public void SetInPlay(bool inPlay)
+        {
+            IsAlive = inPlay;
+            SetRevealed(inPlay);
+        }
+
+        /// <summary>
+        /// Puts the unit back into a state undo/redo recorded earlier. Deliberately skips everything a
+        /// real action would trigger around it: no damage popup, and no fog recompute per unit - the
+        /// caller does a single pass once every unit is back in place.
+        /// </summary>
+        public void RestoreSnapshot(Tile tile, int health, int actionPoints)
+        {
+            restoringSnapshot = true;
+
+            if (tile != null)
+            {
+                currentState.Position = tile;
+                MoveTransformToTile(tile);
+
+                // A removed unit keeps its recorded tile but must not occupy it.
+                if (IsAlive)
+                    tile.SetUnit(this);
+            }
+
+            currentState.Health = health;
+            lastHealth = health;
+            currentState.ActionPoints = actionPoints;
+
+            // The action point bar may still be showing the cost of a plan that belongs to the state
+            // we left; the restored points are what counts now.
+            actionExecutor.ClearPreview();
+
+            restoringSnapshot = false;
+        }
+
         private void PlaceOnTile(Tile selectedTile)
         {
             var currentTile = currentState.Position;
@@ -111,11 +166,16 @@ namespace Runtime.Gameplay.Entities
                 currentTile.SetUnit(null);
 
             currentState.Position = selectedTile;
-            transform.position = unitSpawner.GridToWorldPosition(selectedTile.Position) + Vector3.up * selectedTile.HeightOffset;
+            MoveTransformToTile(selectedTile);
 
             selectedTile.SetUnit(this);
 
             fogOfWar.Recompute();
+        }
+
+        private void MoveTransformToTile(Tile tile)
+        {
+            transform.position = unitSpawner.GridToWorldPosition(tile.Position) + Vector3.up * tile.HeightOffset;
         }
 
         /// <summary>
@@ -142,6 +202,11 @@ namespace Runtime.Gameplay.Entities
         
         private void HandleTurnReset(Runtime.Core.State.ChangeEvent<State> changeEvent)
         {
+            // Removed units stay subscribed (they are only hidden, so undo can bring them back) but
+            // must keep the action points they were recorded with.
+            if (!IsAlive)
+                return;
+
             if (changeEvent.NewValue.Team == currentState.Team)
                 currentState.ActionPoints = blueprint.DefaultState.ActionPoints;
         }

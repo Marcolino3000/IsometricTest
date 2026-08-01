@@ -720,6 +720,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Global.InputHandler
   cameraPanSpeed: 10
+  cameraRig: {fileID: 0}
 --- !u!4 &1298141615
 Transform:
   m_ObjectHideFlags: 0
@@ -735,6 +736,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1021367753}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1687861747
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1687861748}
+  - component: {fileID: 1687861749}
+  m_Layer: 0
+  m_Name: ActionHistory
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1687861748
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1687861747}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 1021367753}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1687861749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1687861747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97d69b93b36c146ec82c332c7aca482a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.History.ActionHistory
+  undoKey: 35
+  redoKey: 32
 --- !u!1001 &8967875688342139071
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -751,6 +798,10 @@ PrefabInstance:
       propertyPath: inputHandler
       value: 
       objectReference: {fileID: 1298141614}
+    - target: {fileID: 1195906192420579916, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: actionHistory
+      value: 
+      objectReference: {fileID: 1687861749}
     - target: {fileID: 6161654108688559747, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -801,13 +852,13 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6161654108688559747, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
       insertIndex: 0
       addedObject: {fileID: 1298141615}
+    - targetCorrespondingSourceObject: {fileID: 6161654108688559747, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      insertIndex: 1
+      addedObject: {fileID: 1687861748}
     - targetCorrespondingSourceObject: {fileID: 5191948205243843475, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1206952710}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5569924132095987555, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

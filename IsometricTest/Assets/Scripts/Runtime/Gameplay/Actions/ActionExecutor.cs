@@ -5,6 +5,7 @@ using Actions;
 using Runtime.Core.Spawning;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
+using Runtime.Gameplay.History;
 using UI;
 using UnityEngine;
 
@@ -26,9 +27,9 @@ namespace Runtime.Gameplay.Actions
         public ConditionTestResult PlanMoveAction(ExecuteArgs executeArgs)
         {
             // Callers can hold on to a unit past its death (stale selection, an AI loop in the frame
-            // its unit died — Destroy() is deferred to end of frame). Everything below transform access
-            // is plain C#, so without this guard a destroyed unit would still plan and act.
-            if (unit == null)
+            // its unit died — removed units stay around hidden so undo can restore them).
+            // Without this guard a dead unit would still plan and act.
+            if (unit == null || !unit.IsAlive)
                 return new ConditionTestResult(false, -1);
 
             var path = tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile);
@@ -44,8 +45,8 @@ namespace Runtime.Gameplay.Actions
 
         public ConditionTestResult PlanAttackAction(ExecuteArgs executeArgs)
         {
-            // Same guard as PlanMoveAction: a destroyed attacker (or target) must not produce a plan.
-            if (unit == null || executeArgs.TargetUnit == null)
+            // Same guard as PlanMoveAction: a dead attacker (or target) must not produce a plan.
+            if (unit == null || !unit.IsAlive || executeArgs.TargetUnit == null || !executeArgs.TargetUnit.IsAlive)
                 return new ConditionTestResult(false, -1);
 
             var targetTile = executeArgs.TargetUnit.CurrentState.Position;
@@ -125,16 +126,24 @@ namespace Runtime.Gameplay.Actions
         {
             if(!PlanMoveAction(executeArgs).IsValid)
                 return;
-            
+
             ExecutePlannedActions();
+
+            ActionReporter.Report(ActionReport.Move(unit));
         }
-        
+
         public void ExecuteAttackAction(ExecuteArgs executeArgs)
         {
             if(!PlanAttackAction(executeArgs).IsValid)
                 return;
 
+            var target = executeArgs.TargetUnit;
+
             ExecutePlannedActions();
+
+            // Reported after the fact, and with the participants only: the history reads what actually
+            // happened (damage, kills, points spent) off the state around the action.
+            ActionReporter.Report(ActionReport.Attack(unit, target));
         }
 
         private void ExecutePlannedActions()
