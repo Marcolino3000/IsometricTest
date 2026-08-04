@@ -66,7 +66,7 @@ namespace Runtime.Core
             gameStateManager.Setup();
             unitSpawner.Setup(gameStateManager, selector, fogOfWar);
             tileSpawner.Setup(selector);
-            selector.Setup(gameStateManager, raycaster);
+            selector.Setup(gameStateManager, raycaster, unitSpawner);
             raycaster.Setup(inputHandler);
             outlineManager.Setup(selector);
             CreateAttackPreview();

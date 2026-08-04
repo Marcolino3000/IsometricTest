@@ -52,7 +52,10 @@ namespace Runtime.Gameplay.Feedback
 
         private void Show(Unit attacker, Unit target)
         {
-            if (attacker == null || target == null)
+            // Callers can hold a unit past its death. A removed unit is hidden rather than destroyed,
+            // so it is not null - but its sprite child is deactivated, and this preview is built out
+            // of exactly that sprite. Hence IsAlive on top of the null check.
+            if (attacker == null || !attacker.IsAlive || target == null || !target.IsAlive)
             {
                 Hide();
                 return;

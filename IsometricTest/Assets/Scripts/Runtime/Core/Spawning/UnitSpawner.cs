@@ -19,7 +19,15 @@ namespace Runtime.Core.Spawning
         // put them back on the board; a respawn clears them out for good.
         [SerializeField] private List<Unit> removedUnits = new();
 
+        // The player's single character, held from the moment it spawns so nothing has to scan the
+        // board for it. Survives its own death: a removed unit is only hidden, and undo restores this
+        // very object, so ask IsAlive rather than expecting null.
+        [SerializeField] private Unit playerUnit;
+
         public IReadOnlyList<Unit> AllUnits => units;
+
+        /// <summary>The player's character. Null only before the first spawn.</summary>
+        public Unit PlayerUnit => playerUnit;
 
         /// <summary>Every unit of this match, in play or removed. Used to snapshot the board.</summary>
         public IEnumerable<Unit> AllSpawnedUnits => units.Concat(removedUnits);
@@ -44,6 +52,10 @@ namespace Runtime.Core.Spawning
             unit.CurrentState.OnNoActionsLeft -= CheckIfNoneHaveActionsLeft;
             removedUnits.Add(unit);
             unit.SetInPlay(false);
+
+            // Nothing may go on pointing at a unit that is off the board: it is hidden rather than
+            // destroyed, so a stale selection or hover survives its death looking valid.
+            selector.DropUnit(unit);
         }
 
         /// <summary>Puts a previously removed unit back into play. Does nothing for a living unit.</summary>
@@ -57,42 +69,54 @@ namespace Runtime.Core.Spawning
             SubscribeToStateEvents(unit);
         }
 
-        private void SpawnUnitsForTeam(Team team)
+        private void SpawnOpponentUnits()
         {
-            foreach (var unitAmount in settings.UnitAmounts)
+            foreach (var unitAmount in settings.OpponentUnits)
             {
-                SpawnUnitsFromPrefab(team, unitAmount.Amount, unitAmount.Prefab);
+                for (int i = 0; i < unitAmount.Amount; i++)
+                {
+                    SpawnUnit(Team.Opponent, unitAmount.Prefab, i);
+                }
             }
         }
 
-        private void SpawnUnitsFromPrefab(Team team, int amount, Unit prefab)
+        private Unit SpawnUnit(Team team, Unit prefab, int index)
         {
-            for(int i = 0; i < amount; i++)
+            if (prefab == null)
             {
-                var instance = Instantiate(prefab, transform);
-
-                var spriteRenderer = instance.GetComponentInChildren<SpriteRenderer>();
-                spriteRenderer.sortingOrder = settings.OrderInLayer;
-                spriteRenderer.sprite = prefab.Blueprint.Sprite;
-                
-                var unit = instance.GetComponentInChildren<Unit>();
-                unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar);
-                
-                PlaceUnit(unit, team);
-
-                if(team == Team.Opponent)
-                {
-                    spriteRenderer.flipX = true;
-                    spriteRenderer.color = settings.OpponentColor;
-                    instance.name = $"Opponent {prefab.name} {i}";
-                }
-                
-                units.Add(instance);
-
-                selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
-
-                SubscribeToStateEvents(unit);
+                Debug.LogError($"No unit prefab set for team {team} in {nameof(UnitSpawnerSettings)}.", settings);
+                return null;
             }
+
+            var instance = Instantiate(prefab, transform);
+
+            var spriteRenderer = instance.GetComponentInChildren<SpriteRenderer>();
+            spriteRenderer.sortingOrder = settings.OrderInLayer;
+            spriteRenderer.sprite = prefab.Blueprint.Sprite;
+
+            var unit = instance.GetComponentInChildren<Unit>();
+            unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar);
+
+            PlaceUnit(unit, team);
+
+            if(team == Team.Opponent)
+            {
+                spriteRenderer.flipX = true;
+                spriteRenderer.color = settings.OpponentColor;
+                instance.name = $"Opponent {prefab.name} {index}";
+            }
+            else
+            {
+                instance.name = $"Player {prefab.name}";
+            }
+
+            units.Add(instance);
+
+            selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
+
+            SubscribeToStateEvents(unit);
+
+            return instance;
         }
 
         private void SubscribeToStateEvents(Unit unit)
@@ -141,6 +165,7 @@ namespace Runtime.Core.Spawning
 
             units.Clear();
             removedUnits.Clear();
+            playerUnit = null;
         }
 
         #region Setup
@@ -157,8 +182,10 @@ namespace Runtime.Core.Spawning
         {
             tileSpawner.ResetOccupiedTiles();
             ClearUnits();
-            SpawnUnitsForTeam(Team.Player);
-            SpawnUnitsForTeam(Team.Opponent);
+
+            // The player fields a single character, the opponent a roster - hence the two paths.
+            playerUnit = SpawnUnit(Team.Player, settings.PlayerUnit, 0);
+            SpawnOpponentUnits();
         }
 
         #endregion

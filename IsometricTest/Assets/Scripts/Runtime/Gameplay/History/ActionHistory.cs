@@ -147,6 +147,12 @@ namespace Runtime.Gameplay.History
             snapshot.RestoreTo(unitSpawner, tileSpawner, gameStateManager, fogOfWar);
             currentSnapshot = snapshot;
 
+            // A restored turn gets no TurnStarted (its actor already played it), so the character is
+            // picked up here instead - now that every unit is back in place and the clear above, which
+            // ran against the board being left behind, has been made good.
+            if (selector != null)
+                selector.SelectPlayerUnit();
+
             restoring = false;
 
             RecountTurns();

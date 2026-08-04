@@ -1,4 +1,5 @@
 using System;
+using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
@@ -10,11 +11,14 @@ namespace Runtime.Gameplay.Global
     public class Selector : MonoBehaviour
     {
         public event Action<ChangeEvent<Selection>> OnSelectionChanged;
-        
+
         [Header("Debug")]
         [SerializeField] private Selection selection;
         [SerializeField] private Selection previousSelection;
         [SerializeField] private Team activeTeam;
+
+        [Header("References")]
+        [SerializeField] private UnitSpawner unitSpawner;
 
         #region Setup
 
@@ -25,12 +29,14 @@ namespace Runtime.Gameplay.Global
             clickable.OnMouseExit += HandleMouseExit;
         }
 
-        public void Setup(GameStateManager gameStateManagerArg, Raycaster raycaster)
+        public void Setup(GameStateManager gameStateManagerArg, Raycaster raycaster, UnitSpawner unitSpawnerArg)
         {
+            unitSpawner = unitSpawnerArg;
             gameStateManagerArg.TurnReset += HandleTurnReset;
+            gameStateManagerArg.TurnStarted += HandleTurnStarted;
             raycaster.OnClickedNothing += HandleClickNothing;
         }
-        
+
         public void ResetSelection()
         {
             selection = new Selection { ActiveTeam = activeTeam };
@@ -40,10 +46,75 @@ namespace Runtime.Gameplay.Global
             CreateSelectionChangedEvent();
         }
 
+        /// <summary>
+        /// Picks the player's character up. It is the only one they command, so selecting it by hand
+        /// would be a click with exactly one possible outcome.
+        ///
+        /// Public because undo/redo restores a turn without a <see cref="GameStateManager.TurnStarted"/>
+        /// and has to ask for this itself once the board is back in place.
+        /// </summary>
+        public void SelectPlayerUnit()
+        {
+            var playerUnit = PlayerUnitThisTurn;
+
+            if (playerUnit == null || selection.SelectedUnit == playerUnit)
+                return;
+
+            selection.SelectedUnit = playerUnit;
+
+            CreateSelectionChangedEvent();
+        }
+
+        /// <summary>
+        /// Forgets a unit that has left the board. A removed unit is only hidden, so a selection or
+        /// hover pointing at one goes on looking perfectly valid while the sprite child that carries
+        /// its visuals - and that the attack preview measures - is no longer active.
+        /// </summary>
+        public void DropUnit(Unit unit)
+        {
+            if (unit == null || (selection.SelectedUnit != unit && selection.HoveredUnit != unit))
+                return;
+
+            if (selection.HoveredUnit == unit)
+                selection.HoveredUnit = null;
+
+            if (selection.SelectedUnit == unit)
+                selection.SelectedUnit = null;
+
+            CreateSelectionChangedEvent();
+        }
+
+        /// <summary>
+        /// The player's character while the turn is its own, otherwise null - the opponent's turn is
+        /// not theirs to point at. Removed units are kept around hidden for undo, so IsAlive is the
+        /// in-play test rather than a null check.
+        /// </summary>
+        private Unit PlayerUnitThisTurn
+        {
+            get
+            {
+                var playerUnit = unitSpawner != null ? unitSpawner.PlayerUnit : null;
+
+                return playerUnit != null && playerUnit.IsAlive && playerUnit.CurrentState.Team == activeTeam
+                    ? playerUnit
+                    : null;
+            }
+        }
+
         private void HandleTurnReset(ChangeEvent<State> changeEvent)
         {
             activeTeam = changeEvent.NewValue.Team;
             ResetSelection();
+        }
+
+        /// <summary>
+        /// Waits for phase 2 to pick the character up: units subscribe to <see cref="GameStateManager.TurnReset"/>
+        /// only once they spawn, so they refresh their action points after this selector has already
+        /// handled it. Selecting in phase 1 would mark the reachable tiles of the turn just ended.
+        /// </summary>
+        private void HandleTurnStarted(ChangeEvent<State> changeEvent)
+        {
+            SelectPlayerUnit();
         }
 
         #endregion
@@ -104,12 +175,16 @@ namespace Runtime.Gameplay.Global
         
         private void HandleClickNothing()
         {
-            selection.SelectedUnit = null;
             selection.HoveredUnit = null;
             selection.HoveredTile = null;
             selection.ClickedTile = null;
             selection.SelectedTile = null;
-            
+
+            // The character is picked straight back up: with no second unit to switch to, dropping it
+            // would only cost the player the click to select it again. Set last so the status
+            // recomputes against the cleared hovers.
+            selection.SelectedUnit = PlayerUnitThisTurn;
+
             CreateSelectionChangedEvent();
         }
 
