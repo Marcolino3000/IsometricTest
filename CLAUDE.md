@@ -83,7 +83,9 @@ Every executed action announces itself through `ActionReporter.Report(...)` at t
 
 **Route every rule number through a `CombatRules`-style query function.** A new mechanic should be a new SO asset plus at most one new trait/effect class — never a switch case in `ActionAssigner` or a new per-type `Plan*`/`Execute*` pair on `ActionExecutor`.
 
-`CombatRunner.ResolveCombat` applies damage, resolves retaliation (only if the defender's *effective* range reaches back), then removes the dead.
+`CombatRunner.ResolveCombat` applies damage, asks `CombatRules.CanRetaliate` whether the defender strikes back, then removes the dead.
+
+`Gameplay/Global/GameRules.cs` (SO, asset at `Resources/Settings/Default GameRules.asset`, injected into `CombatRules` as the *first* line of `Initiator.SetupReferences`) holds match-wide switches that belong to no unit or tile — today just `RetaliationEnabled`, read by `CombatRules.CanRetaliate` (rule first, then effective range). It is held as a live reference, so toggling it in the inspector applies mid-play. Rules that *do* belong to a unit or tile stay traits.
 
 ### Grid and spawning
 

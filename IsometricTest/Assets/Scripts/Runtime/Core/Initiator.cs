@@ -13,6 +13,10 @@ namespace Runtime.Core
 {
     public class Initiator : MonoBehaviour
     {
+        [Header("Rules")]
+        [Tooltip("Match-wide rule switches (retaliation, ...). Toggling one applies immediately, also during play.")]
+        [SerializeField] private GameRules gameRules;
+
         [Header("References")]
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private TileSpawner tileSpawner;
@@ -63,6 +67,8 @@ namespace Runtime.Core
 
         private void SetupReferences()
         {
+            // First: pure config every later system may consult while resolving actions.
+            CombatRules.Setup(gameRules);
             gameStateManager.Setup();
             unitSpawner.Setup(gameStateManager, selector, fogOfWar);
             tileSpawner.Setup(selector);

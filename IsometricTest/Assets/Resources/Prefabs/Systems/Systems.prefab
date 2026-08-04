@@ -590,6 +590,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 838066681562493ea36eaae085a92f57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Core.Initiator
+  gameRules: {fileID: 11400000, guid: 4284ec3bd44b42bbbcffb6af636c7e57, type: 2}
   gameStateManager: {fileID: 3478318959186095542}
   tileSpawner: {fileID: 1090123498142972224}
   unitSpawner: {fileID: 6164232492054156886}

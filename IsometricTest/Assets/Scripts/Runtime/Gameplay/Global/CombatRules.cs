@@ -12,6 +12,33 @@ namespace Runtime.Gameplay.Global
     /// </summary>
     public static class CombatRules
     {
+        private static GameRules rules;
+
+        /// <summary>
+        /// Injected by the Initiator before anything can resolve combat.
+        /// </summary>
+        public static void Setup(GameRules gameRules)
+        {
+            rules = gameRules;
+
+            if (rules == null)
+                Debug.LogError("CombatRules got no GameRules asset - falling back to the built-in defaults.");
+        }
+
+        /// <summary>
+        /// Never null: a missing asset yields a default-valued instance so combat still resolves.
+        /// </summary>
+        private static GameRules Rules
+        {
+            get
+            {
+                if (rules == null)
+                    rules = ScriptableObject.CreateInstance<GameRules>();
+
+                return rules;
+            }
+        }
+
         /// <summary>
         /// Damage a single strike deals once every trait has had its say (terrain, attacker, defender). Never returns less than zero.
         /// </summary>
@@ -30,6 +57,21 @@ namespace Runtime.Gameplay.Global
             return Mathf.Max(0, damage);
         }
         
+        /// <summary>
+        /// Whether <paramref name="defender"/> strikes back at <paramref name="attacker"/> after being hit:
+        /// only if the match rules allow retaliation at all and the attacker is within the defender's
+        /// effective range - so a ranged unit retaliating from a hill benefits from its terrain bonus.
+        /// </summary>
+        public static bool CanRetaliate(Unit defender, Unit attacker)
+        {
+            if (!Rules.RetaliationEnabled)
+                return false;
+
+            var distance = GetManhattanDistance(defender.CurrentState.Position, attacker.CurrentState.Position);
+
+            return distance <= GetEffectiveAttackRange(defender);
+        }
+
         public static int GetEffectiveAttackRange(Unit unit)
         {
             return GetEffectiveAttackRange(unit, unit.CurrentState.Position);
@@ -53,6 +95,14 @@ namespace Runtime.Gameplay.Global
                 range = trait.ModifyAttackRange(range, context);
 
             return range;
+        }
+
+        private static int GetManhattanDistance(Tile from, Tile to)
+        {
+            var dx = Mathf.Abs(from.Position.x - to.Position.x);
+            var dy = Mathf.Abs(from.Position.y - to.Position.y);
+
+            return dx + dy;
         }
 
         private static IEnumerable<Trait> AttackerTraits(Unit unit)

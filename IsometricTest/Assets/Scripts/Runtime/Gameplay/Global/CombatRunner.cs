@@ -1,5 +1,4 @@
 using Runtime.Gameplay.Entities;
-using UnityEngine;
 
 namespace Runtime.Gameplay.Global
 {
@@ -11,8 +10,9 @@ namespace Runtime.Gameplay.Global
 
             bool attackerDied = false;
 
-            // The target only strikes back if the attacker is within the targets attack range.
-            if (IsInAttackRange(target, attacker))
+            // Whether the target strikes back is a rule question, so it is answered by CombatRules
+            // (match rules first, then reach) rather than decided here.
+            if (CombatRules.CanRetaliate(target, attacker))
                 attackerDied = ApplyDamage(target, attacker, isRetaliation: true);
 
             if (targetDied)
@@ -25,21 +25,6 @@ namespace Runtime.Gameplay.Global
                 attacker.Remove();
             }
         }
-
-        private static bool IsInAttackRange(Unit attacker, Unit defender)
-        {
-            int distance = GetManhattanDistance(attacker.CurrentState.Position, defender.CurrentState.Position);
-            // Effective range so a ranged unit retaliating from a hill benefits from its terrain bonus.
-            return distance <= CombatRules.GetEffectiveAttackRange(attacker);
-        }
-
-        private static int GetManhattanDistance(Tile attackerTile, Tile targetTile)
-        {
-            int dx = Mathf.Abs(attackerTile.Position.x - targetTile.Position.x);
-            int dy = Mathf.Abs(attackerTile.Position.y - targetTile.Position.y);
-            return dx + dy;
-        }
-
 
         private static bool ApplyDamage(Unit attacker, Unit target, bool isRetaliation)
         {
