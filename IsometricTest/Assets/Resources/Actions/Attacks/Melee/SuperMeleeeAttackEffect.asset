@@ -10,6 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c5398cd34aeb4ba493d9f85482eb049e, type: 3}
-  m_Name: New Attack Effect
+  m_Name: SuperMeleeeAttackEffect
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackEffect
-  Damage: 5
+  Damage: 20

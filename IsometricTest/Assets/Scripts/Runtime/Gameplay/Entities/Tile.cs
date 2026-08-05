@@ -34,6 +34,11 @@ namespace Runtime.Gameplay.Entities
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
         }
+        
+        public int DistanceTo(Tile other)
+        {
+            return Mathf.Abs(Position.x - other.Position.x) + Mathf.Abs(Position.y - other.Position.y);
+        }
 
         public void SetUnit(Unit unit)
         {

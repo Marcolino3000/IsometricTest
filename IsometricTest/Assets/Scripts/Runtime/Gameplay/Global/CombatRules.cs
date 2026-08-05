@@ -40,7 +40,8 @@ namespace Runtime.Gameplay.Global
         }
 
         /// <summary>
-        /// Damage a single strike deals once every trait has had its say (terrain, attacker, defender). Never returns less than zero.
+        /// Damage a single strike deals once every trait has had its say: the attacker's traits shape the
+        /// outgoing hit, then the defender's shape what actually lands. Never returns less than zero.
         /// </summary>
         public static int CalculateDamage(Unit attacker, Unit defender, bool isRetaliation = false)
         {
@@ -48,15 +49,15 @@ namespace Runtime.Gameplay.Global
 
             var damage = attacker.CurrentState.AttackAction.Effect.Damage;
 
-            foreach (var trait in AttackerTraits(attacker))
+            foreach (var trait in TraitsAffecting(attacker))
                 damage = trait.ModifyOutgoingDamage(damage, context);
 
-            foreach (var trait in DefenderTraits(defender))
+            foreach (var trait in TraitsAffecting(defender))
                 damage = trait.ModifyIncomingDamage(damage, context);
 
             return Mathf.Max(0, damage);
         }
-        
+
         /// <summary>
         /// Whether <paramref name="defender"/> strikes back at <paramref name="attacker"/> after being hit:
         /// only if the match rules allow retaliation at all and the attacker is within the defender's
@@ -67,7 +68,7 @@ namespace Runtime.Gameplay.Global
             if (!Rules.RetaliationEnabled)
                 return false;
 
-            var distance = GetManhattanDistance(defender.CurrentState.Position, attacker.CurrentState.Position);
+            var distance = defender.CurrentState.Position.DistanceTo(attacker.CurrentState.Position);
 
             return distance <= GetEffectiveAttackRange(defender);
         }
@@ -88,56 +89,25 @@ namespace Runtime.Gameplay.Global
 
             var range = baseRange;
 
-            foreach (var trait in TerrainTraits(fromTile))
-                range = trait.ModifyAttackRange(range, context);
-
-            foreach (var trait in UnitTraits(unit))
+            foreach (var trait in TraitsAffecting(unit, fromTile))
                 range = trait.ModifyAttackRange(range, context);
 
             return range;
         }
-
-        private static int GetManhattanDistance(Tile from, Tile to)
+        
+        private static IEnumerable<Trait> TraitsAffecting(Unit unit)
         {
-            var dx = Mathf.Abs(from.Position.x - to.Position.x);
-            var dy = Mathf.Abs(from.Position.y - to.Position.y);
-
-            return dx + dy;
+            return TraitsAffecting(unit, unit.CurrentState.Position);
         }
-
-        private static IEnumerable<Trait> AttackerTraits(Unit unit)
+        
+        private static IEnumerable<Trait> TraitsAffecting(Unit unit, Tile tile)
         {
-            foreach (var trait in UnitTraits(unit))
-                yield return trait;
-
-            foreach (var trait in TerrainTraits(unit.CurrentState.Position))
-                yield return trait;
-        }
-
-        private static IEnumerable<Trait> DefenderTraits(Unit unit)
-        {
-            foreach (var trait in UnitTraits(unit))
-                yield return trait;
-
-            foreach (var trait in TerrainTraits(unit.CurrentState.Position))
-                yield return trait;
-        }
-
-        private static IEnumerable<UnitTrait> UnitTraits(Unit unit)
-        {
-            var traits = unit.CurrentState.Traits;
-            if (traits == null)
-                yield break;
-
-            foreach (var trait in traits)
+            foreach (var trait in unit.CurrentState.Traits)
                 if (trait != null)
                     yield return trait;
-        }
 
-        private static IEnumerable<TerrainTrait> TerrainTraits(Tile tile)
-        {
-            if (tile == null || tile.Traits == null)
-                yield break;
+            if (tile == null)
+                Debug.LogError("Unit does not have a tile/position assigned!");
 
             foreach (var trait in tile.Traits)
                 if (trait != null)

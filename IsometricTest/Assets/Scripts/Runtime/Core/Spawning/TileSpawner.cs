@@ -24,7 +24,7 @@ namespace Runtime.Core.Spawning
         #region Services
         public int GetDistanceBetweenTiles(Tile tileA, Tile tileB)
         {
-            return Mathf.Abs(tileA.Position.x - tileB.Position.x) + Mathf.Abs(tileA.Position.y - tileB.Position.y);
+            return tileA.DistanceTo(tileB);
         }
 
         public List<Tile> GetPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false)
