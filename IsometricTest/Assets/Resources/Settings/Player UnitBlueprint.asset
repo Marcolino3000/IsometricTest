@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbcaca3db3794b188c3bb2227ae55a0d, type: 3}
-  m_Name: Melee UnitBlueprint
+  m_Name: Player UnitBlueprint
   m_EditorClassIdentifier: 
-  Sprite: {fileID: -61923535, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+  Sprite: {fileID: 1034767739, guid: 4f97a675afc3540b894c43bcbf68df44, type: 3}
   defaultState:
     Position: {fileID: 0}
     Team: 0
-    SightRange: 3
+    SightRange: 4
     MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
     AttackAction: {fileID: 11400000, guid: db0aa245c745641109f55f8c5816167a, type: 2}
     Traits:
     - {fileID: 11400000, guid: 3c6d6cf24c5246358d4b7e7541aaf7a6, type: 2}
     - {fileID: 11400000, guid: e39ef3961e384f18a5424164e0b6b823, type: 2}
-    health: 12
-    actionPoints: 3
+    health: 20
+    actionPoints: 4
     hasActionsLeft: 0

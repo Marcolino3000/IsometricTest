@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1c599704cdf42c1a1466a89341ea0b3, type: 3}
   m_Name: Default UnitSpawnerSettings
   m_EditorClassIdentifier: 
-  PlayerUnit: {fileID: 1033920189357735479, guid: 560cd3456b51c4f609e960b3b8f037c6, type: 3}
+  PlayerUnit: {fileID: 1033920189357735479, guid: 940f94232c4d24678868939d3863644e, type: 3}
   OpponentUnits:
   - Amount: 1
     Prefab: {fileID: 1033920189357735479, guid: 560cd3456b51c4f609e960b3b8f037c6, type: 3}

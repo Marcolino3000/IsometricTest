@@ -282,6 +282,77 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selector: {fileID: 4304017811601341457}
+--- !u!1 &4820137755690214301
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4820137755690214302}
+  - component: {fileID: 4820137755690214303}
+  - component: {fileID: 4820137755690214304}
+  m_Layer: 5
+  m_Name: ItemBar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4820137755690214302
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4820137755690214301}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 1412987443265127981}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4820137755690214303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4820137755690214301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: dab021771eed41b7bb2164cf73210e88, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: a1c47f2b90e34d6ea1f5b83c72d40915, type: 3}
+  m_SortingOrder: 1
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 200
+  m_WorldSpaceHeight: 200
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &4820137755690214304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4820137755690214301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9b06e34a5714f28b3cd820f61e9a7c5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::UI.ItemBar
+  slotCount: 6
+  tooltipDelay: 0.5
+  slotTemplate: {fileID: 9197481963319205126, guid: b7e21d5648fa4c93bb0e6a17d4c85320, type: 3}
 --- !u!1 &5086448277929844389
 GameObject:
   m_ObjectHideFlags: 0
@@ -457,6 +528,7 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 839429105084348837}
+  - {fileID: 4820137755690214302}
   m_Father: {fileID: 6161654108688559747}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8420455271412094690
@@ -600,6 +672,10 @@ MonoBehaviour:
   actionAssigner: {fileID: 1772559824657402244}
   fogOfWar: {fileID: 6967780869941050052}
   nextTurnButton: {fileID: 3454670680114467044}
+  itemBar: {fileID: 4820137755690214304}
+  hudDocuments:
+  - {fileID: 8722650819136852705}
+  - {fileID: 4820137755690214303}
 --- !u!1 &9075107352804633641
 GameObject:
   m_ObjectHideFlags: 0

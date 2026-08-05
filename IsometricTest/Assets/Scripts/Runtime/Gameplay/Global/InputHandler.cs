@@ -10,12 +10,22 @@ namespace Runtime.Gameplay.Global
 
         public event Action RightClicked;
 
+        /// <summary>
+        /// Raised with the zero-based index of the number key that was pressed (key 1 reports 0).
+        /// Raw input only — who cares about which index is a valid target is up to the listener.
+        /// </summary>
+        public event Action<int> NumberKeyPressed;
+
+        /// <summary>Keys 1..9. Zero and the numpad are deliberately left alone.</summary>
+        private const int NumberKeyCount = 9;
+
         [SerializeField] private float cameraPanSpeed = 10f;
         [SerializeField] private Transform cameraRig;
 
         private InputAction leftClickAction;
         private InputAction rightClickAction;
         private InputAction moveAction;
+        private InputAction numberKeyAction;
         private Transform panTarget;
         private Camera cam;
 
@@ -96,6 +106,24 @@ namespace Runtime.Gameplay.Global
 
         private void OnRightClickPerformed(InputAction.CallbackContext ctx) => RightClicked?.Invoke();
 
+        /// <summary>
+        /// The bindings are added in key order, so the binding index of the control that fired is
+        /// already the zero-based number key index. The action is pass-through, so it also reports
+        /// releases and a second key pressed while the first is still held — hence the press filter.
+        /// </summary>
+        private void OnNumberKeyPerformed(InputAction.CallbackContext ctx)
+        {
+            if (!ctx.ReadValueAsButton())
+                return;
+
+            int index = numberKeyAction.GetBindingIndexForControl(ctx.control);
+
+            if (index < 0)
+                return;
+
+            NumberKeyPressed?.Invoke(index);
+        }
+
         private void OnEnable()
         {
             cam = Camera.main;
@@ -116,12 +144,20 @@ namespace Runtime.Gameplay.Global
                 .With("Left", "<Keyboard>/a")
                 .With("Right", "<Keyboard>/d");
 
+            // Pass-through instead of Button: a Button action resolves conflicts between its
+            // bindings, so pressing 2 while 1 is still held would be swallowed.
+            numberKeyAction = new InputAction(type: InputActionType.PassThrough);
+            for (int key = 1; key <= NumberKeyCount; key++)
+                numberKeyAction.AddBinding($"<Keyboard>/{key}");
+
             leftClickAction.performed += OnLeftClickPerformed;
             rightClickAction.performed += OnRightClickPerformed;
+            numberKeyAction.performed += OnNumberKeyPerformed;
 
             leftClickAction.Enable();
             rightClickAction.Enable();
             moveAction.Enable();
+            numberKeyAction.Enable();
         }
 
         private void OnDisable()
@@ -136,6 +172,12 @@ namespace Runtime.Gameplay.Global
             {
                 rightClickAction.performed -= OnRightClickPerformed;
                 rightClickAction.Disable();
+            }
+
+            if (numberKeyAction != null)
+            {
+                numberKeyAction.performed -= OnNumberKeyPerformed;
+                numberKeyAction.Disable();
             }
 
             moveAction?.Disable();

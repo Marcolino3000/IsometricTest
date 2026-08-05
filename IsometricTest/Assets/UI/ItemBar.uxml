@@ -1,0 +1,7 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/itemBar.uss?fileID=7433441132597879392&amp;guid=c4f83a6172bd49e0ad91c5e73f682b41&amp;type=3#itemBar"/>
+    <engine:VisualElement name="hudRoot" picking-mode="Ignore" class="item-bar-root">
+        <engine:VisualElement name="container" class="item-bar"/>
+        <engine:Label name="tooltip" picking-mode="Ignore" class="slot-tooltip"/>
+    </engine:VisualElement>
+</engine:UXML>

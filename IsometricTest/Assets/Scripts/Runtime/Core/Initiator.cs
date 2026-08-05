@@ -8,6 +8,7 @@ using Runtime.Gameplay.Global;
 using Runtime.Gameplay.History;
 using UI;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Runtime.Core
 {
@@ -32,7 +33,12 @@ namespace Runtime.Core
 
         [Header("UI")]
         [SerializeField] private NextTurnButton nextTurnButton;
-        
+        [SerializeField] private ItemBar itemBar;
+
+        [Tooltip("Screen-space UI documents. A click that lands on one of them must not raycast into the world.")]
+        [SerializeField] private UIDocument[] hudDocuments;
+
+
         private void Awake()
         {
             SetupReferences();
@@ -63,6 +69,7 @@ namespace Runtime.Core
         private void SetupUI()
         {
             nextTurnButton.Setup(gameStateManager);
+            itemBar.Setup(inputHandler);
         }
 
         private void SetupReferences()
@@ -73,7 +80,7 @@ namespace Runtime.Core
             unitSpawner.Setup(gameStateManager, selector, fogOfWar);
             tileSpawner.Setup(selector);
             selector.Setup(gameStateManager, raycaster, unitSpawner);
-            raycaster.Setup(inputHandler);
+            raycaster.Setup(inputHandler, hudDocuments);
             outlineManager.Setup(selector);
             CreateAttackPreview();
             actionHistory.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, aiController, selector);

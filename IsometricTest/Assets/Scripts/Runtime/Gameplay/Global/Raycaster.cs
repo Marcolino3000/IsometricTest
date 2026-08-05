@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
+// UnityEngine.UIElements also has a Clickable; here it always means the world-space one.
+using Clickable = Runtime.Gameplay.Controls.Clickable;
 
 namespace Runtime.Gameplay.Global
 {
@@ -16,9 +20,14 @@ namespace Runtime.Gameplay.Global
 
         private Clickable _currentHovered;
         private Camera cam;
+        private IReadOnlyList<UIDocument> hudDocuments;
 
-        public void Setup(InputHandler inputHandler)
+        /// <param name="hudDocuments">
+        /// Screen-space UI that swallows clicks instead of letting them through to the world.
+        /// </param>
+        public void Setup(InputHandler inputHandler, IReadOnlyList<UIDocument> hudDocuments)
         {
+            this.hudDocuments = hudDocuments;
             inputHandler.LeftClicked += DoClickRaycast;
         }
 
@@ -29,6 +38,9 @@ namespace Runtime.Gameplay.Global
 
         private void DoClickRaycast()
         {
+            if (IsPointerOverUi())
+                return;
+
             var ray = GetRay();
 
             var clickable = CheckForClickable(ray);
@@ -41,9 +53,9 @@ namespace Runtime.Gameplay.Global
 
         private void DoHoverRaycast()
         {
-            var ray = GetRay();
-
-            var newHovered = CheckForClickable(ray);
+            // Over the HUD nothing in the world counts as hovered, so a tile does not stay
+            // highlighted while the cursor sits on the item bar.
+            var newHovered = IsPointerOverUi() ? null : CheckForClickable(GetRay());
 
             if (newHovered == _currentHovered)
                 return;
@@ -55,6 +67,38 @@ namespace Runtime.Gameplay.Global
 
             if (_currentHovered != null)
                 _currentHovered.HoverEnter();
+        }
+
+        /// <summary>
+        /// True while the cursor sits on a pickable element of one of the HUD documents.
+        /// Unity's usual answer, <c>EventSystem.IsPointerOverGameObject</c>, needs an EventSystem in
+        /// the scene (there is none — UI Toolkit runs on the default event system) and must not be
+        /// called from an InputAction callback, which is exactly where the click raycast runs. So we
+        /// query the runtime panels directly, the alternative UI Toolkit documents for this case.
+        /// </summary>
+        private bool IsPointerOverUi()
+        {
+            if (hudDocuments == null || Mouse.current == null)
+                return false;
+
+            Vector2 screenPosition = Mouse.current.position.ReadValue();
+
+            for (int i = 0; i < hudDocuments.Count; i++)
+            {
+                var root = hudDocuments[i] != null ? hudDocuments[i].rootVisualElement : null;
+
+                if (root?.panel == null)
+                    continue;
+
+                // Screen coordinates start bottom-left, UI Toolkit panel coordinates top-left.
+                var panelPosition = RuntimePanelUtils.ScreenToPanel(
+                    root.panel, new Vector2(screenPosition.x, Screen.height - screenPosition.y));
+
+                if (root.panel.Pick(panelPosition) != null)
+                    return true;
+            }
+
+            return false;
         }
 
         private Ray GetRay()

@@ -1,0 +1,6 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:VisualElement name="slot" class="slot">
+        <engine:VisualElement name="icon" picking-mode="Ignore" class="slot__icon"/>
+        <engine:Label name="hotkey" text="1" picking-mode="Ignore" class="slot__hotkey"/>
+    </engine:VisualElement>
+</engine:UXML>
