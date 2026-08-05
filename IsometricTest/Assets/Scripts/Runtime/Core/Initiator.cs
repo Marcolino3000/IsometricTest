@@ -6,6 +6,7 @@ using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
 using Runtime.Gameplay.History;
+using Runtime.Gameplay.Items;
 using UI;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -30,10 +31,12 @@ namespace Runtime.Core
         [SerializeField] private FogOfWar fogOfWar;
         [SerializeField] private AiController aiController;
         [SerializeField] private ActionHistory actionHistory;
+        [SerializeField] private ItemManager itemManager;
 
         [Header("UI")]
         [SerializeField] private NextTurnButton nextTurnButton;
         [SerializeField] private ItemBar itemBar;
+
 
         [Tooltip("Screen-space UI documents. A click that lands on one of them must not raycast into the world.")]
         [SerializeField] private UIDocument[] hudDocuments;
@@ -44,6 +47,7 @@ namespace Runtime.Core
             SetupReferences();
             SpawnEntities();
             SetupUI();
+            itemManager.Begin(unitSpawner.PlayerUnit);
             actionHistory.Begin();
             StartGame();
         }
@@ -61,7 +65,9 @@ namespace Runtime.Core
             gameStateManager.Setup();
             fogOfWar.ResetExploration();
             SpawnEntities();
-            // A restart replaces every unit the recorded snapshots refer to, so the history starts over.
+            // A restart replaces every unit: the ones the recorded snapshots refer to, and the
+            // character the inventory belongs to. Both start over.
+            itemManager.Begin(unitSpawner.PlayerUnit);
             actionHistory.Begin();
             StartGame();
         }
@@ -70,11 +76,11 @@ namespace Runtime.Core
         {
             nextTurnButton.Setup(gameStateManager);
             itemBar.Setup(inputHandler);
+            itemManager.Setup(itemBar);
         }
 
         private void SetupReferences()
         {
-            // First: pure config every later system may consult while resolving actions.
             CombatRules.Setup(gameRules);
             gameStateManager.Setup();
             unitSpawner.Setup(gameStateManager, selector, fogOfWar);

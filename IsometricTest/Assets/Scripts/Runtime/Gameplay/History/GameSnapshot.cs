@@ -99,6 +99,10 @@ namespace Runtime.Gameplay.History
         public readonly int Health;
         public readonly int ActionPoints;
 
+        // The equipped weapon is deliberately not recorded: it is the player's loadout rather than
+        // world state - free to swap, costing no turn and reported as no action - and the item bar
+        // owns which one is armed. Restoring one behind the bar's back would only make them disagree.
+
         public UnitSnapshot(Unit unit)
         {
             Unit = unit;

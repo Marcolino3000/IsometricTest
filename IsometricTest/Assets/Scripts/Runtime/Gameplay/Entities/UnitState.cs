@@ -4,6 +4,7 @@ using Actions;
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Traits;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Runtime.Gameplay.Entities
 {
@@ -49,8 +50,7 @@ namespace Runtime.Gameplay.Entities
         public int SightRange;
         public MoveActionData MoveAction;
         public AttackActionData AttackAction;
-
-        [Tooltip("Traits carried by this unit (e.g. critical hits, or extra damage from flat ground). Drag unit trait assets here.")]
+        
         public List<UnitTrait> Traits = new();
 
         public bool HasActionsLeft => hasActionsLeft;
@@ -71,6 +71,7 @@ namespace Runtime.Gameplay.Entities
         public UnitState(UnitState other)
         {
             MoveAction = other.MoveAction;
+            // Before ActionPoints: its setter asks the attack what a strike costs.
             AttackAction = other.AttackAction;
             Health = other.Health;
             Position = null;

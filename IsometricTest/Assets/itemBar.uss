@@ -55,12 +55,17 @@
     border-left-color: rgb(231, 227, 86);
 }
 
+/* The symbol is set as a background image, so it is scaled to fit the slot here rather than by
+   whatever size the sprite happens to have. */
 .slot__icon {
     flex-grow: 1;
     margin-top: 6px;
     margin-right: 6px;
     margin-bottom: 6px;
     margin-left: 6px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 /* Anchored to the top center of the hovered slot; the translate lifts it above that point

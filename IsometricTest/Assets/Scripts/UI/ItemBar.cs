@@ -21,6 +21,9 @@ namespace UI
 
         public int SelectedIndex { get; private set; } = NoSelection;
 
+        /// <summary>How many slots the bar actually built. Zero until its Awake has run.</summary>
+        public int SlotCount => slots.Count;
+
         /// <summary>Distance between the top edge of a slot and its tooltip, in panel pixels.</summary>
         private const float TooltipGap = 8f;
 
@@ -34,6 +37,7 @@ namespace UI
         [SerializeField] private VisualTreeAsset slotTemplate;
 
         private readonly List<VisualElement> slots = new();
+        private readonly List<VisualElement> slotIcons = new();
         private readonly List<string> slotTooltips = new();
 
         private InputHandler inputHandler;
@@ -59,10 +63,7 @@ namespace UI
             if (index < 0 || index >= slots.Count)
                 return;
 
-            SelectedIndex = index == SelectedIndex ? NoSelection : index;
-
-            for (int i = 0; i < slots.Count; i++)
-                slots[i].EnableInClassList("slot--selected", i == SelectedIndex);
+            ApplySelection(index == SelectedIndex ? NoSelection : index);
 
             SlotSelected?.Invoke(SelectedIndex);
         }
@@ -73,6 +74,17 @@ namespace UI
                 return;
 
             Select(SelectedIndex);
+        }
+
+        /// <summary>
+        /// Shows <paramref name="index"/> as the armed slot without the toggle <see cref="Select"/>
+        /// applies, and without announcing it: this is the owner of the items pushing what is already
+        /// true into the view (after a unit switch or an undo), not a new choice being made.
+        /// Any index outside the bar shows no selection.
+        /// </summary>
+        public void ShowSelection(int index)
+        {
+            ApplySelection(index >= 0 && index < slots.Count ? index : NoSelection);
         }
 
         /// <summary>
@@ -88,6 +100,27 @@ namespace UI
             // The open tooltip would otherwise keep showing the previous text.
             if (hoveredIndex == index)
                 HideTooltip();
+        }
+
+        /// <summary>
+        /// Sets the symbol a slot shows. A null sprite leaves the slot empty.
+        /// </summary>
+        public void SetSlotIcon(int index, Sprite sprite)
+        {
+            if (index < 0 || index >= slotIcons.Count)
+                return;
+
+            slotIcons[index].style.backgroundImage = sprite != null
+                ? new StyleBackground(sprite)
+                : new StyleBackground(StyleKeyword.None);
+        }
+
+        private void ApplySelection(int index)
+        {
+            SelectedIndex = index;
+
+            for (int i = 0; i < slots.Count; i++)
+                slots[i].EnableInClassList("slot--selected", i == SelectedIndex);
         }
 
         // Built in Awake like the NextTurnButton caches its button: the UIDocument has already
@@ -106,6 +139,7 @@ namespace UI
             tooltipLabel = root.Q<Label>("tooltip");
 
             slots.Clear();
+            slotIcons.Clear();
             slotTooltips.Clear();
             container.Clear();
 
@@ -122,8 +156,9 @@ namespace UI
                 slot.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
 
                 slots.Add(slot);
-                // Placeholder until slots carry item data; replaced through SetSlotTooltip.
-                slotTooltips.Add($"Slot {i + 1}");
+                slotIcons.Add(slot.Q<VisualElement>("icon"));
+                // Filled by the ItemManager from the selected unit's items; empty means no tooltip.
+                slotTooltips.Add(string.Empty);
                 container.Add(slot);
             }
         }

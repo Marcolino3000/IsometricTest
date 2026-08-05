@@ -87,6 +87,18 @@ Every executed action announces itself through `ActionReporter.Report(...)` at t
 
 `Gameplay/Global/GameRules.cs` (SO, asset at `Resources/Settings/Default GameRules.asset`, injected into `CombatRules` as the *first* line of `Initiator.SetupReferences`) holds match-wide switches that belong to no unit or tile — today just `RetaliationEnabled`, read by `CombatRules.CanRetaliate` (rule first, then effective range). It is held as a live reference, so toggling it in the inspector applies mid-play. Rules that *do* belong to a unit or tile stay traits.
 
+### Items and weapons
+
+**A weapon is an `AttackActionData` and nothing else** — there is no separate item SO. The asset carries its condition (cost, range) and effect (damage) as before, plus `DisplayName`, `Description` and `Symbol`; `Tooltip` is just name over description.
+
+There is no separate "equipped weapon" field: equipping *is* writing to `UnitState.AttackAction`, since the weapon and the attack are the same asset. The planner, the attack preview and `CombatRules` all read that one field, so they follow a swap without knowing weapons exist. It carries `[FormerlySerializedAs("baseAttackAction")]` for one session's worth of blueprint assets saved under that name; droppable once every `UnitBlueprint` has been re-saved.
+
+`Gameplay/Items/ItemManager.cs` is the player's inventory: the weapon they started with plus everything picked up since (`Pickup`), in slot order. One for the whole match, not one per unit — the player commands a single character, and `Begin(playerUnit)` hands it over, so the manager holds that unit and needs no spawner. The starting weapon is not authored a second time: `Begin` seeds slot 1 from the character's own attack, which its blueprint already names. The Initiator calls it after `SpawnEntities` and again from `Restart`, which spawns a fresh character holding none of what was armed or looted.
+
+`ItemBar` stays a pure view — it knows which slot is armed, nothing about weapons — and the manager is the only translator. A weapon cannot be put down, only swapped: arming a slot that holds one switches to it, and arming an empty slot or clicking the armed slot to clear it leaves the character holding what it had, with the bar put back on that slot. `ItemBar.ShowSelection` pushes the armed slot into the view without the toggle or the event `Select` applies.
+
+Which weapon is in hand is deliberately **not** in `GameSnapshot`: it is loadout, not world state (free to swap, no AP, reported as no action), and the bar owns which slot is armed. Restoring one behind the bar's back would only make the two disagree.
+
 ### Grid and spawning
 
 `Core/Spawning/TileSpawner.cs` owns all tiles and is the query surface for anything spatial — `GetPath`, `GetPathWithinRange`, `GetAttackApproachPath`, `GetMoveableTiles`, `GetTilesInSightRange`, `GetDistanceBetweenTiles`. It delegates to `Pathfinder` so impassable terrain, occupancy and difficult-terrain costs are honoured; don't reimplement distance or reachability against raw positions. Grid distance is **Manhattan**; fog sight is **Euclidean**.
