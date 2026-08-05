@@ -97,7 +97,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: items_4x_0
+      name: Sword_Wood
       rect:
         serializedVersion: 2
         x: 0
@@ -119,7 +119,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_1
+      name: Pickaxe_Wood
       rect:
         serializedVersion: 2
         x: 32
@@ -141,7 +141,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_2
+      name: Shield_Wood
       rect:
         serializedVersion: 2
         x: 64
@@ -163,7 +163,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_3
+      name: Wand_Wood
       rect:
         serializedVersion: 2
         x: 96
@@ -185,7 +185,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_4
+      name: Bow_Wood
       rect:
         serializedVersion: 2
         x: 128
@@ -207,7 +207,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_5
+      name: Amulet_Wood
       rect:
         serializedVersion: 2
         x: 160
@@ -229,7 +229,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_6
+      name: Mace_Wood
       rect:
         serializedVersion: 2
         x: 192
@@ -251,7 +251,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_7
+      name: Ring_Wood
       rect:
         serializedVersion: 2
         x: 224
@@ -273,7 +273,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_8
+      name: Sword_Copper
       rect:
         serializedVersion: 2
         x: 0
@@ -295,7 +295,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_9
+      name: Pickaxe_Copper
       rect:
         serializedVersion: 2
         x: 32
@@ -317,7 +317,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_10
+      name: Shield_Copper
       rect:
         serializedVersion: 2
         x: 64
@@ -339,7 +339,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_11
+      name: Wand_Copper
       rect:
         serializedVersion: 2
         x: 96
@@ -361,7 +361,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_12
+      name: Bow_Copper
       rect:
         serializedVersion: 2
         x: 128
@@ -383,7 +383,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_13
+      name: Amulet_Copper
       rect:
         serializedVersion: 2
         x: 160
@@ -405,7 +405,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_14
+      name: Mace_Copper
       rect:
         serializedVersion: 2
         x: 192
@@ -427,7 +427,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_15
+      name: Ring_Copper
       rect:
         serializedVersion: 2
         x: 224
@@ -449,7 +449,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_16
+      name: Sword_Bronze
       rect:
         serializedVersion: 2
         x: 0
@@ -471,7 +471,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_17
+      name: Pickaxe_Bronze
       rect:
         serializedVersion: 2
         x: 32
@@ -493,7 +493,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_18
+      name: Shield_Bronze
       rect:
         serializedVersion: 2
         x: 64
@@ -515,7 +515,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_19
+      name: Wand_Bronze
       rect:
         serializedVersion: 2
         x: 96
@@ -537,7 +537,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_20
+      name: Bow_Bronze
       rect:
         serializedVersion: 2
         x: 128
@@ -559,7 +559,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_21
+      name: Amulet_Bronze
       rect:
         serializedVersion: 2
         x: 160
@@ -581,7 +581,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_22
+      name: Mace_Bronze
       rect:
         serializedVersion: 2
         x: 192
@@ -603,7 +603,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_23
+      name: Ring_Bronze
       rect:
         serializedVersion: 2
         x: 224
@@ -625,7 +625,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_24
+      name: Sword_Steel
       rect:
         serializedVersion: 2
         x: 0
@@ -647,7 +647,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_25
+      name: Pickaxe_Steel
       rect:
         serializedVersion: 2
         x: 32
@@ -669,7 +669,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_26
+      name: Shield_Steel
       rect:
         serializedVersion: 2
         x: 64
@@ -691,7 +691,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_27
+      name: Wand_Steel
       rect:
         serializedVersion: 2
         x: 96
@@ -713,7 +713,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_28
+      name: Bow_Steel
       rect:
         serializedVersion: 2
         x: 128
@@ -735,7 +735,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_29
+      name: Amulet_Steel
       rect:
         serializedVersion: 2
         x: 160
@@ -757,7 +757,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_30
+      name: Mace_Steel
       rect:
         serializedVersion: 2
         x: 192
@@ -779,7 +779,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_31
+      name: Ring_Steel
       rect:
         serializedVersion: 2
         x: 224
@@ -801,7 +801,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_32
+      name: Sword_Emerald
       rect:
         serializedVersion: 2
         x: 0
@@ -823,7 +823,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_33
+      name: Pickaxe_Emerald
       rect:
         serializedVersion: 2
         x: 32
@@ -845,7 +845,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_34
+      name: Shield_Emerald
       rect:
         serializedVersion: 2
         x: 64
@@ -867,7 +867,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_35
+      name: Wand_Emerald
       rect:
         serializedVersion: 2
         x: 96
@@ -889,7 +889,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_36
+      name: Bow_Emerald
       rect:
         serializedVersion: 2
         x: 128
@@ -911,7 +911,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_37
+      name: Amulet_Emerald
       rect:
         serializedVersion: 2
         x: 160
@@ -933,7 +933,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_38
+      name: Mace_Emerald
       rect:
         serializedVersion: 2
         x: 192
@@ -955,7 +955,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_39
+      name: Ring_Emerald
       rect:
         serializedVersion: 2
         x: 224
@@ -977,7 +977,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_40
+      name: Sword_Amethyst
       rect:
         serializedVersion: 2
         x: 0
@@ -999,7 +999,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_41
+      name: Pickaxe_Amethyst
       rect:
         serializedVersion: 2
         x: 32
@@ -1021,7 +1021,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_42
+      name: Shield_Amethyst
       rect:
         serializedVersion: 2
         x: 64
@@ -1043,7 +1043,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_43
+      name: Wand_Amethyst
       rect:
         serializedVersion: 2
         x: 96
@@ -1065,7 +1065,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_44
+      name: Bow_Amethyst
       rect:
         serializedVersion: 2
         x: 128
@@ -1087,7 +1087,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_45
+      name: Amulet_Amethyst
       rect:
         serializedVersion: 2
         x: 160
@@ -1109,7 +1109,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_46
+      name: Mace_Amethyst
       rect:
         serializedVersion: 2
         x: 192
@@ -1131,7 +1131,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_47
+      name: Ring_Amethyst
       rect:
         serializedVersion: 2
         x: 224
@@ -1153,7 +1153,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_48
+      name: Sword_Ruby
       rect:
         serializedVersion: 2
         x: 0
@@ -1175,7 +1175,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_49
+      name: Pickaxe_Ruby
       rect:
         serializedVersion: 2
         x: 32
@@ -1197,7 +1197,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_50
+      name: Shield_Ruby
       rect:
         serializedVersion: 2
         x: 64
@@ -1219,7 +1219,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_51
+      name: Wand_Ruby
       rect:
         serializedVersion: 2
         x: 96
@@ -1241,7 +1241,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_52
+      name: Bow_Ruby
       rect:
         serializedVersion: 2
         x: 128
@@ -1263,7 +1263,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_53
+      name: Amulet_Ruby
       rect:
         serializedVersion: 2
         x: 160
@@ -1285,7 +1285,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_54
+      name: Mace_Ruby
       rect:
         serializedVersion: 2
         x: 192
@@ -1307,7 +1307,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_55
+      name: Ring_Ruby
       rect:
         serializedVersion: 2
         x: 224
@@ -1329,7 +1329,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_56
+      name: Sword_Sapphire
       rect:
         serializedVersion: 2
         x: 0
@@ -1351,7 +1351,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_57
+      name: Pickaxe_Sapphire
       rect:
         serializedVersion: 2
         x: 32
@@ -1373,7 +1373,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_58
+      name: Shield_Sapphire
       rect:
         serializedVersion: 2
         x: 64
@@ -1395,7 +1395,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_59
+      name: Wand_Sapphire
       rect:
         serializedVersion: 2
         x: 96
@@ -1417,7 +1417,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_60
+      name: Bow_Sapphire
       rect:
         serializedVersion: 2
         x: 128
@@ -1439,7 +1439,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_61
+      name: Amulet_Sapphire
       rect:
         serializedVersion: 2
         x: 160
@@ -1461,7 +1461,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_62
+      name: Mace_Sapphire
       rect:
         serializedVersion: 2
         x: 192
@@ -1483,7 +1483,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: items_4x_63
+      name: Ring_Sapphire
       rect:
         serializedVersion: 2
         x: 224
@@ -1520,70 +1520,70 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":8.0,"y":8.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      items_4x_0: -34962715
-      items_4x_1: -1898735955
-      items_4x_10: 1488363378
-      items_4x_11: -1745111977
-      items_4x_12: -1572880990
-      items_4x_13: 1683767938
-      items_4x_14: -655068448
-      items_4x_15: 1829891
-      items_4x_16: 457568753
-      items_4x_17: -1586079193
-      items_4x_18: 1454229440
-      items_4x_19: -193375528
-      items_4x_2: -1157360587
-      items_4x_20: 1557238743
-      items_4x_21: 178948567
-      items_4x_22: -1850533929
-      items_4x_23: -2035022939
-      items_4x_24: 1635533467
-      items_4x_25: 500599679
-      items_4x_26: -1343826562
-      items_4x_27: -1569564830
-      items_4x_28: -2124516186
-      items_4x_29: 424517400
-      items_4x_3: 1761427543
-      items_4x_30: 820335677
-      items_4x_31: -2146243458
-      items_4x_32: 14340591
-      items_4x_33: 600374767
-      items_4x_34: 1120977052
-      items_4x_35: -2088117019
-      items_4x_36: -1365905632
-      items_4x_37: 28558125
-      items_4x_38: 650812138
-      items_4x_39: -360103941
-      items_4x_4: -377700250
-      items_4x_40: -998655130
-      items_4x_41: 1190845941
-      items_4x_42: -873904343
-      items_4x_43: -1527640156
-      items_4x_44: 1135746771
-      items_4x_45: 29364167
-      items_4x_46: 1495580776
-      items_4x_47: 1487089252
-      items_4x_48: -306505746
-      items_4x_49: 1186449471
-      items_4x_5: 1460784909
-      items_4x_50: 1332440471
-      items_4x_51: 1230775888
-      items_4x_52: -490412417
-      items_4x_53: 2081327370
-      items_4x_54: -1754601402
-      items_4x_55: 799520674
-      items_4x_56: -388062377
-      items_4x_57: 1020372138
-      items_4x_58: -1732700003
-      items_4x_59: -2065681830
-      items_4x_6: 1184775364
-      items_4x_60: 844178753
-      items_4x_61: 1119931974
-      items_4x_62: 1479591443
-      items_4x_63: -1076014366
-      items_4x_7: 1951226594
-      items_4x_8: -1999230048
-      items_4x_9: -1922021771
+      Amulet_Amethyst: 29364167
+      Amulet_Bronze: 178948567
+      Amulet_Copper: 1683767938
+      Amulet_Emerald: 28558125
+      Amulet_Ruby: 2081327370
+      Amulet_Sapphire: 1119931974
+      Amulet_Steel: 424517400
+      Amulet_Wood: 1460784909
+      Bow_Amethyst: 1135746771
+      Bow_Bronze: 1557238743
+      Bow_Copper: -1572880990
+      Bow_Emerald: -1365905632
+      Bow_Ruby: -490412417
+      Bow_Sapphire: 844178753
+      Bow_Steel: -2124516186
+      Bow_Wood: -377700250
+      Mace_Amethyst: 1495580776
+      Mace_Bronze: -1850533929
+      Mace_Copper: -655068448
+      Mace_Emerald: 650812138
+      Mace_Ruby: -1754601402
+      Mace_Sapphire: 1479591443
+      Mace_Steel: 820335677
+      Mace_Wood: 1184775364
+      Pickaxe_Amethyst: 1190845941
+      Pickaxe_Bronze: -1586079193
+      Pickaxe_Copper: -1922021771
+      Pickaxe_Emerald: 600374767
+      Pickaxe_Ruby: 1186449471
+      Pickaxe_Sapphire: 1020372138
+      Pickaxe_Steel: 500599679
+      Pickaxe_Wood: -1898735955
+      Ring_Amethyst: 1487089252
+      Ring_Bronze: -2035022939
+      Ring_Copper: 1829891
+      Ring_Emerald: -360103941
+      Ring_Ruby: 799520674
+      Ring_Sapphire: -1076014366
+      Ring_Steel: -2146243458
+      Ring_Wood: 1951226594
+      Shield_Amethyst: -873904343
+      Shield_Bronze: 1454229440
+      Shield_Copper: 1488363378
+      Shield_Emerald: 1120977052
+      Shield_Ruby: 1332440471
+      Shield_Sapphire: -1732700003
+      Shield_Steel: -1343826562
+      Shield_Wood: -1157360587
+      Sword_Amethyst: -998655130
+      Sword_Bronze: 457568753
+      Sword_Copper: -1999230048
+      Sword_Emerald: 14340591
+      Sword_Ruby: -306505746
+      Sword_Sapphire: -388062377
+      Sword_Steel: 1635533467
+      Sword_Wood: -34962715
+      Wand_Amethyst: -1527640156
+      Wand_Bronze: -193375528
+      Wand_Copper: -1745111977
+      Wand_Emerald: -2088117019
+      Wand_Ruby: 1230775888
+      Wand_Sapphire: -2065681830
+      Wand_Steel: -1569564830
+      Wand_Wood: 1761427543
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
