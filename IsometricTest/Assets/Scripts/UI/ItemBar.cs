@@ -7,25 +7,47 @@ using UnityEngine.UIElements;
 namespace UI
 {
     /// <summary>
-    /// Row of item slots at the bottom of the screen. A slot is selected by clicking it or by
-    /// pressing its number key; selecting the already selected slot clears the selection.
-    /// Resting the cursor on a slot opens its tooltip.
-    /// The bar is a pure view: it owns which slot is armed and announces it, nothing more.
+    /// One entry of a slot's picker — everything the bar needs to draw a choice, and nothing about
+    /// what that choice is. The owner of the items builds these.
+    /// </summary>
+    public readonly struct ItemOption
+    {
+        public readonly Sprite Icon;
+        public readonly string Tooltip;
+
+        public ItemOption(Sprite icon, string tooltip)
+        {
+            Icon = icon;
+            Tooltip = tooltip;
+        }
+    }
+
+    /// <summary>
+    /// Row of item slots at the bottom of the screen. A slot stands for a category and shows what is
+    /// equipped of it; pressing its number key or clicking it asks the owner of the items for
+    /// everything that fits, which is then offered in a column above the slot. Repeating the key
+    /// walks that column and space confirms; with the mouse the entry is clicked directly.
+    /// The bar is a pure view: it knows which slot is open and which entry is highlighted, nothing more.
     /// </summary>
     public class ItemBar : MonoBehaviour
     {
-        /// <summary>Raised with the selected slot index, or -1 when the selection was cleared.</summary>
-        public event Action<int> SlotSelected;
+        /// <summary>Raised with the slot the player wants to see the fitting items of.</summary>
+        public event Action<int> SlotActivated;
 
-        public const int NoSelection = -1;
-
-        public int SelectedIndex { get; private set; } = NoSelection;
+        /// <summary>Raised with the slot and the index of the entry that was confirmed.</summary>
+        public event Action<int, int> OptionChosen;
 
         /// <summary>How many slots the bar actually built. Zero until its Awake has run.</summary>
         public int SlotCount => slots.Count;
 
-        /// <summary>Distance between the top edge of a slot and its tooltip, in panel pixels.</summary>
+        /// <summary>Stands for "no slot" and "no entry" alike — both are indices into a list.</summary>
+        private const int NoSelection = -1;
+
+        /// <summary>Distance between an element and the tooltip labelling it, in panel pixels.</summary>
         private const float TooltipGap = 8f;
+
+        /// <summary>Distance between the top edge of a slot and its picker, in panel pixels.</summary>
+        private const float PickerGap = 8f;
 
         [Tooltip("How many slots the bar shows. Only the first nine are reachable by number key.")]
         [SerializeField] private int slotCount = 6;
@@ -33,58 +55,80 @@ namespace UI
         [Tooltip("Seconds the cursor has to rest on a slot before its tooltip opens.")]
         [SerializeField] private float tooltipDelay = 0.5f;
 
-        [Tooltip("Template instantiated once per slot.")]
+        [Tooltip("Template instantiated once per slot and once per picker entry.")]
         [SerializeField] private VisualTreeAsset slotTemplate;
 
         private readonly List<VisualElement> slots = new();
         private readonly List<VisualElement> slotIcons = new();
         private readonly List<string> slotTooltips = new();
 
+        private readonly List<VisualElement> options = new();
+        private readonly List<string> optionTooltips = new();
+
         private InputHandler inputHandler;
         private VisualElement container;
         private VisualElement hudRoot;
+        private VisualElement picker;
         private Label tooltipLabel;
         private IVisualElementScheduledItem tooltipTimer;
-        private int hoveredIndex = NoSelection;
+        private int hoveredSlot = NoSelection;
+
+        private int openSlot = NoSelection;
+        private int highlightedOption = NoSelection;
 
         public void Setup(InputHandler handler)
         {
             inputHandler = handler;
-            inputHandler.NumberKeyPressed += Select;
+            inputHandler.NumberKeyPressed += HandleNumberKey;
+            inputHandler.ConfirmPressed += ConfirmHighlighted;
+            inputHandler.CancelPressed += ClosePicker;
         }
 
         /// <summary>
-        /// Selects the slot at <paramref name="index"/>, or clears the selection when that slot is
-        /// already selected. Indices outside the bar are ignored, so the input handler can announce
-        /// every number key without knowing how many slots exist.
+        /// Offers <paramref name="items"/> above <paramref name="slot"/> with
+        /// <paramref name="highlighted"/> pre-selected — what the owner of the items answers a
+        /// <see cref="SlotActivated"/> with. Nothing to offer means no picker, so a slot whose
+        /// category the player owns nothing of simply does not react.
         /// </summary>
-        public void Select(int index)
+        public void OpenPicker(int slot, IReadOnlyList<ItemOption> items, int highlighted)
         {
-            if (index < 0 || index >= slots.Count)
+            ClosePicker();
+
+            if (slot < 0 || slot >= slots.Count || items == null || items.Count == 0)
                 return;
 
-            ApplySelection(index == SelectedIndex ? NoSelection : index);
+            openSlot = slot;
 
-            SlotSelected?.Invoke(SelectedIndex);
+            for (int i = 0; i < items.Count; i++)
+                AddOption(items[i], i);
+
+            // An entry outside the list (nothing equipped there) starts the walk at the first one.
+            Highlight(highlighted >= 0 && highlighted < options.Count ? highlighted : 0);
+
+            slots[slot].AddToClassList("slot--open");
+            picker.style.display = DisplayStyle.Flex;
+
+            PlacePicker(slot);
         }
 
-        public void ClearSelection()
+        public void ClosePicker()
         {
-            if (SelectedIndex == NoSelection)
+            if (openSlot != NoSelection)
+                slots[openSlot].RemoveFromClassList("slot--open");
+
+            openSlot = NoSelection;
+            highlightedOption = NoSelection;
+
+            options.Clear();
+            optionTooltips.Clear();
+
+            if (picker == null)
                 return;
 
-            Select(SelectedIndex);
-        }
+            picker.Clear();
+            picker.style.display = DisplayStyle.None;
 
-        /// <summary>
-        /// Shows <paramref name="index"/> as the armed slot without the toggle <see cref="Select"/>
-        /// applies, and without announcing it: this is the owner of the items pushing what is already
-        /// true into the view (after a unit switch or an undo), not a new choice being made.
-        /// Any index outside the bar shows no selection.
-        /// </summary>
-        public void ShowSelection(int index)
-        {
-            ApplySelection(index >= 0 && index < slots.Count ? index : NoSelection);
+            HideTooltip();
         }
 
         /// <summary>
@@ -98,7 +142,7 @@ namespace UI
             slotTooltips[index] = text;
 
             // The open tooltip would otherwise keep showing the previous text.
-            if (hoveredIndex == index)
+            if (hoveredSlot == index)
                 HideTooltip();
         }
 
@@ -110,17 +154,116 @@ namespace UI
             if (index < 0 || index >= slotIcons.Count)
                 return;
 
-            slotIcons[index].style.backgroundImage = sprite != null
-                ? new StyleBackground(sprite)
-                : new StyleBackground(StyleKeyword.None);
+            SetIcon(slotIcons[index], sprite);
         }
 
-        private void ApplySelection(int index)
+        /// <summary>
+        /// A number key opens its slot's picker; repeating the key of the open one walks its entries.
+        /// Indices outside the bar are ignored, so the input handler can announce every number key
+        /// without knowing how many slots exist.
+        /// </summary>
+        private void HandleNumberKey(int index)
         {
-            SelectedIndex = index;
+            if (index < 0 || index >= slots.Count)
+                return;
 
-            for (int i = 0; i < slots.Count; i++)
-                slots[i].EnableInClassList("slot--selected", i == SelectedIndex);
+            if (openSlot == index)
+            {
+                HighlightNext();
+                return;
+            }
+
+            // Turning to another slot abandons the choice that was being made.
+            ClosePicker();
+
+            SlotActivated?.Invoke(index);
+        }
+
+        /// <summary>
+        /// Clicking a slot opens its picker, clicking it again puts the picker away — the choice
+        /// itself is made by clicking an entry, not the slot.
+        /// </summary>
+        private void HandleSlotClicked(int index)
+        {
+            bool wasOpen = openSlot == index;
+
+            ClosePicker();
+
+            if (wasOpen)
+                return;
+
+            SlotActivated?.Invoke(index);
+        }
+
+        private void ConfirmHighlighted()
+        {
+            if (openSlot == NoSelection)
+                return;
+
+            Choose(highlightedOption);
+        }
+
+        private void Choose(int option)
+        {
+            int slot = openSlot;
+
+            ClosePicker();
+
+            OptionChosen?.Invoke(slot, option);
+        }
+
+        private void HighlightNext()
+        {
+            Highlight((highlightedOption + 1) % options.Count);
+        }
+
+        private void Highlight(int index)
+        {
+            highlightedOption = index;
+
+            for (int i = 0; i < options.Count; i++)
+                options[i].EnableInClassList("slot--selected", i == highlightedOption);
+        }
+
+        private void AddOption(ItemOption item, int index)
+        {
+            var option = slotTemplate.Instantiate().Q("slot");
+
+            // A focusable entry would keep keyboard focus after a click and swallow the number keys.
+            option.focusable = false;
+            option.AddToClassList("slot--option");
+
+            // The number key belongs to the slot, not to the entries offered above it.
+            option.Q<Label>("hotkey").style.display = DisplayStyle.None;
+            SetIcon(option.Q<VisualElement>("icon"), item.Icon);
+
+            option.RegisterCallback<ClickEvent>(_ => Choose(index));
+            option.RegisterCallback<PointerEnterEvent>(_ => ScheduleTooltip(option, optionTooltips[index], true));
+            option.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+
+            options.Add(option);
+            optionTooltips.Add(item.Tooltip);
+            picker.Add(option);
+        }
+
+        /// <summary>
+        /// Anchors the picker to the top center of its slot. The USS translate centers the column and
+        /// lifts it above that point, so how tall the column turned out never has to be measured.
+        /// </summary>
+        private void PlacePicker(int slot)
+        {
+            Rect bounds = slots[slot].worldBound;
+            Vector2 anchor = hudRoot.WorldToLocal(new Vector2(bounds.center.x, bounds.yMin));
+
+            picker.style.left = anchor.x;
+            picker.style.top = anchor.y - PickerGap;
+        }
+
+        private static void SetIcon(VisualElement icon, Sprite sprite)
+        {
+            icon.style.backgroundImage = sprite != null
+                ? new StyleBackground(sprite)
+                : new StyleBackground(StyleKeyword.None);
         }
 
         // Built in Awake like the NextTurnButton caches its button: the UIDocument has already
@@ -151,53 +294,78 @@ namespace UI
                 // A focusable slot would keep keyboard focus after a click and swallow the number keys.
                 slot.focusable = false;
                 slot.Q<Label>("hotkey").text = (i + 1).ToString();
-                slot.RegisterCallback<ClickEvent>(_ => Select(index));
-                slot.RegisterCallback<PointerEnterEvent>(_ => ScheduleTooltip(index));
+                slot.RegisterCallback<ClickEvent>(_ => HandleSlotClicked(index));
+                slot.RegisterCallback<PointerEnterEvent>(_ => HoverSlot(index, slot));
                 slot.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
 
                 slots.Add(slot);
                 slotIcons.Add(slot.Q<VisualElement>("icon"));
-                // Filled by the ItemManager from the selected unit's items; empty means no tooltip.
+                // Filled by the ItemManager from the equipped item; empty means no tooltip.
                 slotTooltips.Add(string.Empty);
                 container.Add(slot);
             }
+
+            BuildPicker();
         }
 
-        private void ScheduleTooltip(int index)
+        /// <summary>
+        /// The picker hangs in the HUD root rather than in the slot row: it is positioned freely
+        /// above whichever slot is open, the same way the tooltip is.
+        /// </summary>
+        private void BuildPicker()
+        {
+            picker = new VisualElement { name = "picker" };
+            picker.AddToClassList("slot-picker");
+            picker.style.display = DisplayStyle.None;
+
+            hudRoot.Add(picker);
+        }
+
+        private void HoverSlot(int index, VisualElement slot)
+        {
+            hoveredSlot = index;
+
+            ScheduleTooltip(slot, slotTooltips[index], false);
+        }
+
+        private void ScheduleTooltip(VisualElement anchor, string text, bool toSide)
         {
             HideTooltip();
 
-            if (string.IsNullOrEmpty(slotTooltips[index]))
+            if (string.IsNullOrEmpty(text))
                 return;
-
-            hoveredIndex = index;
 
             // Scheduled on the bar rather than on the tooltip: the timer has to keep running
             // while the tooltip itself is still hidden.
             tooltipTimer = container.schedule
-                .Execute(() => ShowTooltip(index))
+                .Execute(() => ShowTooltip(anchor, text, toSide))
                 .StartingIn((long)(tooltipDelay * 1000f));
         }
 
-        private void ShowTooltip(int index)
+        private void ShowTooltip(VisualElement anchor, string text, bool toSide)
         {
-            tooltipLabel.text = slotTooltips[index];
+            tooltipLabel.text = text;
+            tooltipLabel.EnableInClassList("slot-tooltip--side", toSide);
             tooltipLabel.style.display = DisplayStyle.Flex;
 
-            // Anchored to the top center of the slot; the USS translate does the centering and
-            // lifts the tooltip above that point, so its size never has to be measured here.
-            Rect slot = slots[index].worldBound;
-            Vector2 anchor = hudRoot.WorldToLocal(new Vector2(slot.center.x, slot.yMin));
+            // Slots are labelled from above; picker entries from the right, because the space above
+            // an entry is taken by the rest of the column.
+            Rect bounds = anchor.worldBound;
+            Vector2 point = toSide
+                ? new Vector2(bounds.xMax + TooltipGap, bounds.center.y)
+                : new Vector2(bounds.center.x, bounds.yMin - TooltipGap);
 
-            tooltipLabel.style.left = anchor.x;
-            tooltipLabel.style.top = anchor.y - TooltipGap;
+            Vector2 local = hudRoot.WorldToLocal(point);
+
+            tooltipLabel.style.left = local.x;
+            tooltipLabel.style.top = local.y;
         }
 
         private void HideTooltip()
         {
             tooltipTimer?.Pause();
             tooltipTimer = null;
-            hoveredIndex = NoSelection;
+            hoveredSlot = NoSelection;
 
             tooltipLabel.style.display = DisplayStyle.None;
         }
@@ -207,7 +375,9 @@ namespace UI
             if (inputHandler == null)
                 return;
 
-            inputHandler.NumberKeyPressed -= Select;
+            inputHandler.NumberKeyPressed -= HandleNumberKey;
+            inputHandler.ConfirmPressed -= ConfirmHighlighted;
+            inputHandler.CancelPressed -= ClosePicker;
         }
     }
 }

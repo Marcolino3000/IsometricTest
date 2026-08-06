@@ -16,6 +16,12 @@ namespace Runtime.Gameplay.Global
         /// </summary>
         public event Action<int> NumberKeyPressed;
 
+        /// <summary>Raised when the confirm key (space) goes down.</summary>
+        public event Action ConfirmPressed;
+
+        /// <summary>Raised when the cancel key (escape) goes down.</summary>
+        public event Action CancelPressed;
+
         /// <summary>Keys 1..9. Zero and the numpad are deliberately left alone.</summary>
         private const int NumberKeyCount = 9;
 
@@ -26,6 +32,8 @@ namespace Runtime.Gameplay.Global
         private InputAction rightClickAction;
         private InputAction moveAction;
         private InputAction numberKeyAction;
+        private InputAction confirmAction;
+        private InputAction cancelAction;
         private Transform panTarget;
         private Camera cam;
 
@@ -106,6 +114,10 @@ namespace Runtime.Gameplay.Global
 
         private void OnRightClickPerformed(InputAction.CallbackContext ctx) => RightClicked?.Invoke();
 
+        private void OnConfirmPerformed(InputAction.CallbackContext ctx) => ConfirmPressed?.Invoke();
+
+        private void OnCancelPerformed(InputAction.CallbackContext ctx) => CancelPressed?.Invoke();
+
         /// <summary>
         /// The bindings are added in key order, so the binding index of the control that fired is
         /// already the zero-based number key index. The action is pass-through, so it also reports
@@ -150,14 +162,26 @@ namespace Runtime.Gameplay.Global
             for (int key = 1; key <= NumberKeyCount; key++)
                 numberKeyAction.AddBinding($"<Keyboard>/{key}");
 
+            confirmAction = new InputAction(
+                type: InputActionType.Button,
+                binding: "<Keyboard>/space");
+
+            cancelAction = new InputAction(
+                type: InputActionType.Button,
+                binding: "<Keyboard>/escape");
+
             leftClickAction.performed += OnLeftClickPerformed;
             rightClickAction.performed += OnRightClickPerformed;
             numberKeyAction.performed += OnNumberKeyPerformed;
+            confirmAction.performed += OnConfirmPerformed;
+            cancelAction.performed += OnCancelPerformed;
 
             leftClickAction.Enable();
             rightClickAction.Enable();
             moveAction.Enable();
             numberKeyAction.Enable();
+            confirmAction.Enable();
+            cancelAction.Enable();
         }
 
         private void OnDisable()
@@ -178,6 +202,18 @@ namespace Runtime.Gameplay.Global
             {
                 numberKeyAction.performed -= OnNumberKeyPerformed;
                 numberKeyAction.Disable();
+            }
+
+            if (confirmAction != null)
+            {
+                confirmAction.performed -= OnConfirmPerformed;
+                confirmAction.Disable();
+            }
+
+            if (cancelAction != null)
+            {
+                cancelAction.performed -= OnCancelPerformed;
+                cancelAction.Disable();
             }
 
             moveAction?.Disable();

@@ -6,11 +6,22 @@ using UnityEngine;
 
 namespace Runtime.Gameplay.Items
 {
+    /// <summary>
+    /// The player's inventory and the only translator between items and the <see cref="ItemBar"/>.
+    /// A slot stands for a category: it shows what the character has equipped of that kind, and
+    /// activating it offers everything owned that fits there.
+    /// </summary>
     public class ItemManager : MonoBehaviour
     {
+        [Tooltip("Slot the weapons are offered in. The remaining slots have no category yet.")]
+        [SerializeField] private int weaponSlot;
+
         [Header("Debug")]
-        [Tooltip("Weapons the player owns, in slot order.")]
+        [Tooltip("Weapons the player owns.")]
         [SerializeField] private List<AttackActionData> weapons = new();
+
+        /// <summary>Answer for a slot that has no category, so the callers need no null check.</summary>
+        private static readonly List<AttackActionData> NoItems = new();
 
         private ItemBar itemBar;
         private Unit playerUnit;
@@ -20,9 +31,10 @@ namespace Runtime.Gameplay.Items
         public void Setup(ItemBar bar)
         {
             itemBar = bar;
-            itemBar.SlotSelected += HandleSlotSelected;
+            itemBar.SlotActivated += HandleSlotActivated;
+            itemBar.OptionChosen += HandleOptionChosen;
         }
-        
+
         public void Begin(Unit unit)
         {
             playerUnit = unit;
@@ -34,12 +46,12 @@ namespace Runtime.Gameplay.Items
             if (startingWeapon != null)
                 weapons.Add(startingWeapon);
 
-            ShowWeapons();
+            ShowSlots();
         }
 
         /// <summary>
         /// Takes a weapon into the inventory - what a lootbox calls. A weapon already owned is
-        /// ignored: two slots holding the same one would each claim to be the armed one.
+        /// ignored: it would be offered twice in the same picker.
         /// </summary>
         public void Pickup(AttackActionData weapon)
         {
@@ -47,7 +59,7 @@ namespace Runtime.Gameplay.Items
                 return;
 
             weapons.Add(weapon);
-            ShowWeapons();
+            ShowSlots();
         }
 
         /// <summary>
@@ -56,54 +68,72 @@ namespace Runtime.Gameplay.Items
         /// </summary>
         private void Start()
         {
-            ShowWeapons();
+            ShowSlots();
         }
 
-        private void HandleSlotSelected(int index)
+        /// <summary>
+        /// Answers the bar with everything that fits the activated slot, starting the choice on
+        /// what is equipped there. A slot with nothing to offer opens no picker.
+        /// </summary>
+        private void HandleSlotActivated(int slot)
         {
-            var weapon = WeaponAt(index);
+            var items = ItemsForSlot(slot);
 
-            // A weapon cannot be put down, only swapped: an empty slot, or clicking the armed slot to
-            // clear it, leaves the character holding what it already had - so the bar is put back on
-            // that slot rather than left showing nothing.
-            if (weapon == null)
-            {
-                itemBar.ShowSelection(EquippedSlot);
+            if (items.Count == 0)
                 return;
-            }
 
-            if (playerUnit != null)
-                playerUnit.CurrentState.AttackAction = weapon;
+            var options = new List<ItemOption>(items.Count);
+
+            foreach (var item in items)
+                options.Add(new ItemOption(item.Symbol, item.Tooltip));
+
+            itemBar.OpenPicker(slot, options, items.IndexOf(EquippedIn(slot)));
         }
 
-        private void ShowWeapons()
+        private void HandleOptionChosen(int slot, int option)
         {
+            var items = ItemsForSlot(slot);
+
+            if (playerUnit == null || option < 0 || option >= items.Count)
+                return;
+
+            Equip(slot, items[option]);
+            ShowSlots();
+        }
+
+        private void ShowSlots()
+        {
+            // Whatever a picker was offering is stale once the equipment or the character changed.
+            itemBar.ClosePicker();
+
             for (var i = 0; i < itemBar.SlotCount; i++)
             {
-                var weapon = WeaponAt(i);
+                var item = EquippedIn(i);
 
-                itemBar.SetSlotIcon(i, weapon != null ? weapon.Symbol : null);
-                itemBar.SetSlotTooltip(i, weapon != null ? weapon.Tooltip : string.Empty);
+                itemBar.SetSlotIcon(i, item != null ? item.Symbol : null);
+                itemBar.SetSlotTooltip(i, item != null ? item.Tooltip : string.Empty);
             }
-
-            itemBar.ShowSelection(EquippedSlot);
         }
 
-        private AttackActionData WeaponAt(int index)
+        // The three methods below are the whole seam between slots and categories: what a slot
+        // offers, what it currently holds, and where the choice is written. A second category is a
+        // second branch here and nowhere else - the bar never learns that items exist.
+
+        private List<AttackActionData> ItemsForSlot(int slot)
         {
-            return index >= 0 && index < weapons.Count ? weapons[index] : null;
+            return slot == weaponSlot ? weapons : NoItems;
         }
 
-        /// <summary>Slot holding the weapon in hand, or <see cref="ItemBar.NoSelection"/> when none does.</summary>
-        private int EquippedSlot
+        /// <summary>What the character carries in <paramref name="slot"/>, or null.</summary>
+        private AttackActionData EquippedIn(int slot)
         {
-            get
-            {
-                var equipped = playerUnit != null ? playerUnit.CurrentState.AttackAction : null;
+            return slot == weaponSlot && playerUnit != null ? playerUnit.CurrentState.AttackAction : null;
+        }
 
-                // IndexOf reports -1 for a weapon the player does not own, which is NoSelection.
-                return equipped != null ? weapons.IndexOf(equipped) : ItemBar.NoSelection;
-            }
+        private void Equip(int slot, AttackActionData item)
+        {
+            if (slot == weaponSlot)
+                playerUnit.CurrentState.AttackAction = item;
         }
     }
 }

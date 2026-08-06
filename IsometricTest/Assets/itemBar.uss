@@ -55,6 +55,53 @@
     border-left-color: rgb(231, 227, 86);
 }
 
+/* The slot whose picker is open. Only the border brightens, so the yellow fill stays the mark of
+   the entry that would be taken. */
+.slot--open {
+    border-top-color: rgb(255, 255, 255);
+    border-right-color: rgb(255, 255, 255);
+    border-bottom-color: rgb(255, 255, 255);
+    border-left-color: rgb(255, 255, 255);
+}
+
+/* Column of the items that fit one slot, anchored to its top center and growing upward.
+   column-reverse puts the first entry closest to the slot it belongs to. */
+.slot-picker {
+    position: absolute;
+    display: none;
+    flex-direction: column-reverse;
+    align-items: center;
+    translate: -50% -100%;
+    padding-top: 6px;
+    padding-right: 6px;
+    padding-bottom: 6px;
+    padding-left: 6px;
+    background-color: rgba(18, 18, 22, 0.9);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-top-color: rgba(255, 255, 255, 0.35);
+    border-right-color: rgba(255, 255, 255, 0.35);
+    border-bottom-color: rgba(255, 255, 255, 0.35);
+    border-left-color: rgba(255, 255, 255, 0.35);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* Same look as a slot, a size smaller: the row stays the thing the eye measures against.
+   Declared after .slot so it wins on equal specificity. */
+.slot--option {
+    width: 72px;
+    height: 72px;
+    margin-top: 4px;
+    margin-right: 0;
+    margin-bottom: 4px;
+    margin-left: 0;
+}
+
 /* The symbol is set as a background image, so it is scaled to fit the slot here rather than by
    whatever size the sprite happens to have. */
 .slot__icon {
@@ -96,6 +143,12 @@
     font-size: 16px;
     white-space: normal;
     -unity-text-align: middle-center;
+}
+
+/* Picker entries are labelled to their right instead: the space above an entry is taken by the
+   rest of the column. Anchored to the entry's right edge, so only the vertical half-shift is left. */
+.slot-tooltip--side {
+    translate: 0 -50%;
 }
 
 .slot__hotkey {
