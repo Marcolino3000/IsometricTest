@@ -147,6 +147,18 @@ namespace UI
         }
 
         /// <summary>
+        /// Marks the slot holding what is actually in use. Several slots can show something at once,
+        /// so the owner of the items says which one of them is the active one.
+        /// </summary>
+        public void SetSlotActive(int index, bool active)
+        {
+            if (index < 0 || index >= slots.Count)
+                return;
+
+            slots[index].EnableInClassList("slot--active", active);
+        }
+
+        /// <summary>
         /// Sets the symbol a slot shows. A null sprite leaves the slot empty.
         /// </summary>
         public void SetSlotIcon(int index, Sprite sprite)

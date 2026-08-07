@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Actions;
 using Runtime.Gameplay.Entities;
@@ -6,22 +7,22 @@ using UnityEngine;
 
 namespace Runtime.Gameplay.Items
 {
-    /// <summary>
-    /// The player's inventory and the only translator between items and the <see cref="ItemBar"/>.
-    /// A slot stands for a category: it shows what the character has equipped of that kind, and
-    /// activating it offers everything owned that fits there.
-    /// </summary>
     public class ItemManager : MonoBehaviour
     {
-        [Tooltip("Slot the weapons are offered in. The remaining slots have no category yet.")]
-        [SerializeField] private int weaponSlot;
+        [SerializeField] private int meleeSlot = 0;
+        [SerializeField] private int rangedSlot = 1;
 
         [Header("Debug")]
         [Tooltip("Weapons the player owns.")]
         [SerializeField] private List<AttackActionData> weapons = new();
 
-        /// <summary>Answer for a slot that has no category, so the callers need no null check.</summary>
-        private static readonly List<AttackActionData> NoItems = new();
+        /// <summary>
+        /// What each slot holds, indexed by <see cref="WeaponKind"/>. Only one weapon can be in hand
+        /// (<see cref="UnitState.AttackAction"/>), but a slot keeps showing what was put in it, so
+        /// drawing a bow does not empty the slot the sword is in.
+        /// </summary>
+        private readonly AttackActionData[] equippedByKind =
+            new AttackActionData[Enum.GetValues(typeof(WeaponKind)).Length];
 
         private ItemBar itemBar;
         private Unit playerUnit;
@@ -40,6 +41,7 @@ namespace Runtime.Gameplay.Items
             playerUnit = unit;
 
             weapons.Clear();
+            Array.Clear(equippedByKind, 0, equippedByKind.Length);
 
             var startingWeapon = playerUnit.CurrentState.AttackAction;
 
@@ -133,34 +135,102 @@ namespace Runtime.Gameplay.Items
             // Whatever a picker was offering is stale once the equipment or the character changed.
             itemBar.ClosePicker();
 
+            RefreshEquipped();
+
+            var inHand = playerUnit != null ? playerUnit.CurrentState.AttackAction : null;
+
             for (var i = 0; i < itemBar.SlotCount; i++)
             {
                 var item = EquippedIn(i);
 
                 itemBar.SetSlotIcon(i, item != null ? item.Symbol : null);
                 itemBar.SetSlotTooltip(i, item != null ? item.Tooltip : string.Empty);
+                itemBar.SetSlotActive(i, item != null && item == inHand);
             }
         }
 
-        // The three methods below are the whole seam between slots and categories: what a slot
-        // offers, what it currently holds, and where the choice is written. A second category is a
-        // second branch here and nowhere else - the bar never learns that items exist.
+        /// <summary>
+        /// Brings what the slots hold in line with what the player owns: the weapon in hand is always
+        /// the one its own slot shows, a slot still empty takes the first weapon of its kind - a
+        /// looted bow appears in its slot without having to be drawn first - and one the player no
+        /// longer owns (an undone pickup) cannot stay on the bar.
+        /// </summary>
+        private void RefreshEquipped()
+        {
+            var inHand = playerUnit != null ? playerUnit.CurrentState.AttackAction : null;
+
+            if (inHand != null)
+                equippedByKind[(int)inHand.Kind] = inHand;
+
+            for (var kind = 0; kind < equippedByKind.Length; kind++)
+                if (!weapons.Contains(equippedByKind[kind]))
+                    equippedByKind[kind] = FirstOwned((WeaponKind)kind);
+        }
+
+        private AttackActionData FirstOwned(WeaponKind kind)
+        {
+            foreach (var weapon in weapons)
+                if (weapon.Kind == kind)
+                    return weapon;
+
+            return null;
+        }
+
+        // The four methods below are the whole seam between slots and categories: which category a
+        // slot stands for, what it offers, what it currently holds, and where the choice is written.
+        // A further category is a further branch here and nowhere else - the bar never learns that
+        // items exist.
+
+        /// <summary>
+        /// The kind of weapon <paramref name="slot"/> stands for, or false for a slot that stands
+        /// for no category yet.
+        /// </summary>
+        private bool KindForSlot(int slot, out WeaponKind kind)
+        {
+            kind = WeaponKind.Melee;
+
+            if (slot == meleeSlot)
+                return true;
+
+            if (slot != rangedSlot)
+                return false;
+
+            kind = WeaponKind.Ranged;
+
+            return true;
+        }
 
         private List<AttackActionData> ItemsForSlot(int slot)
         {
-            return slot == weaponSlot ? weapons : NoItems;
+            var items = new List<AttackActionData>();
+
+            if (!KindForSlot(slot, out var kind))
+                return items;
+
+            foreach (var weapon in weapons)
+                if (weapon.Kind == kind)
+                    items.Add(weapon);
+
+            return items;
         }
 
         /// <summary>What the character carries in <paramref name="slot"/>, or null.</summary>
         private AttackActionData EquippedIn(int slot)
         {
-            return slot == weaponSlot && playerUnit != null ? playerUnit.CurrentState.AttackAction : null;
+            return KindForSlot(slot, out var kind) ? equippedByKind[(int)kind] : null;
         }
 
+        /// <summary>
+        /// Puts <paramref name="item"/> in its slot and in the character's hand - choosing a weapon
+        /// is drawing it. The other slot keeps what it holds; only one of them is the attack.
+        /// </summary>
         private void Equip(int slot, AttackActionData item)
         {
-            if (slot == weaponSlot)
-                playerUnit.CurrentState.AttackAction = item;
+            if (!KindForSlot(slot, out var kind))
+                return;
+
+            equippedByKind[(int)kind] = item;
+            playerUnit.CurrentState.AttackAction = item;
         }
     }
 }

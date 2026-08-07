@@ -29,6 +29,9 @@ namespace Runtime.Gameplay.Global
         /// <summary>Raised when the cancel key (escape) goes down.</summary>
         public event Action CancelPressed;
 
+        /// <summary>Raised when the end-turn key (Q) goes down.</summary>
+        public event Action EndTurnPressed;
+
         /// <summary>Keys 1..9. Zero and the numpad are deliberately left alone.</summary>
         private const int NumberKeyCount = 9;
 
@@ -47,6 +50,7 @@ namespace Runtime.Gameplay.Global
         private InputAction confirmAction;
         private InputAction cancelAction;
         private InputAction interactAction;
+        private InputAction endTurnAction;
         private Transform panTarget;
         private Camera cam;
 
@@ -143,6 +147,8 @@ namespace Runtime.Gameplay.Global
 
         private void OnInteractPerformed(InputAction.CallbackContext ctx) => InteractPressed?.Invoke();
 
+        private void OnEndTurnPerformed(InputAction.CallbackContext ctx) => EndTurnPressed?.Invoke();
+
         /// <summary>
         /// The bindings are added in key order, so the binding index of the control that fired is
         /// already the zero-based number key index. The action is pass-through, so it also reports
@@ -198,11 +204,16 @@ namespace Runtime.Gameplay.Global
                 type: InputActionType.Button,
                 binding: "<Keyboard>/e");
 
+            endTurnAction = new InputAction(
+                type: InputActionType.Button,
+                binding: "<Keyboard>/q");
+
             leftClickAction.performed += OnLeftClickPerformed;
             numberKeyAction.performed += OnNumberKeyPerformed;
             confirmAction.performed += OnConfirmPerformed;
             cancelAction.performed += OnCancelPerformed;
             interactAction.performed += OnInteractPerformed;
+            endTurnAction.performed += OnEndTurnPerformed;
 
             leftClickAction.Enable();
             moveAction.Enable();
@@ -210,6 +221,7 @@ namespace Runtime.Gameplay.Global
             confirmAction.Enable();
             cancelAction.Enable();
             interactAction.Enable();
+            endTurnAction.Enable();
         }
 
         private void OnDisable()
@@ -242,6 +254,12 @@ namespace Runtime.Gameplay.Global
             {
                 interactAction.performed -= OnInteractPerformed;
                 interactAction.Disable();
+            }
+
+            if (endTurnAction != null)
+            {
+                endTurnAction.performed -= OnEndTurnPerformed;
+                endTurnAction.Disable();
             }
 
             moveAction?.Disable();

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
   Condition: {fileID: 11400000, guid: 8948422c180ae45468ebfe48bb8b75db, type: 2}
   Effect: {fileID: 11400000, guid: dcc7296221a0945f7a5c6c6510afc42f, type: 2}
+  Kind: 0
   DisplayName: 
   Description: bamm bumm dideldum
   Symbol: {fileID: -1922021771, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

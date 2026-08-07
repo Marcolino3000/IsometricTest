@@ -89,13 +89,15 @@ Every executed action announces itself through `ActionReporter.Report(...)` at t
 
 ### Items and weapons
 
-**A weapon is an `AttackActionData` and nothing else** — there is no separate item SO. The asset carries its condition (cost, range) and effect (damage) as before, plus `DisplayName`, `Description` and `Symbol`; `Tooltip` is just name over description.
+**A weapon is an `AttackActionData` and nothing else** — there is no separate item SO. The asset carries its condition (cost, range) and effect (damage) as before, plus `DisplayName`, `Description`, `Symbol` and `Kind`; `Tooltip` is just name over description. `Kind` (`WeaponKind.Melee | Ranged`) is the category the weapon is carried in, authored on the asset rather than read off `Condition.Range` — traits change the effective range, the slot a weapon belongs to must not change with them.
 
 There is no separate "equipped weapon" field: equipping *is* writing to `UnitState.AttackAction`, since the weapon and the attack are the same asset. The planner, the attack preview and `CombatRules` all read that one field, so they follow a swap without knowing weapons exist. It carries `[FormerlySerializedAs("baseAttackAction")]` for one session's worth of blueprint assets saved under that name; droppable once every `UnitBlueprint` has been re-saved.
 
 `Gameplay/Items/ItemManager.cs` is the player's inventory: the weapon they started with plus everything picked up since (`Pickup`). One for the whole match, not one per unit — the player commands a single character, and `Begin(playerUnit)` hands it over, so the manager holds that unit and needs no spawner. The starting weapon is not authored a second time: `Begin` seeds the inventory from the character's own attack, which its blueprint already names. The Initiator calls it after `SpawnEntities` and again from `Restart`, which spawns a fresh character holding none of what was equipped or looted.
 
-**A slot is a category, not an item.** A slot shows what the character has equipped of its kind; activating it offers *everything owned that fits there*. Today the only category is weapons, so exactly one slot (`ItemManager.weaponSlot`, default 0) has anything to offer and the rest do not react. Three one-line methods on the manager are the whole seam — `ItemsForSlot` (what a slot offers), `EquippedIn` (what it holds), `Equip` (where the choice is written); a second category is a second branch in those three and nowhere else.
+**A slot is a category, not an item.** A slot shows what the character has equipped of its kind; activating it offers *everything owned that fits there*. Today there are two categories: melee weapons in `ItemManager.meleeSlot` (default 0, key 1) and ranged in `rangedSlot` (default 1, key 2); the remaining slots have no category and do not react. Four one-line methods on the manager are the whole seam — `KindForSlot` (what a slot stands for), `ItemsForSlot` (what it offers), `EquippedIn` (what it holds), `Equip` (where the choice is written); a further category is a further branch in those and nowhere else.
+
+**Each slot keeps what was put in it**, in `ItemManager.equippedByKind` indexed by `WeaponKind` — choosing a bow does not empty the slot the sword is in. Only one of them is in hand, and that is still `UnitState.AttackAction`: `Equip` writes both, and the slot holding it is marked `slot--active` (`ItemBar.SetSlotActive`), so the bar shows what is stowed and what is drawn without a second copy of the truth. `RefreshEquipped` (called from `ShowSlots`) keeps the two honest: the weapon in hand always fills its own slot, an empty slot takes the first owned weapon of its kind so a looted bow shows up without being drawn, and a weapon an undo took away leaves the bar.
 
 `ItemBar` stays a pure view — it knows which slot is open and which entry is highlighted, nothing about weapons — and the manager is the only translator. The dialogue is two events and one call: the bar raises `SlotActivated(slot)`, the manager answers with `OpenPicker(slot, IReadOnlyList<ItemOption>, highlighted)`, and the bar raises `OptionChosen(slot, option)`. `ItemOption` is icon + tooltip, which is all the bar needs to draw a choice.
 
@@ -144,6 +146,8 @@ Because it costs AP it is world state, so `GameSnapshot` records **boxes and inv
 ### UI
 
 UI Toolkit throughout (`.uss` at `Assets/`, world-space panels for health bars / AP bars / floating text). `ActionsPointsBar` shows committed vs. previewed cost as separate blob counts, which is how move previews read as "this will cost you N".
+
+`NextTurnButton` owns ending the turn for the player: it subscribes both its click and `InputHandler.EndTurnPressed` (**Q**) to `ToggleCurrentTeam`, so the shortcut ends the turn on exactly the same terms as the button. A keyboard shortcut lives on the element that owns the action, the way `ItemBar` owns the number keys.
 
 ## Editor tooling
 

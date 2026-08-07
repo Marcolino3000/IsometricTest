@@ -55,6 +55,16 @@
     border-left-color: rgb(231, 227, 86);
 }
 
+/* The slot whose weapon is the one in hand. Both slots keep showing what they hold, so the fill is
+   what tells the drawn one from the stowed one. Same look as a selected picker entry. */
+.slot--active {
+    background-color: rgba(70, 68, 30, 0.9);
+    border-top-color: rgb(231, 227, 86);
+    border-right-color: rgb(231, 227, 86);
+    border-bottom-color: rgb(231, 227, 86);
+    border-left-color: rgb(231, 227, 86);
+}
+
 /* The slot whose picker is open. Only the border brightens, so the yellow fill stays the mark of
    the entry that would be taken. */
 .slot--open {

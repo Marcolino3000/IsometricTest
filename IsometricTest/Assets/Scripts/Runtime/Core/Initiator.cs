@@ -78,7 +78,7 @@ namespace Runtime.Core
 
         private void SetupUI()
         {
-            nextTurnButton.Setup(gameStateManager);
+            nextTurnButton.Setup(gameStateManager, inputHandler);
             itemBar.Setup(inputHandler);
             itemManager.Setup(itemBar);
         }

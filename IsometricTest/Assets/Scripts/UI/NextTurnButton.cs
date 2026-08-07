@@ -1,5 +1,6 @@
 using Runtime.Core.State;
 using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -9,11 +10,15 @@ namespace UI
     {
         private Button _button;
         private GameStateManager _gameStateManager;
+        private InputHandler _inputHandler;
 
-        public void Setup(GameStateManager gameStateManager)
+        public void Setup(GameStateManager gameStateManager, InputHandler inputHandler)
         {
             _gameStateManager = gameStateManager;
+            _inputHandler = inputHandler;
             _button.clicked += gameStateManager.ToggleCurrentTeam;
+            // The key is the button's shortcut, so it ends the turn on exactly the same terms.
+            _inputHandler.EndTurnPressed += gameStateManager.ToggleCurrentTeam;
             gameStateManager.GameStateChanged += HandleStateChange;
         }
 
@@ -44,6 +49,7 @@ namespace UI
             if (_gameStateManager == null) return;
             _gameStateManager.GameStateChanged -= HandleStateChange;
             if (_button != null) _button.clicked -= _gameStateManager.ToggleCurrentTeam;
+            if (_inputHandler != null) _inputHandler.EndTurnPressed -= _gameStateManager.ToggleCurrentTeam;
         }
     }
 }
