@@ -530,6 +530,7 @@ Transform:
   m_Children:
   - {fileID: 2401401930526209846}
   - {fileID: 3815026183987808766}
+  - {fileID: 8843017225560913447}
   m_Father: {fileID: 6161654108688559747}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5494689830264370812
@@ -870,6 +871,7 @@ MonoBehaviour:
   aiController: {fileID: 5918375744286621566}
   actionHistory: {fileID: 7274685206248742136}
   itemManager: {fileID: 6154338141543025472}
+  lootSpawner: {fileID: 6420958871133264903}
   nextTurnButton: {fileID: 3454670680114467044}
   itemBar: {fileID: 4820137755690214304}
   hudDocuments:
@@ -925,3 +927,49 @@ MonoBehaviour:
   tileLayerMask:
     serializedVersion: 2
     m_Bits: 64
+--- !u!1 &3157402861094735218
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8843017225560913447}
+  - component: {fileID: 6420958871133264903}
+  m_Layer: 0
+  m_Name: LootSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8843017225560913447
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3157402861094735218}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2528925431592090402}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6420958871133264903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3157402861094735218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8211618170124126ae4173fa1117b84b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Core.Spawning.LootSpawner
+  settings: {fileID: 11400000, guid: 1ce1c83b85034f62b37cb36d5164e75e, type: 2}
+  lootboxes: []

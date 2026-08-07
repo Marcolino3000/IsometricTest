@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34c3efd67ae54f6b8210649288f66e0c, type: 3}
+  m_Name: Default LootSpawnerSettings
+  m_EditorClassIdentifier: 
+  LootboxPrefab: {fileID: 2295367724618930731, guid: 05367eb55461417e97b73345ce78b4e3, type: 3}
+  LootboxCount: 10
+  PickupCost: 1
+  Weapons:
+  - {fileID: 11400000, guid: 4bc5839b04cac487c897e0a7ed7e18bf, type: 2}
+  - {fileID: 11400000, guid: c0e747be1401e4a289b7ae18e0773dc5, type: 2}
+  OrderInLayer: 1

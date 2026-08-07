@@ -32,6 +32,7 @@ namespace Runtime.Core
         [SerializeField] private AiController aiController;
         [SerializeField] private ActionHistory actionHistory;
         [SerializeField] private ItemManager itemManager;
+        [SerializeField] private LootSpawner lootSpawner;
 
         [Header("UI")]
         [SerializeField] private NextTurnButton nextTurnButton;
@@ -89,10 +90,12 @@ namespace Runtime.Core
             raycaster.Setup(inputHandler, hudDocuments);
             outlineManager.Setup(selector);
             CreateAttackPreview();
-            actionHistory.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, aiController, selector);
+            actionHistory.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, aiController, selector,
+                lootSpawner, itemManager);
             actionAssigner.Setup(selector);
             fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager);
             aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar);
+            lootSpawner.Setup(tileSpawner, unitSpawner, itemManager, gameStateManager, inputHandler);
             Direction.Setup(gameStateManager);
         }
         
@@ -107,10 +110,15 @@ namespace Runtime.Core
             attackPreview.Setup(selector, tileSpawner);
         }
 
+        /// <summary>
+        /// Loot goes down last: the boxes avoid tiles somebody stands on, so the units have to be
+        /// placed before they are scattered.
+        /// </summary>
         private void SpawnEntities()
         {
             tileSpawner.SpawnTiles();
             unitSpawner.SpawnUnits();
+            lootSpawner.SpawnLootboxes();
         }
 
         private void StartGame()

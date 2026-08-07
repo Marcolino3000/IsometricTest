@@ -4,6 +4,7 @@ using Runtime.Core.State;
 using Runtime.Gameplay.AI;
 using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
+using Runtime.Gameplay.Items;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -39,6 +40,8 @@ namespace Runtime.Gameplay.History
         private FogOfWar fogOfWar;
         private AiController aiController;
         private Selector selector;
+        private LootSpawner lootSpawner;
+        private ItemManager itemManager;
 
         // State of the match as it stands right now. Kept because an action announces itself only
         // after it ran, so the state it was taken in has to already be on hand.
@@ -67,7 +70,8 @@ namespace Runtime.Gameplay.History
         public bool CanRedo => cursor < entries.Count;
 
         public void Setup(GameStateManager gameStateManagerArg, UnitSpawner unitSpawnerArg,
-            TileSpawner tileSpawnerArg, FogOfWar fogOfWarArg, AiController aiControllerArg, Selector selectorArg)
+            TileSpawner tileSpawnerArg, FogOfWar fogOfWarArg, AiController aiControllerArg, Selector selectorArg,
+            LootSpawner lootSpawnerArg, ItemManager itemManagerArg)
         {
             gameStateManager = gameStateManagerArg;
             unitSpawner = unitSpawnerArg;
@@ -75,6 +79,8 @@ namespace Runtime.Gameplay.History
             fogOfWar = fogOfWarArg;
             aiController = aiControllerArg;
             selector = selectorArg;
+            lootSpawner = lootSpawnerArg;
+            itemManager = itemManagerArg;
 
             gameStateManager.TurnStarted += HandleTurnStarted;
         }
@@ -89,7 +95,7 @@ namespace Runtime.Gameplay.History
             entries.Clear();
             cursor = 0;
             turnNumber = 0;
-            currentSnapshot = GameSnapshot.Capture(unitSpawner, gameStateManager, fogOfWar);
+            currentSnapshot = GameSnapshot.Capture(unitSpawner, gameStateManager, fogOfWar, lootSpawner, itemManager);
             MarkChanged();
         }
 
@@ -144,7 +150,7 @@ namespace Runtime.Gameplay.History
             if (selector != null)
                 selector.ResetSelection();
 
-            snapshot.RestoreTo(unitSpawner, tileSpawner, gameStateManager, fogOfWar);
+            snapshot.RestoreTo(unitSpawner, tileSpawner, gameStateManager, fogOfWar, lootSpawner, itemManager);
             currentSnapshot = snapshot;
 
             // A restored turn gets no TurnStarted (its actor already played it), so the character is
@@ -172,7 +178,7 @@ namespace Runtime.Gameplay.History
                 return;
 
             var before = currentSnapshot;
-            var after = GameSnapshot.Capture(unitSpawner, gameStateManager, fogOfWar);
+            var after = GameSnapshot.Capture(unitSpawner, gameStateManager, fogOfWar, lootSpawner, itemManager);
 
             // Acting after an undo makes the new action the future: what had been undone is dropped.
             if (cursor < entries.Count)

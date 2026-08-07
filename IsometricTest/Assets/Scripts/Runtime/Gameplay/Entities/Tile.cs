@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Fog;
+using Runtime.Gameplay.Items;
 using Runtime.Gameplay.Traits;
 using UnityEngine;
 
@@ -12,6 +13,13 @@ namespace Runtime.Gameplay.Entities
     {
         public Vector2Int Position;
         public bool IsOccupied {get; private set;}
+
+        /// <summary>
+        /// The lootbox lying here, or null. Unlike a unit it does not occupy the tile - it has to be
+        /// walked onto to be taken. Kept on the tile so the box is found in one step and follows the
+        /// fog the ground is already tinted with.
+        /// </summary>
+        public Lootbox Lootbox { get; private set; }
 
         public TerrainType Terrain { get; private set; }
         public bool IsPassable { get; private set; } = true;
@@ -30,6 +38,9 @@ namespace Runtime.Gameplay.Entities
         private SpriteRenderer spriteRenderer;
         private Color baseTerrainColor = Color.white;
 
+        // Kept so a box placed after the last fog pass is tinted like the ground it lands on.
+        private Color fogTint = Color.white;
+
         private void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
@@ -44,6 +55,13 @@ namespace Runtime.Gameplay.Entities
         {
             this.unit = unit;
             SetOccupied(unit != null);
+        }
+
+        /// <summary>Puts a lootbox on this tile, or clears it with null once the box is taken.</summary>
+        public void SetLootbox(Lootbox lootbox)
+        {
+            Lootbox = lootbox;
+            RefreshLootbox();
         }
 
         /// <summary>
@@ -85,18 +103,18 @@ namespace Runtime.Gameplay.Entities
         {
             Visibility = visibility;
 
-            if (spriteRenderer != null)
+            fogTint = visibility switch
             {
-                var tint = visibility switch
-                {
-                    TileVisibility.Visible => Color.white,
-                    TileVisibility.Explored => exploredTint,
-                    _ => hiddenTint
-                };
-                spriteRenderer.color = baseTerrainColor * tint;
-            }
+                TileVisibility.Visible => Color.white,
+                TileVisibility.Explored => exploredTint,
+                _ => hiddenTint
+            };
+
+            if (spriteRenderer != null)
+                spriteRenderer.color = baseTerrainColor * fogTint;
 
             RefreshMarker();
+            RefreshLootbox();
         }
 
         private void SetOccupied(bool occupied)
@@ -117,6 +135,19 @@ namespace Runtime.Gameplay.Entities
             marker.SetMarkerColor(Visibility == TileVisibility.Visible && IsOccupied
                 ? MarkerColor.Orange
                 : MarkerColor.None);
+        }
+
+        /// <summary>
+        /// Shows the box on this tile only once the ground has been seen and tints it along with it -
+        /// a box that has not been scouted must not shine out of the dark. Unlike an enemy it stays
+        /// visible on remembered ground: it does not move, so what was seen there is still true.
+        /// </summary>
+        private void RefreshLootbox()
+        {
+            if (Lootbox == null)
+                return;
+
+            Lootbox.SetVisibility(Visibility != TileVisibility.Hidden, fogTint);
         }
     }
 }

@@ -14,3 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
   Condition: {fileID: 11400000, guid: 3bd0b82b3ebbb40c5a6a5ed1b82ccf9c, type: 2}
   Effect: {fileID: 11400000, guid: cac7534e04b0b4a969b3dd18a949dc56, type: 2}
+  DisplayName: 
+  Description: 
+  Symbol: {fileID: -377700250, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

@@ -43,6 +43,9 @@ namespace Runtime.Gameplay.History
                 case ActionKind.Attack:
                     return $"{DisplayName(report.Actor)} attacks {DisplayName(report.Target)}";
 
+                case ActionKind.Pickup:
+                    return $"{DisplayName(report.Actor)} picks up a lootbox";
+
                 default:
                     return $"Turn {turnNumber}: {report.Team}";
             }

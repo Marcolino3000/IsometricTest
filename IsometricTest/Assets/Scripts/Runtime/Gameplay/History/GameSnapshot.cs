@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Actions;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Fog;
+using Runtime.Gameplay.Items;
 using UnityEngine;
 
 namespace Runtime.Gameplay.History
@@ -23,11 +25,18 @@ namespace Runtime.Gameplay.History
 
         public readonly List<UnitSnapshot> Units = new();
 
+        // Which boxes were still lying about, and what the player owned at the time. Taking a box
+        // costs action points, so it is a turn action and has to come back on undo - box and loot
+        // together, or undoing one would hand out the same weapon twice.
+        public readonly List<LootboxSnapshot> Lootboxes = new();
+        public readonly List<AttackActionData> Weapons = new();
+
         // Explored ground is cumulative history - unlike visibility it cannot be recomputed from
         // where the units currently stand, so it has to travel with the snapshot.
         public readonly Dictionary<Team, HashSet<Vector2Int>> Explored = new();
 
-        public static GameSnapshot Capture(UnitSpawner unitSpawner, GameStateManager gameStateManager, FogOfWar fogOfWar)
+        public static GameSnapshot Capture(UnitSpawner unitSpawner, GameStateManager gameStateManager,
+            FogOfWar fogOfWar, LootSpawner lootSpawner, ItemManager itemManager)
         {
             var snapshot = new GameSnapshot
             {
@@ -43,6 +52,15 @@ namespace Runtime.Gameplay.History
                     snapshot.Units.Add(new UnitSnapshot(unit));
             }
 
+            // Taken boxes are kept aside the same way, so undoing a pickup can put one back.
+            foreach (var lootbox in lootSpawner.AllSpawnedLootboxes)
+            {
+                if (lootbox != null)
+                    snapshot.Lootboxes.Add(new LootboxSnapshot(lootbox));
+            }
+
+            snapshot.Weapons.AddRange(itemManager.CaptureWeapons());
+
             foreach (var pair in fogOfWar.CaptureExplored())
                 snapshot.Explored[pair.Key] = pair.Value;
 
@@ -54,7 +72,8 @@ namespace Runtime.Gameplay.History
         /// world state (fog owner, facing, selection) is rebuilt, then the units are laid back down
         /// over it - their recorded action points overwrite the turn's action point refresh.
         /// </summary>
-        public void RestoreTo(UnitSpawner unitSpawner, TileSpawner tileSpawner, GameStateManager gameStateManager, FogOfWar fogOfWar)
+        public void RestoreTo(UnitSpawner unitSpawner, TileSpawner tileSpawner, GameStateManager gameStateManager,
+            FogOfWar fogOfWar, LootSpawner lootSpawner, ItemManager itemManager)
         {
             gameStateManager.RestoreTurn(ActiveTeam, UnitsHaveActionsLeft);
 
@@ -76,6 +95,14 @@ namespace Runtime.Gameplay.History
 
                 unitSnapshot.ApplyTo();
             }
+
+            // Loot after the units: a box puts itself back on its tile, and the tile has just been
+            // handed its occupant. The inventory follows the boxes so the two never disagree about
+            // what has been found.
+            foreach (var lootboxSnapshot in Lootboxes)
+                lootboxSnapshot.ApplyTo(lootSpawner);
+
+            itemManager.RestoreWeapons(Weapons);
 
             // A single fog pass for the whole board instead of one per unit placement.
             fogOfWar.Recompute();
@@ -115,6 +142,32 @@ namespace Runtime.Gameplay.History
         public void ApplyTo()
         {
             Unit.RestoreSnapshot(Position, Health, ActionPoints);
+        }
+    }
+
+    /// <summary>
+    /// Whether one box was still lying about at the moment of capture. Only that: a box never moves
+    /// and what is in it is rolled once when it is placed, so there is nothing else about it to
+    /// record. Holding the box itself is safe for the same reason it is for units - a taken box is
+    /// only hidden, and the whole history is dropped whenever the board is respawned.
+    /// </summary>
+    public readonly struct LootboxSnapshot
+    {
+        public readonly Lootbox Lootbox;
+        public readonly bool InPlay;
+
+        public LootboxSnapshot(Lootbox lootbox)
+        {
+            Lootbox = lootbox;
+            InPlay = lootbox.IsInPlay;
+        }
+
+        public void ApplyTo(LootSpawner lootSpawner)
+        {
+            if (InPlay)
+                lootSpawner.RestoreLootbox(Lootbox);
+            else
+                lootSpawner.TakeLootbox(Lootbox);
         }
     }
 }

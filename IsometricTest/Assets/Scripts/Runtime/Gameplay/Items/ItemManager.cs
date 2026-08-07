@@ -63,6 +63,33 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
+        /// What the player owns, for a history snapshot. Taking a lootbox costs action points, so it
+        /// is a turn action and has to be undoable like any other - which means the inventory it fills
+        /// travels with the snapshot. Which weapon is *in hand* still does not: that is loadout, free
+        /// to swap and reported as no action.
+        /// </summary>
+        public List<AttackActionData> CaptureWeapons()
+        {
+            return new List<AttackActionData>(weapons);
+        }
+
+        /// <summary>
+        /// Puts a recorded inventory back. A weapon that is no longer owned cannot stay in hand, so
+        /// the character falls back to something it does own rather than swinging a looted sword the
+        /// undo just took away.
+        /// </summary>
+        public void RestoreWeapons(IReadOnlyList<AttackActionData> recorded)
+        {
+            weapons.Clear();
+            weapons.AddRange(recorded);
+
+            if (playerUnit != null && !weapons.Contains(playerUnit.CurrentState.AttackAction))
+                playerUnit.CurrentState.AttackAction = weapons.Count > 0 ? weapons[^1] : null;
+
+            ShowSlots();
+        }
+
+        /// <summary>
         /// The bar builds its slots in its own Awake, which may run after the Initiator has already
         /// called <see cref="Begin"/> - what was pushed into it back then had nowhere to go yet.
         /// </summary>

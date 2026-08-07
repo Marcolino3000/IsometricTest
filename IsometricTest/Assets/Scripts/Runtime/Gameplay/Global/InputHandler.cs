@@ -8,7 +8,14 @@ namespace Runtime.Gameplay.Global
     {
         public event Action LeftClicked;
 
+        /// <summary>
+        /// Raised when the right button is released without having travelled. The same button drags
+        /// the camera, so a pan must not read as a click - hence the release rather than the press.
+        /// </summary>
         public event Action RightClicked;
+
+        /// <summary>Raised when the interact key (E) goes down.</summary>
+        public event Action InteractPressed;
 
         /// <summary>
         /// Raised with the zero-based index of the number key that was pressed (key 1 reports 0).
@@ -25,20 +32,27 @@ namespace Runtime.Gameplay.Global
         /// <summary>Keys 1..9. Zero and the numpad are deliberately left alone.</summary>
         private const int NumberKeyCount = 9;
 
+        /// <summary>
+        /// How far in screen pixels the cursor may travel with the right button down and still count
+        /// as a click rather than as a pan. A few pixels of slip belong to every press.
+        /// </summary>
+        private const float ClickTravelThreshold = 4f;
+
         [SerializeField] private float cameraPanSpeed = 10f;
         [SerializeField] private Transform cameraRig;
 
         private InputAction leftClickAction;
-        private InputAction rightClickAction;
         private InputAction moveAction;
         private InputAction numberKeyAction;
         private InputAction confirmAction;
         private InputAction cancelAction;
+        private InputAction interactAction;
         private Transform panTarget;
         private Camera cam;
 
         private bool isDragging;
         private Vector3 dragWorldAnchor;
+        private Vector2 dragScreenStart;
 
         private void Update()
         {
@@ -64,26 +78,37 @@ namespace Runtime.Gameplay.Global
         /// Pans by dragging with the right mouse button. The world point grabbed when the button
         /// went down is kept under the cursor (grab-the-world). Moves the same rig as WASD, so the
         /// UI overlay camera follows along too.
+        ///
+        /// Also decides where a press ends up: one that never travelled was meant as a click and is
+        /// announced as <see cref="RightClicked"/> on release. Both live here because the drag is
+        /// what tells the two apart, and it is tracked from the mouse directly rather than through an
+        /// InputAction so the travelled distance is available at the same moment.
         /// </summary>
         private void DragPan()
         {
-            if (panTarget == null || cam == null || Mouse.current == null)
+            if (cam == null || Mouse.current == null)
                 return;
+
+            Vector2 screenPosition = Mouse.current.position.ReadValue();
 
             if (Mouse.current.rightButton.wasPressedThisFrame)
             {
-                dragWorldAnchor = ScreenToWorld(Mouse.current.position.ReadValue());
+                dragWorldAnchor = ScreenToWorld(screenPosition);
+                dragScreenStart = screenPosition;
                 isDragging = true;
             }
             else if (!Mouse.current.rightButton.isPressed)
             {
+                if (isDragging && Vector2.Distance(screenPosition, dragScreenStart) <= ClickTravelThreshold)
+                    RightClicked?.Invoke();
+
                 isDragging = false;
             }
 
-            if (!isDragging)
+            if (!isDragging || panTarget == null)
                 return;
 
-            Vector3 worldUnderCursor = ScreenToWorld(Mouse.current.position.ReadValue());
+            Vector3 worldUnderCursor = ScreenToWorld(screenPosition);
             Vector3 delta = dragWorldAnchor - worldUnderCursor;
             delta.z = 0f;
             panTarget.position += delta;
@@ -112,11 +137,11 @@ namespace Runtime.Gameplay.Global
 
         private void OnLeftClickPerformed(InputAction.CallbackContext ctx) => LeftClicked?.Invoke();
 
-        private void OnRightClickPerformed(InputAction.CallbackContext ctx) => RightClicked?.Invoke();
-
         private void OnConfirmPerformed(InputAction.CallbackContext ctx) => ConfirmPressed?.Invoke();
 
         private void OnCancelPerformed(InputAction.CallbackContext ctx) => CancelPressed?.Invoke();
+
+        private void OnInteractPerformed(InputAction.CallbackContext ctx) => InteractPressed?.Invoke();
 
         /// <summary>
         /// The bindings are added in key order, so the binding index of the control that fired is
@@ -145,9 +170,8 @@ namespace Runtime.Gameplay.Global
                 type: InputActionType.Button,
                 binding: "<Mouse>/leftButton");
 
-            rightClickAction = new InputAction(
-                type: InputActionType.Button,
-                binding: "<Mouse>/rightButton");
+            // The right button has no action of its own: it drags the camera, and whether a press was
+            // a pan or a click is only known on release - see DragPan.
 
             moveAction = new InputAction(type: InputActionType.Value);
             moveAction.AddCompositeBinding("2DVector")
@@ -170,18 +194,22 @@ namespace Runtime.Gameplay.Global
                 type: InputActionType.Button,
                 binding: "<Keyboard>/escape");
 
+            interactAction = new InputAction(
+                type: InputActionType.Button,
+                binding: "<Keyboard>/e");
+
             leftClickAction.performed += OnLeftClickPerformed;
-            rightClickAction.performed += OnRightClickPerformed;
             numberKeyAction.performed += OnNumberKeyPerformed;
             confirmAction.performed += OnConfirmPerformed;
             cancelAction.performed += OnCancelPerformed;
+            interactAction.performed += OnInteractPerformed;
 
             leftClickAction.Enable();
-            rightClickAction.Enable();
             moveAction.Enable();
             numberKeyAction.Enable();
             confirmAction.Enable();
             cancelAction.Enable();
+            interactAction.Enable();
         }
 
         private void OnDisable()
@@ -190,12 +218,6 @@ namespace Runtime.Gameplay.Global
             {
                 leftClickAction.performed -= OnLeftClickPerformed;
                 leftClickAction.Disable();
-            }
-
-            if (rightClickAction != null)
-            {
-                rightClickAction.performed -= OnRightClickPerformed;
-                rightClickAction.Disable();
             }
 
             if (numberKeyAction != null)
@@ -214,6 +236,12 @@ namespace Runtime.Gameplay.Global
             {
                 cancelAction.performed -= OnCancelPerformed;
                 cancelAction.Disable();
+            }
+
+            if (interactAction != null)
+            {
+                interactAction.performed -= OnInteractPerformed;
+                interactAction.Disable();
             }
 
             moveAction?.Disable();

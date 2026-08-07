@@ -7,7 +7,8 @@ namespace Runtime.Gameplay.History
     {
         Move,
         Attack,
-        TurnChange
+        TurnChange,
+        Pickup
     }
 
     /// <summary>
@@ -36,6 +37,9 @@ namespace Runtime.Gameplay.History
 
         public static ActionReport Attack(Unit actor, Unit target) =>
             new(ActionKind.Attack, actor, target, actor.CurrentState.Team);
+
+        public static ActionReport Pickup(Unit actor) =>
+            new(ActionKind.Pickup, actor, null, actor.CurrentState.Team);
 
         public static ActionReport TurnChange(Team team) =>
             new(ActionKind.TurnChange, null, null, team);

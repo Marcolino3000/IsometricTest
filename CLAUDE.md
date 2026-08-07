@@ -101,7 +101,21 @@ There is no separate "equipped weapon" field: equipping *is* writing to `UnitSta
 
 Interaction, and the two modalities deliberately differ: a **number key** opens its slot's picker and *repeating that key walks the column*, with space confirming (`InputHandler.ConfirmPressed`) and escape cancelling (`CancelPressed`); the **mouse** opens the picker by clicking the slot, closes it by clicking the slot again, and chooses by clicking an entry. Turning to another slot abandons the pending choice. A weapon still cannot be put down, only swapped — the picker offers no empty entry.
 
-Which weapon is in hand is deliberately **not** in `GameSnapshot`: it is loadout, not world state (free to swap, no AP, reported as no action). The slot faces are rebuilt from `UnitState.AttackAction` by `ShowSlots`, so there is no second copy of the truth to restore.
+Which weapon is in hand is deliberately **not** in `GameSnapshot`: it is loadout, not world state (free to swap, no AP, reported as no action). The slot faces are rebuilt from `UnitState.AttackAction` by `ShowSlots`, so there is no second copy of the truth to restore. What the player *owns* is a different matter — picking a weapon up costs AP, so the inventory does travel with the snapshot; see Loot below.
+
+### Loot
+
+`Core/Spawning/LootSpawner.cs` scatters `Gameplay/Items/Lootbox` over the map and owns them, the way the other spawners own their tiles and units. The Initiator calls `SpawnLootboxes()` **last** in `SpawnEntities` — boxes avoid tiles somebody stands on, so the units have to be down first. Candidates are `IsPassable && !IsOccupied`, shuffled.
+
+What a box holds is rolled **when it is placed**, not when it is opened, so a given board hands out the same thing however late the player walks over it — the same reason redo reproduces a critical hit instead of re-rolling it. Weapons are dealt from a shuffled bag (`LootSpawnerSettings.Weapons`) refilled only once empty, so a handful of authored weapons don't repeat.
+
+A box is **not clickable and does not occupy its tile**: it is taken by standing on it and pressing `E` (`InputHandler.InteractPressed`) or right-clicking, so it needs no collider and must not block the way to itself. `Tile.Lootbox` is where a box is parked — one step to find it, and it follows the fog the ground is already tinted with (`Tile.RefreshLootbox`; visible on *remembered* ground too, unlike an enemy, because a box does not move).
+
+Taking one is a **turn action**: it costs `LootSpawnerSettings.PickupCost` AP, so it only works on the character's own turn and only while it can afford it, and it reports `ActionKind.Pickup` so the history can undo it. The two conditions (a box here, points to spend) are checked inline in `LootSpawner.TryPickup` rather than through an `ActionData` SO — the pickup has no per-unit authoring and no target, so a `PickupCondition`/`PickupEffect` pair would carry nothing but the cost, which lives on the loot settings instead. Give it the full action pipeline the moment it grows a real condition.
+
+Because it costs AP it is world state, so `GameSnapshot` records **boxes and inventory together** — undoing one without the other would hand out the same weapon twice. `LootSpawner.TakeLootbox` therefore *hides* a box rather than destroying it (`Lootbox.IsInPlay`), exactly as `UnitSpawner.RemoveUnit` keeps a fallen unit. Which weapon is **in hand** is still not recorded; `ItemManager.RestoreWeapons` only re-equips when an undo takes away the weapon the character was holding.
+
+**Right-click is now a release, not a press.** The same button drags the camera, so `InputHandler.DragPan` raises `RightClicked` only when the button comes up without having travelled more than `ClickTravelThreshold` pixels. There is no `rightClickAction` any more.
 
 ### Grid and spawning
 
@@ -117,7 +131,7 @@ Which weapon is in hand is deliberately **not** in `GameSnapshot`: it is loadout
 
 `Gameplay/History/` records every action since the match started and can put the game back at any point in that record.
 
-- `ActionReporter` is a static announcement channel; `ActionExecutor` and `GameStateManager` (via `TurnStarted`) are the only things that report today.
+- `ActionReporter` is a static announcement channel; `ActionExecutor`, `LootSpawner` (pickups) and `GameStateManager` (via `TurnStarted`) are the things that report today.
 - `ActionHistory` (created at runtime by the Initiator, wired by `Setup`) holds a `List<HistoryEntry>`, each with the `GameSnapshot` before and after the action. A `cursor` marks the position: the index of the next action to be (re)done. Recording while the cursor is behind the end truncates the redo branch.
 - `GameSnapshot` is a **whole-world** capture (per-unit placement/vitals/alive, turn state, explored map) restored wholesale — not an inverse action. That is why redo reproduces a critical hit exactly instead of re-rolling it, and why a new mechanic is undoable as soon as it reports. Restore order is load-bearing: turn first (so `TurnReset` rebuilds fog owner/facing/selection), then units over it, then one fog pass.
 - `GameStateManager.RestoreTurn` fires `TurnReset` but deliberately **never `TurnStarted`** — the turn's actor already played it. Restoring a snapshot calls `AiController.CancelTurn()`; `ResumeTurn()` hands the turn back.
