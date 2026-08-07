@@ -1,5 +1,6 @@
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
+using Runtime.Debugger;
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.AI;
 using Runtime.Gameplay.Feedback;
@@ -9,6 +10,7 @@ using Runtime.Gameplay.History;
 using Runtime.Gameplay.Items;
 using UI;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Runtime.Core
@@ -60,6 +62,7 @@ namespace Runtime.Core
         /// persistent singletons (selector, outline manager, UI, ...) don't re-subscribe to events.
         /// </summary>
         [ContextMenu("Restart")]
+        [DebugHotkey(Key.R, HotkeyMods.None, "Restart match")]
         public void Restart()
         {
             selector.ResetSelection();
