@@ -23,6 +23,13 @@ namespace Runtime.Gameplay.Entities
         /// </summary>
         public bool IsAlive { get; private set; } = true;
 
+        /// <summary>
+        /// The health the blueprint starts the unit with, which is also its ceiling: there is no
+        /// separate maximum on <see cref="UnitState"/>, and the health bar is built from this very
+        /// value. What healing clamps against.
+        /// </summary>
+        public int MaxHealth => blueprint.DefaultState.Health;
+
         [Header("Debug")]
         [SerializeField] private UnitState currentState;
 
@@ -79,9 +86,16 @@ namespace Runtime.Gameplay.Entities
             int delta = amount - lastHealth;
             lastHealth = amount;
 
+            if (delta == 0 || restoringSnapshot)
+                return;
+
             // Popups reuse the health bar's world-space panel settings so they render like the unit bars.
-            if (delta < 0 && !restoringSnapshot)
-                FloatingText.ShowDamage(delta, transform.position, healthBar.GetComponent<UIDocument>().panelSettings);
+            var panelSettings = healthBar.GetComponent<UIDocument>().panelSettings;
+
+            if (delta < 0)
+                FloatingText.ShowDamage(delta, transform.position, panelSettings);
+            else
+                FloatingText.ShowHeal(delta, transform.position, panelSettings);
         }
         
         private void ActionPointsChangedCallback(int amount)

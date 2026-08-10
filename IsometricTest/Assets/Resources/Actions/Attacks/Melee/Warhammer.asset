@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
+  m_Name: Warhammer
+  m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
+  Condition: {fileID: 11400000, guid: f9e642ea935d4994aa6fb9e68e1cdf01, type: 2}
+  Effect: {fileID: 11400000, guid: a42ea4f2d11448f6a296db7442b0e619, type: 2}
+  Kind: 0
+  DisplayName: Warhammer
+  Description: One enormous swing a turn, and a single point left to move with.
+  Symbol: {fileID: 820335677, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

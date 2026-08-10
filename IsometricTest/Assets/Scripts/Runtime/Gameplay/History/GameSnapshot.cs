@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Actions;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Entities;
@@ -27,9 +26,10 @@ namespace Runtime.Gameplay.History
 
         // Which boxes were still lying about, and what the player owned at the time. Taking a box
         // costs action points, so it is a turn action and has to come back on undo - box and loot
-        // together, or undoing one would hand out the same weapon twice.
+        // together, or undoing one would hand out the same item twice. Using up an active item is
+        // a turn action for the same reason, and it shortens this very list.
         public readonly List<LootboxSnapshot> Lootboxes = new();
-        public readonly List<AttackActionData> Weapons = new();
+        public readonly List<Item> Items = new();
 
         // Explored ground is cumulative history - unlike visibility it cannot be recomputed from
         // where the units currently stand, so it has to travel with the snapshot.
@@ -59,7 +59,7 @@ namespace Runtime.Gameplay.History
                     snapshot.Lootboxes.Add(new LootboxSnapshot(lootbox));
             }
 
-            snapshot.Weapons.AddRange(itemManager.CaptureWeapons());
+            snapshot.Items.AddRange(itemManager.CaptureItems());
 
             foreach (var pair in fogOfWar.CaptureExplored())
                 snapshot.Explored[pair.Key] = pair.Value;
@@ -102,7 +102,7 @@ namespace Runtime.Gameplay.History
             foreach (var lootboxSnapshot in Lootboxes)
                 lootboxSnapshot.ApplyTo(lootSpawner);
 
-            itemManager.RestoreWeapons(Weapons);
+            itemManager.RestoreItems(Items);
 
             // A single fog pass for the whole board instead of one per unit placement.
             fogOfWar.Recompute();
@@ -126,9 +126,11 @@ namespace Runtime.Gameplay.History
         public readonly int Health;
         public readonly int ActionPoints;
 
-        // The equipped weapon is deliberately not recorded: it is the player's loadout rather than
-        // world state - free to swap, costing no turn and reported as no action - and the item bar
-        // owns which one is armed. Restoring one behind the bar's back would only make them disagree.
+        // The equipped weapon and the worn passive are deliberately not recorded: they are the
+        // player's loadout rather than world state - free to swap, costing no turn and reported as no
+        // action - and the item bar owns which of them is in use. Both are re-derived from the
+        // recorded inventory when it is restored; storing them here would only add a second copy of
+        // the truth to disagree with.
 
         public UnitSnapshot(Unit unit)
         {

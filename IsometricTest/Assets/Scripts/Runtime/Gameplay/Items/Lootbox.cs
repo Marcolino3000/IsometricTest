@@ -1,4 +1,3 @@
-using Actions;
 using Runtime.Gameplay.Entities;
 using UnityEngine;
 
@@ -25,7 +24,7 @@ namespace Runtime.Gameplay.Items
         /// </summary>
         public bool IsInPlay { get; private set; } = true;
         
-        public AttackActionData Content { get; private set; }
+        public Item Content { get; private set; }
 
         private SpriteRenderer spriteRenderer;
 
@@ -34,7 +33,7 @@ namespace Runtime.Gameplay.Items
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         }
 
-        public void Setup(Tile tile, AttackActionData content, int orderInLayer)
+        public void Setup(Tile tile, Item content, int orderInLayer)
         {
             Tile = tile;
             Content = content;

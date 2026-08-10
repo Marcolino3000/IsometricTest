@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c03cb04b53be54c25b559b8cc1ece521, type: 3}
+  m_Name: Battle Stimulant
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ActiveItemData
+  Condition: {fileID: 11400000, guid: 7d4faea9233642fab63c69341fe7c7cb, type: 2}
+  Effect: {fileID: 11400000, guid: 2206cbfe5ade4767b505d120f06f4046, type: 2}
+  DisplayName: Battle Stimulant
+  Description: Grants 3 action points for 1, so 2 more to spend this turn. Used up.
+  Symbol: {fileID: 1230775888, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

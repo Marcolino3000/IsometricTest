@@ -6,6 +6,7 @@ using Runtime.Core.Spawning;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
 using Runtime.Gameplay.History;
+using Runtime.Gameplay.Items;
 using UI;
 using UnityEngine;
 
@@ -144,6 +145,39 @@ namespace Runtime.Gameplay.Actions
             // Reported after the fact, and with the participants only: the history reads what actually
             // happened (damage, kills, points spent) off the state around the action.
             ActionReporter.Report(ActionReport.Attack(unit, target));
+        }
+
+        /// <summary>
+        /// Uses a self-targeted active item, and says whether it was actually used. Runs the same
+        /// plan / test / execute path an attack does, so the cost is tested before anything happens,
+        /// spent afterwards and announced once - which is what makes an item undoable without any
+        /// history code of its own. There is nothing to preview: the item has no target to hover.
+        /// </summary>
+        public bool ExecuteItemAction(ActiveItemData item)
+        {
+            // Same guard as the plan methods: a dead unit must not act.
+            if (unit == null || !unit.IsAlive || item == null)
+                return false;
+
+            var context = new ActionContext()
+            {
+                Unit = unit,
+                TargetUnit = unit,
+                TargetTile = unit.CurrentState.Position,
+                ActionPoints = unit.CurrentState.ActionPoints
+            };
+
+            plannedActions.Clear();
+            plannedActions.Add(item.CreateAction(context));
+
+            if (!TestConditionsForPlannedActions().IsValid)
+                return false;
+
+            ExecutePlannedActions();
+
+            ActionReporter.Report(ActionReport.UseItem(unit));
+
+            return true;
         }
 
         private void ExecutePlannedActions()

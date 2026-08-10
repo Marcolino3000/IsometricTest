@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f9903e6b69c44adbb72ec48ba5b461d, type: 3}
+  m_Name: Longspear
+  m_EditorClassIdentifier: 
+  DisplayName: Longspear
+  Description: +1 tile of attack range, melee and ranged alike.
+  Symbol: {fileID: 1479591443, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  Traits:
+  - {fileID: 11400000, guid: f0869c21bbc64ad99c04a141cf8b478f, type: 2}

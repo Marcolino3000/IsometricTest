@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
+  m_Name: Throwing Axes
+  m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
+  Condition: {fileID: 11400000, guid: b70a0e40e52b43009077d97cb1f06b4d, type: 2}
+  Effect: {fileID: 11400000, guid: 18dda24c225248b7a64db4d51569dd62, type: 2}
+  Kind: 1
+  DisplayName: Throwing Axes
+  Description: Hits far harder than a bow, but you have to come within two tiles.
+  Symbol: {fileID: -1586079193, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

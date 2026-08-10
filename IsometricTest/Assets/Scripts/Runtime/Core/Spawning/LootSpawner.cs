@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Actions;
 using Data;
 using Runtime.Core.State;
 using Runtime.Gameplay.Entities;
@@ -28,9 +27,10 @@ namespace Runtime.Core.Spawning
         // the same way UnitSpawner keeps a fallen unit; a respawn clears them out for good.
         [SerializeField] private List<Lootbox> takenLootboxes = new();
 
-        // Weapons are dealt from a shuffled copy of the pool and only refilled once it runs out:
-        // rolling every box on its own would keep handing out the same one out of a handful.
-        private readonly List<AttackActionData> weaponBag = new();
+        // One bag per category, so each category's box count can be honoured on its own. Each is
+        // dealt from a shuffled copy and only refilled once it runs out: rolling every box
+        // independently would keep handing out the same one out of a handful.
+        private readonly List<Item>[] bags = new List<Item>[(int)SlotKind.None];
 
         private TileSpawner tileSpawner;
         private UnitSpawner unitSpawner;
@@ -111,16 +111,18 @@ namespace Runtime.Core.Spawning
 
             lootboxes.Clear();
             takenLootboxes.Clear();
-            weaponBag.Clear();
+
+            foreach (var bag in bags)
+                bag?.Clear();
         }
 
-        private void SpawnLootbox(Tile tile)
+        private void SpawnLootbox(Tile tile, Item content)
         {
             var position = tileSpawner.GridIndexToWorldPosition(tile.Position) + Vector3.up * tile.HeightOffset + new Vector3(0, 0.25f, 0);
 
             var lootbox = Instantiate(settings.LootboxPrefab, position, Quaternion.identity, transform);
             lootbox.name = $"Lootbox {tile.Position.x}-{tile.Position.y}";
-            lootbox.Setup(tile, TakeWeapon(), settings.OrderInLayer);
+            lootbox.Setup(tile, content, settings.OrderInLayer);
 
             lootboxes.Add(lootbox);
         }
@@ -140,48 +142,57 @@ namespace Runtime.Core.Spawning
                     candidates.Add(tile);
             }
 
-            // Fisher-Yates shuffle
-            for (var i = candidates.Count - 1; i > 0; i--)
-            {
-                var j = Random.Range(0, i + 1);
-                (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
-            }
+            Shuffle(candidates);
 
             return candidates;
         }
 
-        private AttackActionData TakeWeapon()
+        private static void Shuffle<T>(List<T> list)
         {
-            if (weaponBag.Count == 0)
-                RefillWeaponBag();
-
-            if (weaponBag.Count == 0)
-                return null;
-
-            var index = weaponBag.Count - 1;
-            var weapon = weaponBag[index];
-            weaponBag.RemoveAt(index);
-
-            return weapon;
-        }
-
-        private void RefillWeaponBag()
-        {
-            if (settings.Weapons == null)
-                return;
-
-            foreach (var weapon in settings.Weapons)
-            {
-                if (weapon != null)
-                    weaponBag.Add(weapon);
-            }
-
-            // Fisher-Yates shuffle
-            for (var i = weaponBag.Count - 1; i > 0; i--)
+            // Fisher-Yates
+            for (var i = list.Count - 1; i > 0; i--)
             {
                 var j = Random.Range(0, i + 1);
-                (weaponBag[i], weaponBag[j]) = (weaponBag[j], weaponBag[i]);
+                (list[i], list[j]) = (list[j], list[i]);
             }
+        }
+
+        /// <summary>The bag <paramref name="kind"/> is dealt from, created on first use.</summary>
+        private List<Item> BagFor(SlotKind kind)
+        {
+            return bags[(int)kind] ??= new List<Item>();
+        }
+
+        /// <summary>The next item of <paramref name="kind"/>, or null if none is authored at all.</summary>
+        private Item TakeItem(SlotKind kind)
+        {
+            var bag = BagFor(kind);
+
+            if (bag.Count == 0)
+                RefillBag(bag, kind);
+
+            if (bag.Count == 0)
+                return null;
+
+            var index = bag.Count - 1;
+            var item = bag[index];
+            bag.RemoveAt(index);
+
+            return item;
+        }
+
+        private void RefillBag(List<Item> bag, SlotKind kind)
+        {
+            if (settings.Items == null)
+                return;
+
+            foreach (var item in settings.Items)
+            {
+                if (item != null && item.Slot == kind)
+                    bag.Add(item);
+            }
+
+            Shuffle(bag);
         }
 
         #endregion
@@ -215,17 +226,39 @@ namespace Runtime.Core.Spawning
                 return;
             }
 
-            if (settings.Weapons == null || settings.Weapons.Count == 0)
+            if (settings.Items == null || settings.Items.Count == 0)
             {
-                Debug.LogWarning($"No weapons to fill lootboxes with in {nameof(LootSpawnerSettings)}.", settings);
+                Debug.LogWarning($"No items to fill lootboxes with in {nameof(LootSpawnerSettings)}.", settings);
                 return;
             }
 
             var tiles = GetShuffledLootTiles();
-            var count = Mathf.Min(settings.LootboxCount, tiles.Count);
+            var placed = 0;
 
-            for (var i = 0; i < count; i++)
-                SpawnLootbox(tiles[i]);
+            // One category at a time, so each gets the number of boxes it was asked for. The tiles
+            // were shuffled beforehand, so handing them out in order still scatters the categories.
+            for (var kind = 0; kind < (int)SlotKind.None; kind++)
+            {
+                var wanted = settings.CountFor((SlotKind)kind);
+
+                for (var i = 0; i < wanted; i++)
+                {
+                    if (placed >= tiles.Count)
+                        return;
+
+                    var content = TakeItem((SlotKind)kind);
+
+                    // Nothing of this category is authored, so no further box of it can be filled.
+                    if (content == null)
+                    {
+                        Debug.LogWarning($"{nameof(LootSpawnerSettings)} asks for {wanted} " +
+                                         $"{(SlotKind)kind} box(es) but lists no item of that category.", settings);
+                        break;
+                    }
+
+                    SpawnLootbox(tiles[placed++], content);
+                }
+            }
         }
 
         #endregion

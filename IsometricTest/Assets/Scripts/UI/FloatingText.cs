@@ -44,6 +44,12 @@ namespace UI
             Show(healthDelta.ToString(), Settings.DamageColor, unitPosition + Settings.SpawnOffset, panelSettings);
         }
 
+        /// <summary>Health going back up, e.g. from an active item. Signed, so it reads as a gain.</summary>
+        public static void ShowHeal(int healthDelta, Vector3 unitPosition, PanelSettings panelSettings)
+        {
+            Show($"+{healthDelta}", Settings.HealColor, unitPosition + Settings.SpawnOffset, panelSettings);
+        }
+
         public static void Show(string text, Color color, Vector3 worldPosition, PanelSettings panelSettings)
         {
             var popup = new GameObject("FloatingText");

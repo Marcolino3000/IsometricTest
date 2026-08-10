@@ -33,5 +33,6 @@ namespace Data
         public float OutlineWidth = 4f;
         public Color OutlineColor = new(0.08f, 0.05f, 0.05f, 0.9f);
         public Color DamageColor = new(0.85f, 0.2f, 0.16f);
+        public Color HealColor = new(0.34f, 0.78f, 0.35f);
     }
 }
