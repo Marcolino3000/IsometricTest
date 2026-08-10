@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PlayerUnit: {fileID: 1033920189357735479, guid: 940f94232c4d24678868939d3863644e, type: 3}
   OpponentUnits:
-  - Amount: 4
+  - Amount: 5
     Prefab: {fileID: 1033920189357735479, guid: 560cd3456b51c4f609e960b3b8f037c6, type: 3}
   - Amount: 2
     Prefab: {fileID: 8279638395231357746, guid: cc378132656d04836986c39202c89fca, type: 3}

@@ -13,8 +13,9 @@ namespace Runtime.Gameplay.AI
     /// <summary>
     /// Drives a team automatically. At the start of its turn it activates each of its units in order;
     /// a unit attacks the closest enemy it can reach this turn, otherwise advances toward the closest
-    /// visible enemy, otherwise moves to uncover as much unexplored map as possible. When every unit is
-    /// spent it hands the turn back via <see cref="GameStateManager.ToggleCurrentTeam"/>.
+    /// visible enemy, otherwise hunts the tile an enemy was last seen on, otherwise moves to uncover as
+    /// much unexplored map as possible. When every unit is spent it hands the turn back via
+    /// <see cref="GameStateManager.ToggleCurrentTeam"/>.
     /// </summary>
     public class AiController : MonoBehaviour
     {
@@ -32,6 +33,11 @@ namespace Runtime.Gameplay.AI
         [Tooltip("Safety cap on actions per unit per turn, guarding against any pathological loop.")]
         [SerializeField] private int maxActionsPerUnit = 20;
 
+        [Tooltip("Last resort when every enemy is out of sight, none was seen recently and the whole map " +
+                 "is explored: units advance on the closest enemy's real position instead of standing " +
+                 "still. Off is strictly fog-honest - units then idle until an enemy shows up again.")]
+        [SerializeField] private bool advanceOnLostEnemies = true;
+
         [Header("References")]
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private UnitSpawner unitSpawner;
@@ -39,6 +45,12 @@ namespace Runtime.Gameplay.AI
         [SerializeField] private FogOfWar fogOfWar;
 
         private bool _running;
+
+        // Where each enemy was last seen. Sight is the only thing that ever put an enemy on the AI's
+        // radar, so without this a unit loses its target the moment the player steps out of its sight
+        // radius. Pure AI scratch state: not part of a history snapshot, and losing it on undo only
+        // costs the AI a turn of searching.
+        private readonly Dictionary<Unit, Tile> _lastKnownEnemyTiles = new();
 
         /// <summary>
         /// Whether the AI drives its team. When false the team's turn is left to the player.
@@ -177,27 +189,43 @@ namespace Runtime.Gameplay.AI
         /// </summary>
         private bool TryActOnce(Unit unit)
         {
-            var enemy = ClosestVisibleEnemy(unit);
+            RefreshEnemyMemory();
 
-            return enemy != null
-                ? EngageEnemy(unit, enemy)
-                : Explore(unit);
+            var enemy = ClosestEnemy(unit, visibleOnly: true);
+            if (enemy != null)
+                return EngageEnemy(unit, enemy);
+
+            // Lost contact: go to where the enemy was, rather than forgetting it exists.
+            var lastKnown = ClosestRememberedEnemyTile(unit);
+            if (lastKnown != null && MoveToward(unit, lastKnown))
+                return true;
+
+            if (Explore(unit))
+                return true;
+
+            // Nothing seen, nothing remembered, nothing left to uncover. The explored map never
+            // shrinks, so from here the unit would stand still for the rest of the match.
+            return advanceOnLostEnemies && MoveTowardEnemy(unit, ClosestEnemy(unit, visibleOnly: false));
         }
 
         // --- Combat -----------------------------------------------------------------------------
 
-        private Unit ClosestVisibleEnemy(Unit unit)
+        /// <summary>
+        /// The nearest enemy still in play, either the nearest one the team can currently see
+        /// (<paramref name="visibleOnly"/>) or the nearest one outright.
+        /// </summary>
+        private Unit ClosestEnemy(Unit unit, bool visibleOnly)
         {
             Unit closest = null;
             var closestDistance = int.MaxValue;
 
             foreach (var other in unitSpawner.AllUnits)
             {
-                if (other == null || other.CurrentState.Team == aiTeam)
+                if (other == null || !other.IsAlive || other.CurrentState.Team == aiTeam)
                     continue;
 
                 var tile = other.CurrentState.Position;
-                if (tile == null || !fogOfWar.IsVisible(tile.Position))
+                if (tile == null || visibleOnly && !fogOfWar.IsVisible(tile.Position))
                     continue;
 
                 var distance = tileSpawner.GetDistanceBetweenTiles(unit.CurrentState.Position, tile);
@@ -222,7 +250,65 @@ namespace Runtime.Gameplay.AI
             }
 
             // Out of reach this turn: close the distance as much as the AP budget allows.
-            return MoveToward(unit, enemy.CurrentState.Position);
+            return MoveTowardEnemy(unit, enemy);
+        }
+
+        private bool MoveTowardEnemy(Unit unit, Unit enemy)
+        {
+            var tile = enemy != null ? enemy.CurrentState.Position : null;
+            return tile != null && MoveToward(unit, tile);
+        }
+
+        // --- Memory of lost enemies ---------------------------------------------------------------
+
+        /// <summary>
+        /// Brings the memory of where enemies are in line with what the team can see right now: a
+        /// visible enemy is (re)recorded, a remembered tile that is in sight without its enemy on it is
+        /// forgotten (we looked, it moved on), and enemies that left play stop being hunted.
+        /// </summary>
+        private void RefreshEnemyMemory()
+        {
+            var inPlay = new HashSet<Unit>();
+
+            foreach (var enemy in unitSpawner.AllUnits)
+            {
+                if (enemy == null || !enemy.IsAlive || enemy.CurrentState.Team == aiTeam)
+                    continue;
+
+                inPlay.Add(enemy);
+
+                var tile = enemy.CurrentState.Position;
+                if (tile != null && fogOfWar.IsVisible(tile.Position))
+                    _lastKnownEnemyTiles[enemy] = tile;
+                else if (_lastKnownEnemyTiles.TryGetValue(enemy, out var remembered)
+                         && (remembered == null || fogOfWar.IsVisible(remembered.Position)))
+                    _lastKnownEnemyTiles.Remove(enemy);
+            }
+
+            // AllUnits drops removed units, so anything left over here has been killed or undone away.
+            foreach (var gone in _lastKnownEnemyTiles.Keys.Where(u => !inPlay.Contains(u)).ToList())
+                _lastKnownEnemyTiles.Remove(gone);
+        }
+
+        private Tile ClosestRememberedEnemyTile(Unit unit)
+        {
+            Tile closest = null;
+            var closestDistance = int.MaxValue;
+
+            foreach (var tile in _lastKnownEnemyTiles.Values)
+            {
+                if (tile == null)
+                    continue;
+
+                var distance = tileSpawner.GetDistanceBetweenTiles(unit.CurrentState.Position, tile);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = tile;
+                }
+            }
+
+            return closest;
         }
 
         // --- Exploration ------------------------------------------------------------------------
@@ -291,10 +377,55 @@ namespace Runtime.Gameplay.AI
         // --- Movement helpers -------------------------------------------------------------------
 
         /// <summary>
-        /// Moves to the reachable tile that gets strictly closest to <paramref name="target"/>.
-        /// Returns false when no reachable tile improves on the current position (so we don't spin).
+        /// Walks as far along the path to <paramref name="target"/> as the AP budget allows.
+        /// Returns false when nothing gets the unit closer (so we don't spin).
         /// </summary>
         private bool MoveToward(Unit unit, Tile target)
+        {
+            var step = FurthestStepAlongPath(unit, target) ?? ClosestReachableTile(unit, target);
+
+            if (step == null)
+                return false;
+
+            unit.ActionExecutor.ExecuteMoveActions(new ExecuteArgs(step));
+            return true;
+        }
+
+        /// <summary>
+        /// The furthest tile on the path to <paramref name="target"/> the unit can still pay for.
+        /// Follows the pathfinder rather than picking the reachable tile with the smallest distance:
+        /// a detour around impassable terrain first walks *away* from the target, which a
+        /// closest-tile choice reads as "no improvement" and stalls on.
+        /// </summary>
+        private Tile FurthestStepAlongPath(Unit unit, Tile target)
+        {
+            // Enemies and last-known tiles are occupied targets; path onto them and stop just short.
+            var path = tileSpawner.GetPath(unit.CurrentState.Position, target, ignoreGoalOccupied: true);
+
+            var budget = unit.CurrentState.ActionPoints;
+            var moveCost = unit.CurrentState.MoveAction.Condition.Cost;
+
+            Tile furthest = null;
+            var spent = 0;
+
+            for (var i = 1; i < path.Count; i++)
+            {
+                spent += moveCost + path[i].ExtraMoveCost;
+                if (spent > budget)
+                    break;
+
+                if (!path[i].IsOccupied)
+                    furthest = path[i];
+            }
+
+            return furthest;
+        }
+
+        /// <summary>
+        /// Fallback for when there is no path at all (target walled off, or the only corridor to it
+        /// blocked): the reachable tile that gets strictly closest to <paramref name="target"/>.
+        /// </summary>
+        private Tile ClosestReachableTile(Unit unit, Tile target)
         {
             Tile best = null;
             var bestDistance = tileSpawner.GetDistanceBetweenTiles(unit.CurrentState.Position, target);
@@ -309,11 +440,7 @@ namespace Runtime.Gameplay.AI
                 }
             }
 
-            if (best == null)
-                return false;
-
-            unit.ActionExecutor.ExecuteMoveActions(new ExecuteArgs(best));
-            return true;
+            return best;
         }
 
         private List<Tile> ReachableTiles(Unit unit)
