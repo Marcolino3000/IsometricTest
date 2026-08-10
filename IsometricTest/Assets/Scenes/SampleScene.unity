@@ -636,6 +636,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1195906192420579916, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
+      propertyPath: verticalItemPopup
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6154338141543025472, guid: cc8bba060bf0844c3b67dc1212284a5f, type: 3}
       propertyPath: weapons.Array.size
       value: 0

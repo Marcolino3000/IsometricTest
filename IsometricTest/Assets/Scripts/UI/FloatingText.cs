@@ -50,7 +50,23 @@ namespace UI
             Show($"+{healthDelta}", Settings.HealColor, unitPosition + Settings.SpawnOffset, panelSettings);
         }
 
-        public static void Show(string text, Color color, Vector3 worldPosition, PanelSettings panelSettings)
+        /// <summary>
+        /// Why something the player asked for did not happen - a lootbox left where it lies because
+        /// there is no slot for what is in it. Words rather than a number, but it belongs over the
+        /// character's head like the numbers do, and goes away by itself the same way.
+        /// </summary>
+        public static void ShowNotice(string text, Vector3 unitPosition, PanelSettings panelSettings)
+        {
+            Show(text, Settings.NoticeColor, unitPosition + Settings.SpawnOffset, panelSettings,
+                Settings.NoticeFontSize);
+        }
+
+        /// <summary>
+        /// Puts <paramref name="text"/> over a world position. <paramref name="fontSize"/> defaults to
+        /// the settings' - a whole sentence needs to be smaller than a damage number to fit.
+        /// </summary>
+        public static void Show(string text, Color color, Vector3 worldPosition, PanelSettings panelSettings,
+            int fontSize = 0)
         {
             var popup = new GameObject("FloatingText");
             popup.transform.position = worldPosition;
@@ -62,10 +78,10 @@ namespace UI
 
             var floatingText = popup.AddComponent<FloatingText>();
             floatingText.basePosition = worldPosition;
-            floatingText.BuildLabel(document, text, color);
+            floatingText.BuildLabel(document, text, color, fontSize > 0 ? fontSize : Settings.FontSize);
         }
 
-        private void BuildLabel(UIDocument document, string text, Color color)
+        private void BuildLabel(UIDocument document, string text, Color color, int fontSize)
         {
             root = document.rootVisualElement;
             root.pickingMode = PickingMode.Ignore;
@@ -73,7 +89,7 @@ namespace UI
             root.style.opacity = 0f;
 
             var label = new Label(text) { pickingMode = PickingMode.Ignore };
-            label.style.fontSize = Settings.FontSize;
+            label.style.fontSize = fontSize;
             label.style.color = color;
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
             label.style.unityTextAlign = TextAnchor.MiddleCenter;

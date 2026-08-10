@@ -62,6 +62,19 @@ namespace Runtime.Core.Spawning
             if (lootbox == null || unit.CurrentState.ActionPoints < settings.PickupCost)
                 return;
 
+            // A box holding something the character cannot take is left where it lies, unopened and
+            // costing nothing, so it can be come back for once a slot is free or the copy already
+            // carried has been used up. The player is told why, since an unopened box looks exactly
+            // like one that was never walked over. The reason comes from the inventory: the rule for
+            // what can be taken is the inventory's, and this must not have a second opinion.
+            if (!itemManager.CanTake(lootbox.Content, out var reason))
+            {
+                if (!string.IsNullOrEmpty(reason))
+                    unit.ShowNotice(reason);
+
+                return;
+            }
+
             itemManager.Pickup(lootbox.Content);
             TakeLootbox(lootbox);
 

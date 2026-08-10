@@ -9,16 +9,43 @@ namespace Runtime.Gameplay.Items
 {
     public class ItemManager : MonoBehaviour
     {
+        /// <summary>
+        /// The category every slot of the bar stands for, in bar order: melee 0 (key 1), ranged 1,
+        /// passive 2, and the three active slots 3 to 5 (keys 4 to 6). A category may take more than
+        /// one slot, which is what tells the two kinds of category apart: a weapon or a passive shares
+        /// its one slot with everything of its kind and is picked from a column, while an active item
+        /// gets a slot to itself - so there is nothing to pick, and how many can be carried at once is
+        /// how many slots the category has here.
+        ///
+        /// This table is the layout, not <see cref="SlotKind"/>'s own order: the enum is serialized on
+        /// item assets and in the loot settings, so rearranging the bar must not mean rearranging it.
+        /// </summary>
+        private static readonly SlotKind[] SlotKinds =
+        {
+            SlotKind.Melee,
+            SlotKind.Ranged,
+            SlotKind.Passive,
+            SlotKind.Active,
+            SlotKind.Active,
+            SlotKind.Active
+        };
+
+        /// <summary>Why an item cannot be taken - see <see cref="CanTake"/>. Short: they are shown
+        /// over the character's head, where a damage number normally goes.</summary>
+        private const string NoRoomNotice = "No free item slot";
+        private const string AlreadyCarriedNotice = "Already carried";
+
         [Header("Debug")]
         [Tooltip("Items the player owns.")]
         [SerializeField] private List<Item> items = new();
 
         /// <summary>
-        /// What each slot holds, indexed by <see cref="SlotKind"/>. A slot keeps showing what was put
-        /// in it even when it is not the thing currently in effect, so drawing a bow does not empty
-        /// the slot the sword is in.
+        /// What each slot holds. Indexed by slot rather than by category, since a category can have
+        /// several of them. A slot keeps showing what was put in it even when that is not the thing
+        /// currently in effect, so drawing a bow does not empty the slot the sword is in, and a potion
+        /// drunk out of slot 4 does not shuffle the one in slot 5 down into its place.
         /// </summary>
-        private readonly Item[] equippedByKind = new Item[Enum.GetValues(typeof(SlotKind)).Length];
+        private readonly Item[] equippedBySlot = new Item[SlotKinds.Length];
 
         /// <summary>
         /// Everything already announced by the find popup. Deliberately outside the snapshot: undoing
@@ -33,12 +60,21 @@ namespace Runtime.Gameplay.Items
 
         public IReadOnlyList<Item> Items => items;
 
+        /// <summary>How many slots the layout above describes - what the bar has to build.</summary>
+        public static int SlotCount => SlotKinds.Length;
+
         public void Setup(ItemBar bar, ItemPopup popup)
         {
             itemBar = bar;
             itemPopup = popup;
             itemBar.SlotActivated += HandleSlotActivated;
             itemBar.OptionChosen += HandleOptionChosen;
+
+            // A bar built too short leaves a category with no slot, and one built too long shows slots
+            // that stand for nothing. Neither is visible from the bar's side, which knows no categories.
+            if (itemBar.SlotCount != SlotCount)
+                Debug.LogWarning($"The item bar builds {itemBar.SlotCount} slots but the layout " +
+                                 $"describes {SlotCount}.", itemBar);
         }
 
         public void Begin(Unit unit)
@@ -47,7 +83,7 @@ namespace Runtime.Gameplay.Items
 
             items.Clear();
             announced.Clear();
-            Array.Clear(equippedByKind, 0, equippedByKind.Length);
+            Array.Clear(equippedBySlot, 0, equippedBySlot.Length);
 
             if (itemPopup != null)
                 itemPopup.Hide();
@@ -61,12 +97,52 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
-        /// Takes an item into the inventory - what a lootbox calls. One already owned is ignored: it
-        /// would be offered twice in the same picker.
+        /// Whether the player can take <paramref name="item"/>, and what to tell them when not. Two
+        /// things stand in the way, and this is the *only* place either is decided: whoever is about
+        /// to hand an item over asks first, and <see cref="Pickup"/> asks again. They were once two
+        /// separate rules - one asked beforehand, one enforced inside - and a lootbox holding
+        /// something that failed the second was opened and emptied for nothing.
+        ///
+        /// <list type="bullet">
+        /// <item>The same asset cannot be owned twice: the slots, the find popup and using one up all
+        /// identify an item *by the asset*, so a second copy would be the first one over again.</item>
+        /// <item>A category carrying one item per slot is full once its slots are - active items.</item>
+        /// </list>
+        /// </summary>
+        public bool CanTake(Item item, out string reason)
+        {
+            reason = string.Empty;
+
+            // No box should hold nothing; there is nothing to say about it if one does.
+            if (item == null)
+                return false;
+
+            if (items.Contains(item))
+            {
+                reason = AlreadyCarriedNotice;
+
+                return false;
+            }
+
+            if (HoldsOneItem(item.Slot) && CountOwned(item.Slot) >= SlotsOf(item.Slot))
+            {
+                reason = NoRoomNotice;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Takes an item into the inventory - what a lootbox calls. Callers ask
+        /// <see cref="CanTake"/> first so they can say why nothing happened and hold on to whatever
+        /// they were going to hand over, but this asks again: nothing may enter the inventory that the
+        /// one rule turns away.
         /// </summary>
         public void Pickup(Item item)
         {
-            if (item == null || items.Contains(item))
+            if (!CanTake(item, out _))
                 return;
 
             items.Add(item);
@@ -87,18 +163,23 @@ namespace Runtime.Gameplay.Items
             if (itemPopup == null)
                 return;
 
-            itemPopup.Show(new ItemCard(item.Symbol, item.Title, Item.NameOf(item.Slot), SlotNameOf(item.Slot),
+            itemPopup.Show(new ItemCard(item.Symbol, item.Title, Item.NameOf(item.Slot), SlotNameOf(item),
                 item.Description, item.Stats));
         }
 
         /// <summary>
-        /// What the slot a category is shown in is called - the inverse of <see cref="KindForSlot"/>,
-        /// counted from one because that is the key the bar labels the slot with. Empty for a category
-        /// no slot stands for.
+        /// What the slot an item ended up in is called, counted from one because that is the key the
+        /// bar labels the slot with. Read off the slots rather than worked out from the category: a
+        /// category can hold several slots, and only the slots know which one took this item. Empty
+        /// for an item no slot is showing.
         /// </summary>
-        private static string SlotNameOf(SlotKind kind)
+        private string SlotNameOf(Item item)
         {
-            return kind != SlotKind.None ? $"Slot {(int)kind + 1}" : string.Empty;
+            for (var slot = 0; slot < equippedBySlot.Length; slot++)
+                if (equippedBySlot[slot] == item)
+                    return $"Slot {slot + 1}";
+
+            return string.Empty;
         }
 
         /// <summary>
@@ -151,6 +232,19 @@ namespace Runtime.Gameplay.Items
         /// </summary>
         private void HandleSlotActivated(int slot)
         {
+            if (!KindForSlot(slot, out var kind))
+                return;
+
+            // A slot holding one item offers no choice, so activating it *is* choosing what it holds -
+            // pressing 4 drinks the potion in slot 4 rather than opening a column of one entry.
+            if (HoldsOneItem(kind))
+            {
+                Choose(slot, EquippedIn(slot));
+                ShowSlots();
+
+                return;
+            }
+
             var slotItems = ItemsForSlot(slot);
 
             if (slotItems.Count == 0)
@@ -194,31 +288,38 @@ namespace Runtime.Gameplay.Items
 
         /// <summary>
         /// Brings what the slots hold in line with what the player owns: the weapon in hand always
-        /// fills its own slot, and a slot holding something no longer owned - an undone pickup, a
-        /// used-up potion, or nothing yet - takes the first owned item of its kind instead, so a
-        /// looted bow turns up in its slot without having to be drawn first.
+        /// fills its own slot, a slot holding something no longer owned - an undone pickup, a used-up
+        /// potion - is emptied, and an empty slot takes the first owned item of its kind no other slot
+        /// is already showing. So a looted bow turns up in its slot without having to be drawn, a
+        /// second potion finds a slot of its own, and the potion beside a drunk one stays where it was.
         /// </summary>
         private void RefreshEquipped()
         {
             var inHand = playerUnit != null ? playerUnit.CurrentState.AttackAction : null;
 
-            if (inHand != null)
-                equippedByKind[(int)inHand.Slot] = inHand;
+            if (inHand != null && FirstSlotOf(inHand.Slot, out var weaponSlot))
+                equippedBySlot[weaponSlot] = inHand;
 
-            for (var kind = 0; kind < equippedByKind.Length; kind++)
-            {
-                if (items.Contains(equippedByKind[kind]))
-                    continue;
+            for (var slot = 0; slot < equippedBySlot.Length; slot++)
+                if (equippedBySlot[slot] != null && !items.Contains(equippedBySlot[slot]))
+                    Fill(slot, null);
 
-                var replacement = FirstOwned((SlotKind)kind);
+            for (var slot = 0; slot < equippedBySlot.Length; slot++)
+                if (equippedBySlot[slot] == null)
+                    Fill(slot, FirstFitting(slot));
+        }
 
-                // The passive slot is the one whose contents are in effect merely by being shown, so
-                // it is filled through the wearer rather than written straight into the array.
-                if ((SlotKind)kind == SlotKind.Passive)
-                    Wear(replacement);
-                else
-                    equippedByKind[kind] = replacement;
-            }
+        /// <summary>
+        /// Puts <paramref name="item"/> in <paramref name="slot"/>. The passive slot is filled through
+        /// the wearer rather than written straight into the array: what it holds is in effect merely
+        /// by being shown there.
+        /// </summary>
+        private void Fill(int slot, Item item)
+        {
+            if (SlotKinds[slot] == SlotKind.Passive)
+                Wear(slot, item);
+            else
+                equippedBySlot[slot] = item;
         }
 
         private Item FirstOwned(SlotKind kind)
@@ -230,25 +331,86 @@ namespace Runtime.Gameplay.Items
             return null;
         }
 
+        /// <summary>The first owned item that fits <paramref name="slot"/>, or null.</summary>
+        private Item FirstFitting(int slot)
+        {
+            var slotItems = ItemsForSlot(slot);
+
+            return slotItems.Count > 0 ? slotItems[0] : null;
+        }
+
+        private int CountOwned(SlotKind kind)
+        {
+            var count = 0;
+
+            foreach (var item in items)
+                if (item != null && item.Slot == kind)
+                    count++;
+
+            return count;
+        }
+
         // The methods below are the whole seam between slots and categories: which category a slot
-        // stands for, what it offers, what it holds, whether that is in effect, and what choosing it
-        // does. A further category is a further branch here and nowhere else - the bar never learns
-        // that items exist.
+        // stands for, how many slots it has, what one offers, what it holds, whether that is in
+        // effect, and what choosing it does. A further category is a further entry in the layout and
+        // a further branch here, and nowhere else - the bar never learns that items exist.
 
         /// <summary>
         /// The category <paramref name="slot"/> stands for, or false for a slot that stands for none.
-        /// The bar's slots follow <see cref="SlotKind"/> in order - slot 0 melee, 1 ranged, 2 active,
-        /// 3 passive - so the mapping is the enum itself rather than one serialized index per
-        /// category. Four such indices can silently be given the same number, and the category
-        /// checked last then loses its slot; the enum cannot collide with itself.
         /// </summary>
-        private bool KindForSlot(int slot, out SlotKind kind)
+        private static bool KindForSlot(int slot, out SlotKind kind)
         {
-            kind = slot >= 0 && slot < (int)SlotKind.None ? (SlotKind)slot : SlotKind.None;
+            kind = slot >= 0 && slot < SlotKinds.Length ? SlotKinds[slot] : SlotKind.None;
 
             return kind != SlotKind.None;
         }
 
+        /// <summary>How many slots <paramref name="kind"/> is given - how many can be carried.</summary>
+        private static int SlotsOf(SlotKind kind)
+        {
+            var count = 0;
+
+            foreach (var slotKind in SlotKinds)
+                if (slotKind == kind)
+                    count++;
+
+            return count;
+        }
+
+        /// <summary>The lowest slot standing for <paramref name="kind"/>, or false for a category
+        /// the layout gives no slot at all.</summary>
+        private static bool FirstSlotOf(SlotKind kind, out int slot)
+        {
+            for (var i = 0; i < SlotKinds.Length; i++)
+            {
+                if (SlotKinds[i] != kind)
+                    continue;
+
+                slot = i;
+
+                return true;
+            }
+
+            slot = -1;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Whether a category carries one item per slot rather than a shelf of them behind one slot.
+        /// The whole difference between the two: one is chosen from a column, the other is simply
+        /// there, and how many of it can be carried is how many slots the layout gives it.
+        /// </summary>
+        private static bool HoldsOneItem(SlotKind kind)
+        {
+            return kind == SlotKind.Active;
+        }
+
+        /// <summary>
+        /// Everything owned that <paramref name="slot"/> can show: items of its category that no other
+        /// slot is already holding. The second half only ever matters to a category with several slots
+        /// - a category with one can have nothing held elsewhere.
+        /// </summary>
         private List<Item> ItemsForSlot(int slot)
         {
             var slotItems = new List<Item>();
@@ -257,16 +419,26 @@ namespace Runtime.Gameplay.Items
                 return slotItems;
 
             foreach (var item in items)
-                if (item != null && item.Slot == kind)
+                if (item != null && item.Slot == kind && !HeldElsewhere(item, slot))
                     slotItems.Add(item);
 
             return slotItems;
         }
 
+        /// <summary>Whether a slot other than <paramref name="slot"/> is holding the item.</summary>
+        private bool HeldElsewhere(Item item, int slot)
+        {
+            for (var i = 0; i < equippedBySlot.Length; i++)
+                if (i != slot && equippedBySlot[i] == item)
+                    return true;
+
+            return false;
+        }
+
         /// <summary>What the character carries in <paramref name="slot"/>, or null.</summary>
         private Item EquippedIn(int slot)
         {
-            return KindForSlot(slot, out var kind) ? equippedByKind[(int)kind] : null;
+            return slot >= 0 && slot < equippedBySlot.Length ? equippedBySlot[slot] : null;
         }
 
         /// <summary>
@@ -301,12 +473,12 @@ namespace Runtime.Gameplay.Items
                 case SlotKind.Melee:
                 case SlotKind.Ranged:
                     // The other weapon slot keeps what it holds; only one of them is the attack.
-                    equippedByKind[(int)kind] = item;
+                    equippedBySlot[slot] = item;
                     playerUnit.CurrentState.AttackAction = item as AttackActionData;
                     break;
 
                 case SlotKind.Passive:
-                    Wear(item);
+                    Wear(slot, item);
                     break;
 
                 case SlotKind.Active:
@@ -320,9 +492,9 @@ namespace Runtime.Gameplay.Items
         /// trait list and the new one's join it, which is all a passive item is. Only one instance of
         /// each trait is removed, so one the blueprint grants as well survives taking the item off.
         /// </summary>
-        private void Wear(Item item)
+        private void Wear(int slot, Item item)
         {
-            var previous = equippedByKind[(int)SlotKind.Passive];
+            var previous = equippedBySlot[slot];
 
             if (previous == item)
                 return;
@@ -341,7 +513,7 @@ namespace Runtime.Gameplay.Items
                             traits.Add(trait);
             }
 
-            equippedByKind[(int)SlotKind.Passive] = item;
+            equippedBySlot[slot] = item;
         }
 
         /// <summary>

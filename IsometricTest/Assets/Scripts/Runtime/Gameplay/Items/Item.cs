@@ -5,13 +5,14 @@ using UnityEngine;
 namespace Runtime.Gameplay.Items
 {
     /// <summary>
-    /// The category an item belongs to, which is the slot of the item bar it is offered in. Authored
-    /// on the item rather than derived from what it does: traits change a weapon's effective range,
-    /// but the slot it is carried in must not change with them.
+    /// The category an item belongs to, which decides the slots of the item bar it is offered in.
+    /// Authored on the item rather than derived from what it does: traits change a weapon's effective
+    /// range, but the slot it is carried in must not change with them.
     ///
-    /// **This order is the order of the slots on the bar** (see <see cref="ItemManager.KindForSlot"/>):
-    /// melee is slot 0 / key 1, passive is slot 3 / key 4. Reordering it reorders the bar, and
-    /// <see cref="None"/> has to stay last - it marks where the categories end.
+    /// Which slots a category gets - and how many, since an active item gets one each - is the layout
+    /// table in <see cref="ItemManager"/>, not this order. This order is serialized on every item asset
+    /// and in the loot settings, so it is not free to change; <see cref="None"/> has to stay last, as
+    /// it marks where the categories end and everything counting them reads it as the count.
     /// </summary>
     public enum SlotKind
     {

@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: Default GameRules
   m_EditorClassIdentifier: 
   RetaliationEnabled: 0
-  ShowEnemyTurns: 1
+  ShowEnemyTurns: 0
+  LogCombatCalculations: 1
+  LogCombatDetails: 0

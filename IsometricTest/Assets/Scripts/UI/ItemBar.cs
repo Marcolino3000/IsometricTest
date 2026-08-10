@@ -49,7 +49,8 @@ namespace UI
         /// <summary>Distance between the top edge of a slot and its picker, in panel pixels.</summary>
         private const float PickerGap = 8f;
 
-        [Tooltip("How many slots the bar shows. Only the first nine are reachable by number key.")]
+        [Tooltip("How many slots the bar shows. Has to match the categories the owner of the items " +
+                 "lays out - it warns when it does not. Only the first nine are reachable by number key.")]
         [SerializeField] private int slotCount = 6;
 
         [Tooltip("Seconds the cursor has to rest on a slot before its tooltip opens.")]

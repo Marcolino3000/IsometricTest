@@ -79,6 +79,16 @@ namespace Runtime.Gameplay.Entities
             TileHighlighter.Setup(currentState, tileSpawner);
         }
 
+        /// <summary>
+        /// Puts a short message over this unit - why something it was told to do did not happen. Here
+        /// rather than at the caller because the popups borrow the health bar's world-space panel,
+        /// which is the unit's own business.
+        /// </summary>
+        public void ShowNotice(string text)
+        {
+            FloatingText.ShowNotice(text, transform.position, healthBar.GetComponent<UIDocument>().panelSettings);
+        }
+
         private void HealthChangedCallback(int amount)
         {
             healthBar.SetBlobAmount(amount);
