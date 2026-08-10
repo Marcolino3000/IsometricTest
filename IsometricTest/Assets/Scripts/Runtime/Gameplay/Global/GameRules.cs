@@ -18,6 +18,13 @@ namespace Runtime.Gameplay.Global
                  "only show where you can actually see them. A turn you took over manually is never hidden.")]
         public bool ShowEnemyTurns = true;
 
+        [Tooltip("When on, the same active item may be carried more than once - three Healing Draughts " +
+                 "fill the three active slots. Only active items can stack: a weapon or a passive is " +
+                 "identified by its asset and shares one slot with its whole category, so a second " +
+                 "copy would have nowhere of its own to be and would do nothing besides. When off, a " +
+                 "lootbox holding something already carried is left where it lies.")]
+        public bool StackDuplicateActiveItems = true;
+
         [Header("Debug")]
         [Tooltip("Prints every attack to the console with its damage breakdown: the weapon's base " +
                  "damage, each trait that changed the number and what it changed it to, the damage " +

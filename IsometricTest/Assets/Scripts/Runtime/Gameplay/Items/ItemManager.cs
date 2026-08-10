@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Actions;
 using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Global;
 using UI;
 using UnityEngine;
 
@@ -56,6 +57,7 @@ namespace Runtime.Gameplay.Items
 
         private ItemBar itemBar;
         private ItemPopup itemPopup;
+        private GameRules gameRules;
         private Unit playerUnit;
 
         public IReadOnlyList<Item> Items => items;
@@ -63,10 +65,11 @@ namespace Runtime.Gameplay.Items
         /// <summary>How many slots the layout above describes - what the bar has to build.</summary>
         public static int SlotCount => SlotKinds.Length;
 
-        public void Setup(ItemBar bar, ItemPopup popup)
+        public void Setup(ItemBar bar, ItemPopup popup, GameRules rules)
         {
             itemBar = bar;
             itemPopup = popup;
+            gameRules = rules;
             itemBar.SlotActivated += HandleSlotActivated;
             itemBar.OptionChosen += HandleOptionChosen;
 
@@ -104,9 +107,10 @@ namespace Runtime.Gameplay.Items
         /// something that failed the second was opened and emptied for nothing.
         ///
         /// <list type="bullet">
-        /// <item>The same asset cannot be owned twice: the slots, the find popup and using one up all
-        /// identify an item *by the asset*, so a second copy would be the first one over again.</item>
-        /// <item>A category carrying one item per slot is full once its slots are - active items.</item>
+        /// <item>An asset already owned, unless its category may <see cref="CanStack"/> it.</item>
+        /// <item>A category carrying one item per slot is full once its slots are - active items.
+        /// Copies count, so three of the same draught fill the three slots as surely as three
+        /// different ones do.</item>
         /// </list>
         /// </summary>
         public bool CanTake(Item item, out string reason)
@@ -117,7 +121,7 @@ namespace Runtime.Gameplay.Items
             if (item == null)
                 return false;
 
-            if (items.Contains(item))
+            if (items.Contains(item) && !CanStack(item.Slot))
             {
                 reason = AlreadyCarriedNotice;
 
@@ -132,6 +136,19 @@ namespace Runtime.Gameplay.Items
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Whether a category may hold the same item more than once, which the player switches with
+        /// <see cref="GameRules.StackDuplicateActiveItems"/>. Only a category carrying one item per
+        /// slot can, switch or no switch: everywhere else the whole category shares a single slot, so
+        /// a second copy would have nowhere of its own to be and would do nothing while it sat there -
+        /// a second identical sword is not a sword to swing, and a second amulet grants no more traits.
+        /// A copy is only worth owning where owning it means a use in hand.
+        /// </summary>
+        private bool CanStack(SlotKind kind)
+        {
+            return HoldsOneItem(kind) && gameRules != null && gameRules.StackDuplicateActiveItems;
         }
 
         /// <summary>
@@ -287,11 +304,18 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
-        /// Brings what the slots hold in line with what the player owns: the weapon in hand always
-        /// fills its own slot, a slot holding something no longer owned - an undone pickup, a used-up
-        /// potion - is emptied, and an empty slot takes the first owned item of its kind no other slot
-        /// is already showing. So a looted bow turns up in its slot without having to be drawn, a
-        /// second potion finds a slot of its own, and the potion beside a drunk one stays where it was.
+        /// Brings what the slots hold in line with what the player owns. The slots hold *copies*, not
+        /// identities - the same draught may sit in two of them - so this counts rather than compares:
+        /// a slot is backed by the inventory only while the copies shown up to it are copies owned.
+        /// Two passes, and both fall out of that one rule.
+        ///
+        /// <list type="number">
+        /// <item>A slot showing a copy the inventory no longer covers is emptied: an undone pickup, a
+        /// used-up potion, or the second of two slots once one of the pair has been drunk.</item>
+        /// <item>An empty slot takes the first owned item of its kind that has a copy in no slot yet.
+        /// So a looted bow turns up in its slot without having to be drawn, a second draught finds a
+        /// slot of its own, and the draught beside a drunk one stays where it was.</item>
+        /// </list>
         /// </summary>
         private void RefreshEquipped()
         {
@@ -301,12 +325,53 @@ namespace Runtime.Gameplay.Items
                 equippedBySlot[weaponSlot] = inHand;
 
             for (var slot = 0; slot < equippedBySlot.Length; slot++)
-                if (equippedBySlot[slot] != null && !items.Contains(equippedBySlot[slot]))
+                if (equippedBySlot[slot] != null && CopiesShownUpTo(slot) > CountOwnedOf(equippedBySlot[slot]))
                     Fill(slot, null);
 
             for (var slot = 0; slot < equippedBySlot.Length; slot++)
                 if (equippedBySlot[slot] == null)
-                    Fill(slot, FirstFitting(slot));
+                    Fill(slot, FirstUnshown(slot));
+        }
+
+        /// <summary>
+        /// How many slots up to and including <paramref name="slot"/> show what it shows - which copy
+        /// of that item this slot is, counted from one. The later of two slots showing a draught owned
+        /// only once is the one that comes out above the count and so the one that gives it up.
+        /// </summary>
+        private int CopiesShownUpTo(int slot)
+        {
+            var item = equippedBySlot[slot];
+            var copies = 0;
+
+            for (var i = 0; i <= slot; i++)
+                if (equippedBySlot[i] == item)
+                    copies++;
+
+            return copies;
+        }
+
+        /// <summary>How many copies of <paramref name="item"/> the player owns.</summary>
+        private int CountOwnedOf(Item item)
+        {
+            var copies = 0;
+
+            foreach (var owned in items)
+                if (owned == item)
+                    copies++;
+
+            return copies;
+        }
+
+        /// <summary>How many slots are showing <paramref name="item"/>.</summary>
+        private int CopiesShown(Item item)
+        {
+            var copies = 0;
+
+            foreach (var shown in equippedBySlot)
+                if (shown == item)
+                    copies++;
+
+            return copies;
         }
 
         /// <summary>
@@ -331,12 +396,21 @@ namespace Runtime.Gameplay.Items
             return null;
         }
 
-        /// <summary>The first owned item that fits <paramref name="slot"/>, or null.</summary>
-        private Item FirstFitting(int slot)
+        /// <summary>
+        /// The first owned item fitting <paramref name="slot"/> that the slots do not already show
+        /// every copy of, or null. Owning two draughts and showing one means the second still wants a
+        /// slot; owning one and showing it means it does not.
+        /// </summary>
+        private Item FirstUnshown(int slot)
         {
-            var slotItems = ItemsForSlot(slot);
+            if (!KindForSlot(slot, out var kind))
+                return null;
 
-            return slotItems.Count > 0 ? slotItems[0] : null;
+            foreach (var item in items)
+                if (item != null && item.Slot == kind && CopiesShown(item) < CountOwnedOf(item))
+                    return item;
+
+            return null;
         }
 
         private int CountOwned(SlotKind kind)
@@ -407,9 +481,11 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
-        /// Everything owned that <paramref name="slot"/> can show: items of its category that no other
-        /// slot is already holding. The second half only ever matters to a category with several slots
-        /// - a category with one can have nothing held elsewhere.
+        /// Everything owned that <paramref name="slot"/> offers - its whole category. Only a category
+        /// sharing one slot is ever picked from, and those are exactly the ones that cannot hold the
+        /// same asset twice (<see cref="CanStack"/>), so no entry here is ever a duplicate of another.
+        /// Which slot an item ends up *sitting* in is not this question - that is
+        /// <see cref="FirstUnshown"/>, which has to count copies.
         /// </summary>
         private List<Item> ItemsForSlot(int slot)
         {
@@ -419,20 +495,10 @@ namespace Runtime.Gameplay.Items
                 return slotItems;
 
             foreach (var item in items)
-                if (item != null && item.Slot == kind && !HeldElsewhere(item, slot))
+                if (item != null && item.Slot == kind)
                     slotItems.Add(item);
 
             return slotItems;
-        }
-
-        /// <summary>Whether a slot other than <paramref name="slot"/> is holding the item.</summary>
-        private bool HeldElsewhere(Item item, int slot)
-        {
-            for (var i = 0; i < equippedBySlot.Length; i++)
-                if (i != slot && equippedBySlot[i] == item)
-                    return true;
-
-            return false;
         }
 
         /// <summary>What the character carries in <paramref name="slot"/>, or null.</summary>
@@ -521,6 +587,10 @@ namespace Runtime.Gameplay.Items
         /// *before* the action runs: the executor announces itself once it is done, and the snapshot
         /// taken at that moment has to already show the item gone, or an undo would hand it back
         /// twice. One that could not be afforded goes back where it was.
+        ///
+        /// One copy leaves, not the item: with several of the same draught carried, which of them was
+        /// drunk is not a question - they are the same asset, and it is <see cref="RefreshEquipped"/>
+        /// that decides which slot goes empty over it.
         /// </summary>
         private void Use(ActiveItemData item)
         {

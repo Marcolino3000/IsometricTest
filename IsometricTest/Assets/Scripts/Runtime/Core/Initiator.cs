@@ -84,7 +84,9 @@ namespace Runtime.Core
         {
             nextTurnButton.Setup(gameStateManager, inputHandler);
             itemBar.Setup(inputHandler);
-            itemManager.Setup(itemBar, CreateItemPopup());
+            // The rules go in live, like they do into CombatRules: whether the same draught may be
+            // carried twice is switchable during play.
+            itemManager.Setup(itemBar, CreateItemPopup(), gameRules);
         }
 
         /// <summary>
