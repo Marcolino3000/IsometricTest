@@ -76,17 +76,48 @@ namespace Runtime.Gameplay.Global
 
         /// <summary>
         /// Whether <paramref name="defender"/> strikes back at <paramref name="attacker"/> after being hit:
-        /// only if the match rules allow retaliation at all and the attacker is within the defender's
-        /// effective range - so a ranged unit retaliating from a hill benefits from its terrain bonus.
+        /// only if it is allowed to answer at all - the match rules, and then whatever
+        /// <see cref="Trait.ModifyRetaliation"/> makes of them - and the attacker is within the
+        /// defender's effective range, so a ranged unit retaliating from a hill benefits from its
+        /// terrain bonus. Permission and reach stay separate questions: a trait grants the right to
+        /// answer, never the reach to do it.
         /// </summary>
         public static bool CanRetaliate(Unit defender, Unit attacker)
         {
-            // Only a refusal is logged: a counter-strike announces itself with its own line.
-            if (!Rules.RetaliationEnabled)
+            // The counter-strike as it would be resolved - the defender answering, roles swapped -
+            // so a trait sees itself on the same side here as it does while the damage is folded.
+            var context = new CombatContext(defender, attacker, isRetaliation: true);
+
+            var allowed = Rules.RetaliationEnabled;
+
+            // Whoever would answer has the say: the traits they carry and the ones the ground grants.
+            Trait decidedBy = null;
+
+            foreach (var trait in TraitsAffecting(defender))
             {
-                CombatLog.Note("no retaliation (turned off in GameRules)");
+                var modified = trait.ModifyRetaliation(allowed, context);
+
+                if (modified == allowed)
+                    continue;
+
+                allowed = modified;
+                decidedBy = trait;
+            }
+
+            // Only a refusal is logged: a counter-strike announces itself with its own line.
+            if (!allowed)
+            {
+                CombatLog.Note(decidedBy != null
+                    ? $"no retaliation ({decidedBy.name})"
+                    : "no retaliation (turned off in GameRules)");
+
                 return false;
             }
+
+            // That there is one at all is worth a line only when a trait, rather than the rules, is
+            // why - and then it is a detail, since the counter-strike itself is already reported.
+            if (decidedBy != null && CombatLog.Details)
+                CombatLog.Note($"retaliation granted by {decidedBy.name}");
 
             var distance = defender.CurrentState.Position.DistanceTo(attacker.CurrentState.Position);
             var range = GetEffectiveAttackRange(defender);

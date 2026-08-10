@@ -10,7 +10,9 @@ namespace Runtime.Gameplay.Global
     [CreateAssetMenu(menuName = "ScriptableObjects/Rules/Game Rules")]
     public class GameRules : ScriptableObject
     {
-        [Tooltip("When off, a defender never strikes back after being attacked, no matter the range.")]
+        [Tooltip("Whether a defender strikes back after being attacked. Only the default: a unit's " +
+                 "traits are asked afterwards, so gear can grant a counter-strike while this is off " +
+                 "or forgo one while it is on. A counter-strike still has to reach the attacker.")]
         public bool RetaliationEnabled = true;
 
         [Tooltip("When on, the map switches to the acting team's vision while an AI plays its turn, so you " +

@@ -15,6 +15,46 @@ namespace Runtime.Gameplay.Traits
     }
 
     /// <summary>
+    /// The one place a <see cref="WeaponRequirement"/> is answered and named. Gear that hangs on a
+    /// weapon is authored on more than one trait (<see cref="EquipmentTrait"/> for its numbers,
+    /// <see cref="RetaliationTrait"/> for its counter-strike), and all of them have to read the
+    /// requirement the same way or the same wording would mean two things.
+    /// </summary>
+    public static class WeaponRequirements
+    {
+        /// <summary>
+        /// Whether <paramref name="carrier"/> currently has the required weapon drawn. Which unit
+        /// carries the trait differs per hook - the attacker deals damage, the defender takes it -
+        /// so it is passed in rather than guessed.
+        /// </summary>
+        public static bool IsMetBy(this WeaponRequirement requirement, Unit carrier)
+        {
+            if (requirement == WeaponRequirement.Any)
+                return true;
+
+            var weapon = carrier != null ? carrier.CurrentState.AttackAction : null;
+
+            if (weapon == null)
+                return false;
+
+            return requirement == WeaponRequirement.Melee
+                ? weapon.Kind == WeaponKind.Melee
+                : weapon.Kind == WeaponKind.Ranged;
+        }
+
+        /// <summary>
+        /// The requirement as a suffix for a trait's <see cref="Trait.Summary"/> - empty when there
+        /// is none, and never left off when there is, since it is the whole point of gear that has one.
+        /// </summary>
+        public static string Describe(this WeaponRequirement requirement)
+        {
+            return requirement == WeaponRequirement.Any
+                ? ""
+                : $" (with a {requirement.ToString().ToLowerInvariant()} weapon)";
+        }
+    }
+
+    /// <summary>
     /// The flat modifiers a piece of equipment grants whoever carries it: one number per hook a
     /// <see cref="Trait"/> has, so a single asset covers "+3 damage", "+2 defence", "+1 reach" or any
     /// combination of them. One class rather than three because a piece of gear usually changes more
@@ -69,12 +109,7 @@ namespace Runtime.Gameplay.Traits
                 if (parts.Count == 0)
                     return base.Summary;
 
-                var bonuses = string.Join(", ", parts);
-
-                // The requirement is the whole point of gear that has one, so it is never left off.
-                return RequiresWeapon == WeaponRequirement.Any
-                    ? bonuses
-                    : $"{bonuses} (with a {RequiresWeapon.ToString().ToLowerInvariant()} weapon)";
+                return string.Join(", ", parts) + RequiresWeapon.Describe();
             }
         }
 
@@ -82,37 +117,17 @@ namespace Runtime.Gameplay.Traits
 
         public override int ModifyOutgoingDamage(int damage, CombatContext context)
         {
-            return AppliesTo(context.Attacker) ? damage + DamageBonus : damage;
+            return RequiresWeapon.IsMetBy(context.Attacker) ? damage + DamageBonus : damage;
         }
 
         public override int ModifyIncomingDamage(int damage, CombatContext context)
         {
-            return AppliesTo(context.Defender) ? damage - DefenseBonus : damage;
+            return RequiresWeapon.IsMetBy(context.Defender) ? damage - DefenseBonus : damage;
         }
 
         public override int ModifyAttackRange(int range, RangeContext context)
         {
-            return AppliesTo(context.Unit) ? range + RangeBonus : range;
-        }
-
-        /// <summary>
-        /// Whether the carrier currently meets the weapon requirement. Which unit carries the trait
-        /// differs per hook - the attacker deals damage, the defender takes it - so it is passed in
-        /// rather than guessed.
-        /// </summary>
-        private bool AppliesTo(Unit carrier)
-        {
-            if (RequiresWeapon == WeaponRequirement.Any)
-                return true;
-
-            var weapon = carrier != null ? carrier.CurrentState.AttackAction : null;
-
-            if (weapon == null)
-                return false;
-
-            return RequiresWeapon == WeaponRequirement.Melee
-                ? weapon.Kind == WeaponKind.Melee
-                : weapon.Kind == WeaponKind.Ranged;
+            return RequiresWeapon.IsMetBy(context.Unit) ? range + RangeBonus : range;
         }
     }
 }

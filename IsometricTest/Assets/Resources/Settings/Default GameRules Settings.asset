@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Default GameRules Settings
   m_EditorClassIdentifier: 
   RetaliationEnabled: 0
-  ShowEnemyTurns: 0
+  ShowEnemyTurns: 1
+  StackDuplicateActiveItems: 1
+  WinByDefeatingAllEnemies: 1
+  WinByExploringMap: 1
+  LoseWhenCharacterFalls: 1
   LogCombatCalculations: 1
   LogCombatDetails: 0

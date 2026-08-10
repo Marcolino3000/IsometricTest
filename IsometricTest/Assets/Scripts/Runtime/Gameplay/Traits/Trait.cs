@@ -21,6 +21,16 @@ namespace Runtime.Gameplay.Traits
         public virtual int ModifyAttackRange(int range, RangeContext context) => range;
 
         /// <summary>
+        /// Whether the carrier strikes back after being hit, given what the match rules allow.
+        /// Folded by <see cref="Global.CombatRules.CanRetaliate"/> over the traits of whoever would
+        /// answer, so gear can grant a counter-strike the rules withhold or take one away. The
+        /// context is the counter-strike itself, i.e. the carrier is its
+        /// <see cref="CombatContext.Attacker"/>. Only the right to answer - the reach to do it is
+        /// still checked afterwards, through <see cref="ModifyAttackRange"/>.
+        /// </summary>
+        public virtual bool ModifyRetaliation(bool canRetaliate, CombatContext context) => canRetaliate;
+
+        /// <summary>
         /// The action points one step onto <see cref="MoveContext.Tile"/> costs. Folded by
         /// <see cref="Global.MovementRules"/>, which clamps the result so a step is never free.
         /// </summary>
