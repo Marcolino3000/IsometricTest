@@ -44,8 +44,14 @@ namespace Runtime.Gameplay.AI
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private TileSpawner tileSpawner;
         [SerializeField] private FogOfWar fogOfWar;
+        [SerializeField] private MatchOutcomeWatcher outcomeWatcher;
 
         private bool _running;
+
+        // Whether the match has been decided. A verdict stops the AI where it stands: its remaining
+        // units would otherwise play on over a game that is over, and every action they took would be
+        // one more the player has to step back through to take the deciding one back.
+        private bool _matchOver;
 
         // Where each enemy was last seen. Sight is the only thing that ever put an enemy on the AI's
         // radar, so without this a unit loses its target the moment the player steps out of its sight
@@ -97,7 +103,7 @@ namespace Runtime.Gameplay.AI
         /// </summary>
         public void ResumeTurn()
         {
-            if (aiEnabled && !_running
+            if (aiEnabled && !_running && !_matchOver
                 && gameStateManager != null && gameStateManager.State != null
                 && gameStateManager.State.Team == aiTeam)
             {
@@ -120,26 +126,45 @@ namespace Runtime.Gameplay.AI
         }
 
         public void Setup(GameStateManager gameStateManagerArg, UnitSpawner unitSpawnerArg,
-            TileSpawner tileSpawnerArg, FogOfWar fogOfWarArg)
+            TileSpawner tileSpawnerArg, FogOfWar fogOfWarArg, MatchOutcomeWatcher matchOutcomeWatcher)
         {
             gameStateManager = gameStateManagerArg;
             unitSpawner = unitSpawnerArg;
             tileSpawner = tileSpawnerArg;
             fogOfWar = fogOfWarArg;
+            outcomeWatcher = matchOutcomeWatcher;
 
             gameStateManager.TurnStarted += HandleTurnStarted;
+            outcomeWatcher.OutcomeChanged += HandleOutcomeChanged;
         }
 
         private void OnDestroy()
         {
             if (gameStateManager != null)
                 gameStateManager.TurnStarted -= HandleTurnStarted;
+
+            if (outcomeWatcher != null)
+                outcomeWatcher.OutcomeChanged -= HandleOutcomeChanged;
         }
 
         private void HandleTurnStarted(ChangeEvent<State> changeEvent)
         {
-            if (aiEnabled && !_running && changeEvent.NewValue.Team == aiTeam)
+            if (aiEnabled && !_running && !_matchOver && changeEvent.NewValue.Team == aiTeam)
                 StartCoroutine(RunTurn());
+        }
+
+        /// <summary>
+        /// A decided match drops the turn being played out, for the same reason undo/redo does: the AI
+        /// would go on acting over a game that has already been settled. Taking the verdict back only
+        /// lifts the block - the turn is handed back the way a restored one is, by asking
+        /// (<see cref="ResumeTurn"/>), since it was the history that cancelled that one.
+        /// </summary>
+        private void HandleOutcomeChanged(MatchResult result)
+        {
+            _matchOver = result.IsOver;
+
+            if (_matchOver)
+                CancelTurn();
         }
 
         private IEnumerator RunTurn()
@@ -165,7 +190,7 @@ namespace Runtime.Gameplay.AI
 
             foreach (var unit in myUnits)
             {
-                if (!aiEnabled)
+                if (!aiEnabled || _matchOver)
                     break; // switched off mid-turn: hand the remaining units to the player
 
                 if (unit == null || !unit.IsAlive)
@@ -177,8 +202,9 @@ namespace Runtime.Gameplay.AI
             _running = false;
 
             // Only auto-advance if the AI actually played the turn out. If it was switched off
-            // mid-turn, leave the turn for the player to finish and end via the Next Turn button.
-            if (aiEnabled)
+            // mid-turn, leave the turn for the player to finish and end via the Next Turn button;
+            // if the turn decided the match, there is no next turn to hand over to.
+            if (aiEnabled && !_matchOver)
                 gameStateManager.ToggleCurrentTeam();
         }
 
@@ -187,8 +213,9 @@ namespace Runtime.Gameplay.AI
             for (var i = 0; i < maxActionsPerUnit; i++)
             {
                 // Also the re-check after the pause below: the unit may have died to retaliation in its
-                // own previous action, or been taken off the board by an undo while we waited.
-                if (!aiEnabled || unit == null || !unit.IsAlive || !unit.CurrentState.HasActionsLeft)
+                // own previous action, been taken off the board by an undo while we waited, or just
+                // decided the match - the action that ends it is the last one played.
+                if (!aiEnabled || _matchOver || unit == null || !unit.IsAlive || !unit.CurrentState.HasActionsLeft)
                     yield break;
 
                 if (!TryActOnce(unit))

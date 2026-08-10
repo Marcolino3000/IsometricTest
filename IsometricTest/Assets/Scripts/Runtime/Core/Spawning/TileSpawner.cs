@@ -142,13 +142,13 @@ namespace Runtime.Core.Spawning
 
         /// <summary>
         /// Candidate spawn positions for <paramref name="team"/>, best first - the player around the map's
-        /// centre, opponents in a ring around <paramref name="playerPosition"/>. See
-        /// <see cref="TileSpawnerSettings.GetSpawnZonePositions"/>; the caller walks the list until a tile
-        /// takes the unit, so terrain and occupancy are settled here rather than there.
+        /// centre, opponents along its rim. See <see cref="TileSpawnerSettings.GetSpawnZonePositions"/>; the
+        /// caller walks the list until a tile takes the unit, so terrain and occupancy are settled there
+        /// rather than here.
         /// </summary>
-        public List<Vector2Int> GetSpawnZonePositions(Team team, Vector2Int playerPosition)
+        public List<Vector2Int> GetSpawnZonePositions(Team team)
         {
-            return settings.GetSpawnZonePositions(team, playerPosition);
+            return settings.GetSpawnZonePositions(team);
         }
 
         public Vector3 GridIndexToWorldPosition(Vector2Int gridPosition)

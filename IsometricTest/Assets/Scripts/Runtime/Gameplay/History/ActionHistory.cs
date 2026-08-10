@@ -57,6 +57,9 @@ namespace Runtime.Gameplay.History
 
         public IReadOnlyList<HistoryEntry> Entries => entries;
 
+        /// <summary>The key that steps back, so a hint about it can name the one actually bound.</summary>
+        public Key UndoKey => undoKey;
+
         /// <summary>Position in the history: the index of the next action to be (re)done.</summary>
         public int Cursor => cursor;
 

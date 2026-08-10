@@ -137,14 +137,13 @@ namespace Runtime.Core.Spawning
 
         /// <summary>
         /// Puts a freshly spawned unit on the first tile of its spawn zone that will take it. The zone is
-        /// ranked rather than rolled: a ring can be walled off by mountains or filled by the units placed
-        /// before it, and re-rolling inside it would spin forever - the tail of the list widens outwards
-        /// instead. An opponent's ring is measured from the player, so the player has to be down first,
-        /// which is the order <see cref="SpawnUnits"/> keeps.
+        /// ranked rather than rolled: it can be walled off by mountains or filled by the units placed before
+        /// it, and re-rolling inside it would spin forever - the tail of the list spills over its border
+        /// instead.
         /// </summary>
         private void PlaceUnit(Unit unit, Team team)
         {
-            foreach (var gridPosition in tileSpawner.GetSpawnZonePositions(team, PlayerSpawnPosition()))
+            foreach (var gridPosition in tileSpawner.GetSpawnZonePositions(team))
             {
                 var tile = tileSpawner.GetTileAtPosition(gridPosition);
 
@@ -157,14 +156,6 @@ namespace Runtime.Core.Spawning
             }
 
             Debug.LogError($"No free tile left to spawn {unit.name} on.", settings);
-        }
-
-        /// <summary>The tile the player was placed on, which the opponents' spawn ring is drawn around.</summary>
-        private Vector2Int PlayerSpawnPosition()
-        {
-            return playerUnit != null && playerUnit.CurrentState.Position != null
-                ? playerUnit.CurrentState.Position.Position
-                : Vector2Int.zero;
         }
 
         public Vector3 GridToWorldPosition(Vector2Int gridPosition)

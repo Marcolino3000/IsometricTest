@@ -21,8 +21,7 @@ MonoBehaviour:
   GridSizeY: 15
   AllowMovementInAllDirections: 0
   PlayerSpawnRadius: 0
-  OpponentSpawnDistanceMin: 4
-  OpponentSpawnDistanceMax: 10
+  OpponentSpawnZoneSize: 2
   FlatTerrain:
     Type: 0
     Passable: 1

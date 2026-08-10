@@ -25,6 +25,20 @@ namespace Runtime.Gameplay.Global
                  "lootbox holding something already carried is left where it lies.")]
         public bool StackDuplicateActiveItems = true;
 
+        [Header("Victory")]
+        [Tooltip("When on, the match is won the moment the last opposing unit falls.")]
+        public bool WinByDefeatingAllEnemies = true;
+
+        [Tooltip("When on, the match is won once every walkable tile has been uncovered. Impassable " +
+                 "terrain is not counted - the inside of a mountain range may never come within sight " +
+                 "of anywhere the character can stand.")]
+        public bool WinByExploringMap = true;
+
+        [Tooltip("When on, losing your character ends the match in defeat. Asked before the two above, " +
+                 "so a character that falls to the retaliation of the last enemy it struck down has lost " +
+                 "rather than won by a hair.")]
+        public bool LoseWhenCharacterFalls = true;
+
         [Header("Debug")]
         [Tooltip("Prints every attack to the console with its damage breakdown: the weapon's base " +
                  "damage, each trait that changed the number and what it changed it to, the damage " +

@@ -24,10 +24,8 @@ namespace Data
         [Header("Spawn Settings")]
         [Tooltip("The player spawns on a tile no further than this from the centre of the map.")]
         public int PlayerSpawnRadius = 2;
-        [Tooltip("Opponents spawn in a ring around the player - no closer to it than this.")]
-        public int OpponentSpawnDistanceMin = 4;
-        [Tooltip("Opponents spawn in a ring around the player - no further from it than this.")]
-        public int OpponentSpawnDistanceMax = 6;
+        [Tooltip("How many tiles deep the opponents' band around the rim of the map is: 1 spawns them on the outermost tiles only, 2 adds the row behind those, and so on.")]
+        public int OpponentSpawnZoneSize = 2;
 
         /// <summary>The middle tile of the grid, which the player spawns around.</summary>
         public Vector2Int GridCenter => new((GridSizeX - 1) / 2, (GridSizeY - 1) / 2);
@@ -110,35 +108,46 @@ namespace Data
         }
 
         /// <summary>
-        /// Where a unit of <paramref name="team"/> may spawn, best candidates first. The player takes a
-        /// tile within <see cref="PlayerSpawnRadius"/> of <see cref="GridCenter"/>; an opponent takes one
-        /// in the ring between <see cref="OpponentSpawnDistanceMin"/> and <see cref="OpponentSpawnDistanceMax"/>
-        /// around the player, which is why <paramref name="playerPosition"/> is passed in - the player is
-        /// placed first and the opponents' zone is measured from where it landed.
+        /// Where a unit of <paramref name="team"/> may spawn, best candidates first. The player takes a tile
+        /// within <see cref="PlayerSpawnRadius"/> of <see cref="GridCenter"/>; an opponent takes one in the
+        /// <see cref="OpponentSpawnZoneSize"/>-deep band along the rim of the map. The two are measured from
+        /// opposite ends on purpose - the player from the middle outwards, the opponents from the edge inwards
+        /// - so the opponents encircle the player without either zone having to know where the other landed.
         /// <para>
-        /// Distance is Euclidean, so a zone reads as a circle rather than the diamond Manhattan would give
-        /// - the same metric fog sight uses. Every grid position is returned, not just the zone's: the ones
-        /// inside it come first in random order, the rest follow ordered by how far outside they are, so a
-        /// zone blocked by terrain or already-placed units spills outwards instead of failing to spawn.
+        /// Every grid position is returned, not just the zone's: the ones inside it come first in random order,
+        /// the rest follow ordered by how far outside they are, so a zone blocked by terrain or already-placed
+        /// units spills over its border instead of failing to spawn.
         /// </para>
         /// </summary>
-        public List<Vector2Int> GetSpawnZonePositions(Team team, Vector2Int playerPosition)
+        public List<Vector2Int> GetSpawnZonePositions(Team team)
         {
-            var isPlayer = team == Team.Player;
-            var center = isPlayer ? GridCenter : playerPosition;
-            float minDistance = isPlayer ? 0 : OpponentSpawnDistanceMin;
-            float maxDistance = isPlayer ? PlayerSpawnRadius : OpponentSpawnDistanceMax;
-
             return AllPositions()
-                .OrderBy(position => DistanceOutsideZone(Vector2.Distance(position, center), minDistance, maxDistance))
+                .OrderBy(position => DistanceOutsideZone(position, team))
                 .ThenBy(_ => Random.value)
                 .ToList();
         }
 
-        /// <summary>How far <paramref name="distance"/> misses the ring between the two radii; 0 inside it.</summary>
-        private static float DistanceOutsideZone(float distance, float minDistance, float maxDistance)
+        /// <summary>
+        /// How far <paramref name="position"/> misses its team's spawn zone; 0 inside it, which is what makes
+        /// the zone itself sort as one block for the random tiebreak to shuffle.
+        /// </summary>
+        private float DistanceOutsideZone(Vector2Int position, Team team)
         {
-            return Mathf.Max(0f, Mathf.Max(minDistance - distance, distance - maxDistance));
+            // The player's zone is a circle, measured Euclidean like fog sight rather than the diamond
+            // Manhattan would give. The opponents' is a band, so it counts whole tiles in from the rim -
+            // a size of 1 is the outermost tiles and nothing else, which is why the depth is compared
+            // against one less than the size.
+            return team == Team.Player
+                ? Mathf.Max(0f, Vector2.Distance(position, GridCenter) - PlayerSpawnRadius)
+                : Mathf.Max(0f, DepthFromRim(position) - (OpponentSpawnZoneSize - 1));
+        }
+
+        /// <summary>How many tiles in from the nearest edge of the map a position lies; 0 on the rim itself.</summary>
+        private int DepthFromRim(Vector2Int position)
+        {
+            return Mathf.Min(
+                Mathf.Min(position.x, GridSizeX - 1 - position.x),
+                Mathf.Min(position.y, GridSizeY - 1 - position.y));
         }
 
         private IEnumerable<Vector2Int> AllPositions()

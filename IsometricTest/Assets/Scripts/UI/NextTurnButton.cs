@@ -11,15 +11,31 @@ namespace UI
         private Button _button;
         private GameStateManager _gameStateManager;
         private InputHandler _inputHandler;
+        private MatchOutcomeWatcher _outcomeWatcher;
 
-        public void Setup(GameStateManager gameStateManager, InputHandler inputHandler)
+        public void Setup(GameStateManager gameStateManager, InputHandler inputHandler,
+            MatchOutcomeWatcher outcomeWatcher)
         {
             _gameStateManager = gameStateManager;
             _inputHandler = inputHandler;
-            _button.clicked += gameStateManager.ToggleCurrentTeam;
+            _outcomeWatcher = outcomeWatcher;
+            _button.clicked += EndTurn;
             // The key is the button's shortcut, so it ends the turn on exactly the same terms.
-            _inputHandler.EndTurnPressed += gameStateManager.ToggleCurrentTeam;
+            _inputHandler.EndTurnPressed += EndTurn;
             gameStateManager.GameStateChanged += HandleStateChange;
+        }
+
+        /// <summary>
+        /// Hands the turn over, unless the match has been decided - a settled match has no next turn,
+        /// and letting one start would only bury the deciding action under further ones to undo. This
+        /// button owns ending the player's turn, so it is the one place that has to know.
+        /// </summary>
+        private void EndTurn()
+        {
+            if (_outcomeWatcher != null && _outcomeWatcher.IsOver)
+                return;
+
+            _gameStateManager.ToggleCurrentTeam();
         }
 
         private void HandleStateChange(Runtime.Core.State.ChangeEvent<State> changeEvent)
@@ -48,8 +64,8 @@ namespace UI
         {
             if (_gameStateManager == null) return;
             _gameStateManager.GameStateChanged -= HandleStateChange;
-            if (_button != null) _button.clicked -= _gameStateManager.ToggleCurrentTeam;
-            if (_inputHandler != null) _inputHandler.EndTurnPressed -= _gameStateManager.ToggleCurrentTeam;
+            if (_button != null) _button.clicked -= EndTurn;
+            if (_inputHandler != null) _inputHandler.EndTurnPressed -= EndTurn;
         }
     }
 }

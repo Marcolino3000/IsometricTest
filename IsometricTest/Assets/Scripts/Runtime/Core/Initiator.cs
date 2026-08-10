@@ -48,6 +48,10 @@ namespace Runtime.Core
         [Tooltip("Screen-space UI documents. A click that lands on one of them must not raycast into the world.")]
         [SerializeField] private UIDocument[] hudDocuments;
 
+        // Created in SetupReferences, like the attack preview: it holds nothing worth authoring and
+        // nothing worth keeping across a restart, only the verdict it reads off the board.
+        private MatchOutcomeWatcher matchOutcomeWatcher;
+
 
         private void Awake()
         {
@@ -82,11 +86,27 @@ namespace Runtime.Core
 
         private void SetupUI()
         {
-            nextTurnButton.Setup(gameStateManager, inputHandler);
+            nextTurnButton.Setup(gameStateManager, inputHandler, matchOutcomeWatcher);
             itemBar.Setup(inputHandler);
             // The rules go in live, like they do into CombatRules: whether the same draught may be
             // carried twice is switchable during play.
             itemManager.Setup(itemBar, CreateItemPopup(), gameRules);
+            CreateGameOverScreen();
+        }
+
+        /// <summary>
+        /// The end screen is built at runtime on the HUD's panel settings like the find popup, and
+        /// sorts above it - a match that ends on a find shows both, and the verdict is the news. It
+        /// subscribes to the watcher itself, the way the next-turn button subscribes to the state
+        /// manager, so nothing has to push a result at it. Not rebuilt on a restart: it holds no
+        /// match state, only what it was last told.
+        /// </summary>
+        private void CreateGameOverScreen()
+        {
+            var hud = itemBar.GetComponent<UIDocument>();
+
+            GameOverScreen.Create(hud.panelSettings, hud.sortingOrder + 2)
+                .Setup(matchOutcomeWatcher, actionHistory.UndoKey);
         }
 
         /// <summary>
@@ -109,9 +129,12 @@ namespace Runtime.Core
             CombatRules.Setup(gameRules);
             CombatLog.Setup(gameRules);
             gameStateManager.Setup();
+            // Early: the selector and the AI are both told to stand down by it, so it has to exist
+            // before either is wired.
+            CreateMatchOutcomeWatcher();
             unitSpawner.Setup(gameStateManager, selector, fogOfWar);
             tileSpawner.Setup(selector);
-            selector.Setup(gameStateManager, raycaster, unitSpawner);
+            selector.Setup(gameStateManager, raycaster, unitSpawner, matchOutcomeWatcher);
             raycaster.Setup(inputHandler, hudDocuments);
             outlineManager.Setup(selector);
             CreateAttackPreview();
@@ -119,11 +142,23 @@ namespace Runtime.Core
                 lootSpawner, itemManager);
             actionAssigner.Setup(selector);
             fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager, aiController, gameRules);
-            aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar);
+            aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, matchOutcomeWatcher);
             lootSpawner.Setup(tileSpawner, unitSpawner, itemManager, gameStateManager, inputHandler);
             Direction.Setup(gameStateManager);
         }
         
+        /// <summary>
+        /// The watcher of the win and loss conditions. Created here rather than placed on the Systems
+        /// prefab because it is nothing but a question asked of the board, and it goes on the
+        /// Initiator's own object since it has no transform of its own to speak of. The rules go in
+        /// live like everywhere else, so a condition can be switched on and off during play.
+        /// </summary>
+        private void CreateMatchOutcomeWatcher()
+        {
+            matchOutcomeWatcher = gameObject.AddComponent<MatchOutcomeWatcher>();
+            matchOutcomeWatcher.Setup(gameRules, unitSpawner, tileSpawner, fogOfWar, gameStateManager);
+        }
+
         /// <summary>
         /// The attack preview (ghost + red attack line) is created at runtime like the floating
         /// text popups, so the Systems prefab needs no extra scene object. Unparented on purpose:

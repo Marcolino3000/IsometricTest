@@ -19,6 +19,7 @@ namespace Runtime.Gameplay.Global
 
         [Header("References")]
         [SerializeField] private UnitSpawner unitSpawner;
+        [SerializeField] private MatchOutcomeWatcher outcomeWatcher;
 
         #region Setup
 
@@ -29,9 +30,11 @@ namespace Runtime.Gameplay.Global
             clickable.OnMouseExit += HandleMouseExit;
         }
 
-        public void Setup(GameStateManager gameStateManagerArg, Raycaster raycaster, UnitSpawner unitSpawnerArg)
+        public void Setup(GameStateManager gameStateManagerArg, Raycaster raycaster, UnitSpawner unitSpawnerArg,
+            MatchOutcomeWatcher matchOutcomeWatcher)
         {
             unitSpawner = unitSpawnerArg;
+            outcomeWatcher = matchOutcomeWatcher;
             gameStateManagerArg.TurnReset += HandleTurnReset;
             gameStateManagerArg.TurnStarted += HandleTurnStarted;
             raycaster.OnClickedNothing += HandleClickNothing;
@@ -157,8 +160,17 @@ namespace Runtime.Gameplay.Global
             }
         }
 
+        /// <summary>
+        /// A click on the board. Ignored once the match has been decided: this is the head of the
+        /// selection pipeline, so refusing here is what stops the player moving and attacking under
+        /// the end screen, and one refusal covers every action the pipeline leads to. Hovering is
+        /// left alone - a preview changes nothing - and an undo lifts the block with the verdict.
+        /// </summary>
         private void HandleClick(IClickable clickable)
         {
+            if (outcomeWatcher != null && outcomeWatcher.IsOver)
+                return;
+
             switch (clickable)
             {
                 case Unit unit:
