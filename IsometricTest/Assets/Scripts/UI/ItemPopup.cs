@@ -57,12 +57,12 @@ namespace UI
         private const float FadeInDuration = 0.2f;
         private const float FadeOutDuration = 0.35f;
 
-        // Opaque: the card is read, and the map moving underneath it is only in the way.
-        protected static readonly Color Background = new(0.07f, 0.07f, 0.086f);
-        protected static readonly Color Border = new(1f, 1f, 1f, 0.35f);
-        protected static readonly Color Text = new(0.92f, 0.92f, 0.92f);
-        protected static readonly Color MutedText = new(1f, 1f, 1f, 0.6f);
-        protected static readonly Color StatText = new(0.91f, 0.89f, 0.34f);
+        // Shared with every other panel built in code - see CardStyle, which is where they live now.
+        protected static readonly Color Background = CardStyle.Background;
+        protected static readonly Color Border = CardStyle.Border;
+        protected static readonly Color Text = CardStyle.Text;
+        protected static readonly Color MutedText = CardStyle.MutedText;
+        protected static readonly Color StatText = CardStyle.StatText;
 
         private VisualElement root;
 
@@ -302,20 +302,7 @@ namespace UI
 
         private static void SetBorder(VisualElement element, float width, float radius)
         {
-            element.style.borderTopWidth = width;
-            element.style.borderRightWidth = width;
-            element.style.borderBottomWidth = width;
-            element.style.borderLeftWidth = width;
-
-            element.style.borderTopColor = Border;
-            element.style.borderRightColor = Border;
-            element.style.borderBottomColor = Border;
-            element.style.borderLeftColor = Border;
-
-            element.style.borderTopLeftRadius = radius;
-            element.style.borderTopRightRadius = radius;
-            element.style.borderBottomLeftRadius = radius;
-            element.style.borderBottomRightRadius = radius;
+            CardStyle.SetBorder(element, width, radius);
         }
     }
 }

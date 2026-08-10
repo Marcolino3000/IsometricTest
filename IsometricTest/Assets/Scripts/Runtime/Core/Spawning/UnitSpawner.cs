@@ -39,6 +39,10 @@ namespace Runtime.Core.Spawning
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private FogOfWar fogOfWar;
 
+        // Handed to every unit it spawns: whether a unit wears capability badges and whether it
+        // shows a threat zone are match rules, and a unit is where both are drawn.
+        [SerializeField] private GameRules gameRules;
+
         /// <summary>
         /// Takes a unit out of play. It is hidden instead of destroyed - that keeps it, and every
         /// reference to it, intact so <see cref="RestoreUnit"/> can bring it back when the action that
@@ -95,7 +99,7 @@ namespace Runtime.Core.Spawning
             spriteRenderer.sprite = prefab.Blueprint.Sprite;
 
             var unit = instance.GetComponentInChildren<Unit>();
-            unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar);
+            unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar, gameRules);
 
             PlaceUnit(unit, team);
 
@@ -181,11 +185,13 @@ namespace Runtime.Core.Spawning
 
         #region Setup
 
-        public void Setup(GameStateManager gameStateManagerArg, Selector selectorArg, FogOfWar fogOfWarArg)
+        public void Setup(GameStateManager gameStateManagerArg, Selector selectorArg, FogOfWar fogOfWarArg,
+            GameRules gameRulesArg)
         {
             gameStateManager = gameStateManagerArg;
             selector = selectorArg;
             fogOfWar = fogOfWarArg;
+            gameRules = gameRulesArg;
         }
 
         [ContextMenu("Spawn Units")]

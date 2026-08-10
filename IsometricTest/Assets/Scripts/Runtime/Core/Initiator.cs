@@ -91,7 +91,22 @@ namespace Runtime.Core
             // The rules go in live, like they do into CombatRules: whether the same draught may be
             // carried twice is switchable during play.
             itemManager.Setup(itemBar, CreateItemPopup(), gameRules);
+            CreateUnitCard();
             CreateGameOverScreen();
+        }
+
+        /// <summary>
+        /// The card shown while a unit is hovered. Built at runtime on the HUD's panel settings like
+        /// the find popup, and lowest of the three cards that sort above the bar: a find and a
+        /// verdict are both news, and the hovered unit is only ever the thing being looked at while
+        /// they arrive. It listens to the selector itself, so nothing has to push a unit at it, and
+        /// it is not rebuilt on a restart - it holds no match state, only what it was last shown.
+        /// </summary>
+        private void CreateUnitCard()
+        {
+            var hud = itemBar.GetComponent<UIDocument>();
+
+            UnitCard.Create(hud.panelSettings, hud.sortingOrder + 1).Setup(selector, gameRules);
         }
 
         /// <summary>
@@ -105,7 +120,7 @@ namespace Runtime.Core
         {
             var hud = itemBar.GetComponent<UIDocument>();
 
-            GameOverScreen.Create(hud.panelSettings, hud.sortingOrder + 2)
+            GameOverScreen.Create(hud.panelSettings, hud.sortingOrder + 3)
                 .Setup(matchOutcomeWatcher, actionHistory.UndoKey);
         }
 
@@ -120,8 +135,8 @@ namespace Runtime.Core
             var hud = itemBar.GetComponent<UIDocument>();
 
             return verticalItemPopup
-                ? ItemPopup.Create<VerticalItemPopup>(hud.panelSettings, hud.sortingOrder + 1)
-                : ItemPopup.Create<ItemPopup>(hud.panelSettings, hud.sortingOrder + 1);
+                ? ItemPopup.Create<VerticalItemPopup>(hud.panelSettings, hud.sortingOrder + 2)
+                : ItemPopup.Create<ItemPopup>(hud.panelSettings, hud.sortingOrder + 2);
         }
 
         private void SetupReferences()
@@ -132,7 +147,7 @@ namespace Runtime.Core
             // Early: the selector and the AI are both told to stand down by it, so it has to exist
             // before either is wired.
             CreateMatchOutcomeWatcher();
-            unitSpawner.Setup(gameStateManager, selector, fogOfWar);
+            unitSpawner.Setup(gameStateManager, selector, fogOfWar, gameRules);
             tileSpawner.Setup(selector);
             selector.Setup(gameStateManager, raycaster, unitSpawner, matchOutcomeWatcher);
             raycaster.Setup(inputHandler, hudDocuments);

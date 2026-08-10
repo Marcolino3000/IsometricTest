@@ -4,6 +4,7 @@ using Runtime.Core.State;
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Fog;
+using Runtime.Gameplay.Global;
 using UI;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -29,6 +30,14 @@ namespace Runtime.Gameplay.Entities
         /// value. What healing clamps against.
         /// </summary>
         public int MaxHealth => blueprint.DefaultState.Health;
+
+        /// <summary>
+        /// The action points the unit is given at the start of each of its turns - the counterpart to
+        /// <see cref="MaxHealth"/>, read off the blueprint the same way. What anything asking "what
+        /// could this unit do on its turn" has to budget with: <see cref="UnitState.ActionPoints"/> is
+        /// what is left of them, which for an enemy on the player's turn is usually nothing.
+        /// </summary>
+        public int MaxActionPoints => blueprint.DefaultState.ActionPoints;
 
         [Header("Debug")]
         [SerializeField] private UnitState currentState;
@@ -58,7 +67,7 @@ namespace Runtime.Gameplay.Entities
         }
 
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team,
-            GameStateManager gameStateManagerArg, FogOfWar fogOfWarArg)
+            GameStateManager gameStateManagerArg, FogOfWar fogOfWarArg, GameRules gameRules)
         {
             currentState = blueprint.DefaultState;
             currentState.Team = team;
@@ -72,11 +81,30 @@ namespace Runtime.Gameplay.Entities
 
             gameStateManager = gameStateManagerArg;
             gameStateManager.TurnReset += HandleTurnReset;
-            
+
             healthBar.Setup(blueprint.DefaultState.Health);
             actionExecutor.Setup(this, tileSpawner);
-            
-            TileHighlighter.Setup(currentState, tileSpawner);
+
+            TileHighlighter.Setup(this, tileSpawner, gameRules);
+
+            CreateBadges(gameRules);
+        }
+
+        /// <summary>
+        /// Hangs the capability badges over the unit. Built at runtime rather than placed on the
+        /// prefab, like the floating text is: how many badges there are depends on what the unit
+        /// carries, and what it carries changes while the match runs. They borrow the health bar's
+        /// world-space panel, so they scale and sort with the bars, and being a child of the unit is
+        /// what puts them under <see cref="SetRevealed"/> - an enemy in the fog gives nothing away.
+        /// </summary>
+        private void CreateBadges(GameRules gameRules)
+        {
+            if (gameRules == null || !gameRules.ShowUnitBadges)
+                return;
+
+            // Nothing is held on to: the row keeps itself in step with what the unit carries, so
+            // there is nothing here that would have to tell it when that changes.
+            UnitBadges.Create(this, healthBar.GetComponent<UIDocument>().panelSettings);
         }
 
         /// <summary>

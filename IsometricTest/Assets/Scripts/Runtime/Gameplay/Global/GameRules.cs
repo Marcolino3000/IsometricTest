@@ -27,6 +27,23 @@ namespace Runtime.Gameplay.Global
                  "lootbox holding something already carried is left where it lies.")]
         public bool StackDuplicateActiveItems = true;
 
+        [Header("Reading the enemy")]
+        [Tooltip("When on, every unit wears a row of badges: the weapon it has drawn, how far it " +
+                 "moves in a turn, and one per trait it carries. A trait with no symbol authored is " +
+                 "badged with its name.")]
+        public bool ShowUnitBadges = true;
+
+        [Tooltip("When on, hovering a unit puts a card in the corner with its health, its points and " +
+                 "what each of its badges means. The badges say what it can do; this says what the " +
+                 "numbers are.")]
+        public bool ShowUnitCard = true;
+
+        [Tooltip("When on, hovering an enemy tints every tile it could strike next turn - measured " +
+                 "from the points it starts a turn with, not the ones it has left, so it reads the " +
+                 "same on your turn as on its own. The tiles it could stand on stay marked over the " +
+                 "top, so what is left orange is what it can reach you at without moving there.")]
+        public bool ShowThreatZone = true;
+
         [Header("Victory")]
         [Tooltip("When on, the match is won the moment the last opposing unit falls.")]
         public bool WinByDefeatingAllEnemies = true;

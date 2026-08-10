@@ -81,13 +81,21 @@ namespace Runtime.Core.Spawning
         /// </summary>
         public List<Tile> GetMoveableTiles(UnitState mover)
         {
+            return GetMoveableTiles(mover, mover != null ? mover.ActionPoints : 0);
+        }
+
+        /// <summary>
+        /// The same, on a budget of somebody else's choosing. What an enemy could reach is asked of
+        /// the points it *starts* a turn with rather than the ones it has left over from its last
+        /// one, which are nearly always none while the player is the one moving.
+        /// </summary>
+        public List<Tile> GetMoveableTiles(UnitState mover, int actionPoints)
+        {
             var moveableTiles = new List<Tile>();
 
             var start = mover?.Position;
             if (start == null)
                 return moveableTiles;
-
-            var actionPoints = mover.ActionPoints;
 
             // No step can cost less than this, so a tile whose minimum step count already blows the
             // budget can never be reached - skip it before paying for a pathfinding search.
@@ -112,6 +120,67 @@ namespace Runtime.Core.Spawning
             return moveableTiles;
         }
 
+        /// <summary>
+        /// Every tile <paramref name="attacker"/> could strike within one turn: it walks somewhere it
+        /// can afford to walk, and hits whatever its effective range reaches from there. The reach
+        /// comes from the same <see cref="MovementRules"/> the move itself is charged against and the
+        /// range from the same <see cref="CombatRules"/> the strike is resolved with, so the tint can
+        /// never promise safety the rules would not honour - a unit on a hill threatens as far as it
+        /// would actually shoot from it.
+        ///
+        /// <paramref name="actionPoints"/> is the budget to spend walking; the tile it stands on is
+        /// counted too, since it may simply attack from where it is.
+        /// </summary>
+        public IEnumerable<Tile> GetThreatenedTiles(Unit attacker, int actionPoints)
+        {
+            if (attacker == null)
+                return new List<Tile>();
+
+            return GetThreatenedTiles(attacker, GetMoveableTiles(attacker.CurrentState, actionPoints));
+        }
+
+        /// <summary>
+        /// The same for a caller that has already worked out where the unit could walk - the overlay
+        /// draws that set as well, and a second sweep of the board would cost a pathfinding search
+        /// per tile to arrive at the list it is already holding. The tile it stands on need not be in
+        /// <paramref name="standingOn"/>; it is counted either way.
+        /// </summary>
+        public IEnumerable<Tile> GetThreatenedTiles(Unit attacker, IEnumerable<Tile> standingOn)
+        {
+            var start = attacker != null ? attacker.CurrentState.Position : null;
+
+            if (start == null)
+                return new List<Tile>();
+
+            // Collected as positions rather than tiles so the same tile reached from two directions
+            // costs one hash rather than a search through every tile on the board.
+            var threatened = new HashSet<Vector2Int>();
+
+            foreach (var tile in Prepend(start, standingOn))
+            {
+                var range = CombatRules.GetEffectiveAttackRange(attacker, tile);
+
+                // Manhattan, like every other grid distance here - Tile.DistanceTo is what the attack
+                // condition tests against, and a diamond is what the player will actually be hit in.
+                for (int dx = -range; dx <= range; dx++)
+                for (int dy = -range + Mathf.Abs(dx); dy <= range - Mathf.Abs(dx); dy++)
+                    threatened.Add(tile.Position + new Vector2Int(dx, dy));
+            }
+
+            return Tiles.FindAll(tile => threatened.Contains(tile.Position));
+        }
+
+        private static IEnumerable<Tile> Prepend(Tile first, IEnumerable<Tile> rest)
+        {
+            yield return first;
+
+            if (rest == null)
+                yield break;
+
+            foreach (var tile in rest)
+                yield return tile;
+        }
+
         public void HighlightTile(Vector2Int tilePosition, MarkerColor markerColor = MarkerColor.White)
         {
             var tile = Tiles.Find(t => t.GetComponent<Tile>().Position == tilePosition);
@@ -120,7 +189,19 @@ namespace Runtime.Core.Spawning
                 Debug.LogWarning("Tile not found at position: " + tilePosition);
                 return;
             }
-            
+
+            tile.GetComponentInChildren<TileMarker>().SetMarkerColor(markerColor);
+        }
+
+        /// <summary>
+        /// The same for a tile already in hand - the overlays paint whole sets of them, and looking
+        /// each one back up by position is a search through the board per tile.
+        /// </summary>
+        public void HighlightTile(Tile tile, MarkerColor markerColor)
+        {
+            if (tile == null)
+                return;
+
             tile.GetComponentInChildren<TileMarker>().SetMarkerColor(markerColor);
         }
 

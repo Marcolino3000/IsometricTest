@@ -7,6 +7,10 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Designer-facing note describing what this trait does. Purely informational.")]
         [TextArea] public string Description;
 
+        [Tooltip("Symbol shown on the badge over a unit carrying this trait. Optional - a trait with " +
+                 "none is badged with its name instead, so nothing has to be drawn before a trait works.")]
+        public Sprite Icon;
+
         /// <summary>
         /// One short line saying what this trait does, in numbers - what a passive item carrying it
         /// reports when it is found. A trait with numbers of its own builds it from them; the default
