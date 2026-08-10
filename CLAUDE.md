@@ -179,6 +179,8 @@ Because it costs AP it is world state, so `GameSnapshot` records **boxes and inv
 
 `UnitState` exposes `Health`/`ActionPoints` as properties that fire callbacks and raise `OnNoActionsLeft`; `ActionPoints` throws on negative values.
 
+**Spawn zones are circles, and the opponents' is centred on the player.** `TileSpawnerSettings.GetSpawnZonePositions(team, playerPosition)` puts the player within `PlayerSpawnRadius` of `GridCenter` and every opponent in the ring between `OpponentSpawnDistanceMin` and `OpponentSpawnDistanceMax` around wherever the player actually landed — hence the position argument, and hence `SpawnUnits` placing the player before the roster. Distance is **Euclidean** here, like fog sight, so the zone reads as a circle rather than Manhattan's diamond. It returns **every** grid position, the zone's shuffled and the rest ordered by how far outside they fall, and `UnitSpawner.PlaceUnit` walks that list until a tile takes the unit: a ring can be walled off by mountains or filled by the units already placed in it, so it has to spill outwards — re-rolling inside the zone would spin forever.
+
 `UnitSpawner.RemoveUnit` does **not** destroy — it moves the unit to `removedUnits` and calls `Unit.SetInPlay(false)`, which hides it via `SetRevealed` (not `SetActive`, which would make the UIDocument rebuild its tree and wipe the health/AP blobs). `RestoreUnit` reverses it. `Unit.IsAlive` is the authoritative "in play" test; only `ClearUnits` (respawn) actually destroys.
 
 ### Undo/redo

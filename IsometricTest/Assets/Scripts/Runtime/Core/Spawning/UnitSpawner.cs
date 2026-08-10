@@ -135,16 +135,36 @@ namespace Runtime.Core.Spawning
             
         }
 
+        /// <summary>
+        /// Puts a freshly spawned unit on the first tile of its spawn zone that will take it. The zone is
+        /// ranked rather than rolled: a ring can be walled off by mountains or filled by the units placed
+        /// before it, and re-rolling inside it would spin forever - the tail of the list widens outwards
+        /// instead. An opponent's ring is measured from the player, so the player has to be down first,
+        /// which is the order <see cref="SpawnUnits"/> keeps.
+        /// </summary>
         private void PlaceUnit(Unit unit, Team team)
         {
-            var gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);
-            
-            while(!unit.TryPlaceAtTile(tileSpawner.GetTileAtPosition(gridPosition)))
-                gridPosition = tileSpawner.GetRandomSpawnZonePosition(team);
+            foreach (var gridPosition in tileSpawner.GetSpawnZonePositions(team, PlayerSpawnPosition()))
+            {
+                var tile = tileSpawner.GetTileAtPosition(gridPosition);
 
-            var tile = tileSpawner.GetTileAtPosition(gridPosition);
-            unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition)
-                                      + Vector3.up * (tile != null ? tile.HeightOffset : 0f);
+                if (!unit.TryPlaceAtTile(tile))
+                    continue;
+
+                unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition)
+                                          + Vector3.up * tile.HeightOffset;
+                return;
+            }
+
+            Debug.LogError($"No free tile left to spawn {unit.name} on.", settings);
+        }
+
+        /// <summary>The tile the player was placed on, which the opponents' spawn ring is drawn around.</summary>
+        private Vector2Int PlayerSpawnPosition()
+        {
+            return playerUnit != null && playerUnit.CurrentState.Position != null
+                ? playerUnit.CurrentState.Position.Position
+                : Vector2Int.zero;
         }
 
         public Vector3 GridToWorldPosition(Vector2Int gridPosition)

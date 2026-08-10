@@ -140,18 +140,15 @@ namespace Runtime.Core.Spawning
             }
         }
 
-        public Vector2Int GetRandomSpawnZonePosition(Team team)
+        /// <summary>
+        /// Candidate spawn positions for <paramref name="team"/>, best first - the player around the map's
+        /// centre, opponents in a ring around <paramref name="playerPosition"/>. See
+        /// <see cref="TileSpawnerSettings.GetSpawnZonePositions"/>; the caller walks the list until a tile
+        /// takes the unit, so terrain and occupancy are settled here rather than there.
+        /// </summary>
+        public List<Vector2Int> GetSpawnZonePositions(Team team, Vector2Int playerPosition)
         {
-            var positions = settings.GetSpawnZonePositions(team);
-
-            if (positions == null || positions.Count == 0)
-            {
-                Debug.LogWarning("No spawn positions defined for team: " + team);
-                return Vector2Int.zero;
-            }
-
-            var index = Random.Range(0, positions.Count);
-            return positions[index];
+            return settings.GetSpawnZonePositions(team, playerPosition);
         }
 
         public Vector3 GridIndexToWorldPosition(Vector2Int gridPosition)
