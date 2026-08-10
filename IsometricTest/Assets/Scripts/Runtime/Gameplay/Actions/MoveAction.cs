@@ -1,4 +1,5 @@
 using Runtime.Gameplay.Actions;
+using Runtime.Gameplay.Global;
 
 namespace Actions
 {
@@ -13,8 +14,13 @@ namespace Actions
     {
         public MoveAction(MoveCondition condition, MoveEffect effect, ActionContext context) : base(condition, effect, context) { }
 
-        // Stepping onto difficult terrain (e.g. hills) costs extra action points on top of the base move cost.
-        public override int Cost => Condition.Cost + (Context.TargetTile != null ? Context.TargetTile.ExtraMoveCost : 0);
+        // Difficult terrain and any trait that discounts it are folded in by MovementRules, so what
+        // is charged here is the same number the pathfinder routed by and the highlight promised.
+        // TargetUnit is the mover on a move action - it is what ExecuteEffects walks.
+        public override int Cost => MovementRules.GetStepCost(
+            Context.TargetUnit != null ? Context.TargetUnit.CurrentState : null,
+            Context.TargetTile,
+            Condition.Cost);
 
         public override bool TestConditions()
         {

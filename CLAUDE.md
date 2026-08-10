@@ -77,7 +77,7 @@ Every executed action announces itself through `ActionReporter.Report(...)` at t
 
 ### Traits: the extensibility seam
 
-`Gameplay/Traits/` — `Trait : ScriptableObject` with three no-op virtuals: `ModifyOutgoingDamage`, `ModifyIncomingDamage`, `ModifyAttackRange`. Split into `UnitTrait` (travels with the unit, listed on `UnitState.Traits`) and `TerrainTrait` (attached to terrain, applies to whoever stands there) purely so inspector lists stay type-correct.
+`Gameplay/Traits/` — `Trait : ScriptableObject` with four no-op virtuals: `ModifyOutgoingDamage`, `ModifyIncomingDamage`, `ModifyAttackRange`, `ModifyMoveCost`. Split into `UnitTrait` (travels with the unit, listed on `UnitState.Traits`) and `TerrainTrait` (attached to terrain, applies to whoever stands there) purely so inspector lists stay type-correct.
 
 `EquipmentTrait` is the workhorse on the unit side: one asset with a flat `DamageBonus` / `DefenseBonus` / `RangeBonus`, one per hook. Gear usually moves more than one of those numbers, so most passive items need no new class — reach for it before writing another `UnitTrait`.
 
@@ -88,6 +88,8 @@ Every executed action announces itself through `ActionReporter.Report(...)` at t
 **Route every rule number through a `CombatRules`-style query function.** A new mechanic should be a new SO asset plus at most one new trait/effect class — never a switch case in `ActionAssigner` or a new per-type `Plan*`/`Execute*` pair on `ActionExecutor`.
 
 `CombatRunner.ResolveCombat` applies damage, asks `CombatRules.CanRetaliate` whether the defender strikes back, then removes the dead.
+
+`Gameplay/Global/MovementRules.cs` is the same idea for the other half of a turn: `GetStepCost` / `GetPathCost` fold the base move cost, the tile's `ExtraMoveCost` and every trait's `ModifyMoveCost`, clamped so **a step is never free** (a free step would cross the map, since `MoveAction` only tests cost against AP). Four things used to compute this separately and drift — `Pathfinder` picking a route, `TileSpawner.GetMoveableTiles` deciding what is in reach, `AiController` budgeting, `MoveAction.Cost` charging. They all ask here now, so a discount changes the route, the highlight, the AI's plan and the bill together. `Pathfinder.FindPath` takes an optional `UnitState mover` for that reason; `GetMoveableTiles(UnitState)` takes the state instead of a position/AP/cost triple. `CombatRules.TraitsAffecting(UnitState, Tile)` is public so both rule sets fold the identical trait set.
 
 `Gameplay/Global/GameRules.cs` (SO, asset at `Resources/Settings/Default GameRules.asset`, injected into `CombatRules` as the *first* line of `Initiator.SetupReferences`) holds match-wide switches that belong to no unit or tile — today just `RetaliationEnabled`, read by `CombatRules.CanRetaliate` (rule first, then effective range). It is held as a live reference, so toggling it in the inspector applies mid-play. Rules that *do* belong to a unit or tile stay traits.
 

@@ -5,6 +5,7 @@ using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Global;
 using Runtime.Gameplay.Fog;
 using UnityEngine;
 
@@ -403,14 +404,13 @@ namespace Runtime.Gameplay.AI
             var path = tileSpawner.GetPath(unit.CurrentState.Position, target, ignoreGoalOccupied: true);
 
             var budget = unit.CurrentState.ActionPoints;
-            var moveCost = unit.CurrentState.MoveAction.Condition.Cost;
 
             Tile furthest = null;
             var spent = 0;
 
             for (var i = 1; i < path.Count; i++)
             {
-                spent += moveCost + path[i].ExtraMoveCost;
+                spent += MovementRules.GetStepCost(unit.CurrentState, path[i]);
                 if (spent > budget)
                     break;
 
@@ -445,10 +445,7 @@ namespace Runtime.Gameplay.AI
 
         private List<Tile> ReachableTiles(Unit unit)
         {
-            return tileSpawner.GetMoveableTiles(
-                unit.CurrentState.Position.Position,
-                unit.CurrentState.ActionPoints,
-                unit.CurrentState.MoveAction.Condition.Cost);
+            return tileSpawner.GetMoveableTiles(unit.CurrentState);
         }
     }
 }

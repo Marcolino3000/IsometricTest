@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
 namespace Runtime.Core.Spawning
@@ -20,7 +21,7 @@ namespace Runtime.Core.Spawning
             _tileSpawner = tileSpawner;
         }
 
-        public List<Tile> FindPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false)
+        public List<Tile> FindPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false, UnitState mover = null)
         {
             if (start == null || goal == null || _tileSpawner == null || !goal.IsPassable || goal.IsOccupied && !ignoreGoalOccupied)
                 return new List<Tile>();
@@ -72,8 +73,9 @@ namespace Runtime.Core.Spawning
                             continue;
                     }
 
-                    // base step cost of 1, plus any extra cost for difficult terrain (e.g. hills)
-                    var stepCost = 1 + neighborTile.ExtraMoveCost;
+                    // Asked rather than worked out here, so a unit that finds hills cheap is also
+                    // routed over them instead of around. Without a mover this is the bare terrain cost.
+                    var stepCost = MovementRules.GetStepCost(mover, neighborTile);
                     var tentativeG = gScore.ContainsKey(current) ? gScore[current] + stepCost : int.MaxValue;
 
                     if (!gScore.ContainsKey(neighbor) || tentativeG < gScore[neighbor])

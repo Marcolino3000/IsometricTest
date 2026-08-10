@@ -99,15 +99,29 @@ namespace Runtime.Gameplay.Global
         {
             return TraitsAffecting(unit, unit.CurrentState.Position);
         }
-        
+
         private static IEnumerable<Trait> TraitsAffecting(Unit unit, Tile tile)
         {
-            foreach (var trait in unit.CurrentState.Traits)
+            return TraitsAffecting(unit.CurrentState, tile);
+        }
+
+        /// <summary>
+        /// Every trait that has a say about <paramref name="state"/> standing on <paramref name="tile"/>:
+        /// the ones it carries, then the ones the ground grants. Public because it is not a combat
+        /// question - <see cref="MovementRules"/> asks it too - and both have to fold the same set or
+        /// a trait would apply to one and not the other.
+        /// </summary>
+        public static IEnumerable<Trait> TraitsAffecting(UnitState state, Tile tile)
+        {
+            foreach (var trait in state.Traits)
                 if (trait != null)
                     yield return trait;
 
             if (tile == null)
+            {
                 Debug.LogError("Unit does not have a tile/position assigned!");
+                yield break;
+            }
 
             foreach (var trait in tile.Traits)
                 if (trait != null)

@@ -10,17 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbcaca3db3794b188c3bb2227ae55a0d, type: 3}
-  m_Name: Scout UnitBlueprint
+  m_Name: Longbow Archer UnitBlueprint
   m_EditorClassIdentifier: 
-  Sprite: {fileID: -331967165, guid: 9695c82f379a74793a23c4c0505d74b2, type: 3}
+  Sprite: {fileID: -61923535, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
   defaultState:
     Position: {fileID: 0}
     Team: 0
     SightRange: 4
     MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
-    AttackAction: {fileID: 11400000, guid: bd36f51258904d66852d68d43d60f03d, type: 2}
+    AttackAction: {fileID: 11400000, guid: 3a7c77a40e34431e8fe31ccb9b061ddb, type: 2}
     Traits:
-    - {fileID: 11400000, guid: 5034c1b13f434312be98d74f14fa95be, type: 2}
-    health: 8
-    actionPoints: 4
+    - {fileID: 11400000, guid: 3c6d6cf24c5246358d4b7e7541aaf7a6, type: 2}
+    - {fileID: 11400000, guid: e39ef3961e384f18a5424164e0b6b823, type: 2}
+    health: 18
+    actionPoints: 3
     hasActionsLeft: 0

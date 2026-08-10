@@ -25,6 +25,23 @@ namespace Runtime.Gameplay.Traits
         }
     }
     
+    /// <summary>
+    /// One step of movement: the unit about to enter <see cref="Tile"/>. Carries the state rather
+    /// than the <see cref="Unit"/> because the tile highlighter, which asks what is reachable, only
+    /// ever holds the state - and the traits and the move action are both on it anyway.
+    /// </summary>
+    public readonly struct MoveContext
+    {
+        public readonly UnitState Mover;
+        public readonly Tile Tile;
+
+        public MoveContext(UnitState mover, Tile tile)
+        {
+            Mover = mover;
+            Tile = tile;
+        }
+    }
+
     public readonly struct RangeContext
     {
         public readonly Unit Unit;

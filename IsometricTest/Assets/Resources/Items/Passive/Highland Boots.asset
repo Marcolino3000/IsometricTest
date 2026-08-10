@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Highland Boots
   m_EditorClassIdentifier: 
   DisplayName: Highland Boots
-  Description: +4 damage on every attack made from hills.
+  Description: +4 damage attacking from hills, and hills cost one less to climb.
   Symbol: {fileID: -2035022939, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   Traits:
   - {fileID: 11400000, guid: 1ca75753f20541bcb1ba80225cab6fc3, type: 2}
+  - {fileID: 11400000, guid: 5034c1b13f434312be98d74f14fa95be, type: 2}

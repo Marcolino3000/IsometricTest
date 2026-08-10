@@ -14,8 +14,7 @@ namespace Runtime.Gameplay.Entities
 
         public void HighlightMoveableTiles()
         {
-            var moveCost = state.MoveAction.Condition.Cost;
-            var moveableTiles = _tileSpawner.GetMoveableTiles(state.Position.Position, state.ActionPoints, moveCost);
+            var moveableTiles = _tileSpawner.GetMoveableTiles(state);
 
             foreach (var tile in moveableTiles)
                 _tileSpawner.HighlightTile(tile.Position, MarkerColor.TransparentWhite);

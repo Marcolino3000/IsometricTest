@@ -76,32 +76,36 @@ namespace Runtime.Core.Spawning
         /// Returns every tile the unit at <paramref name="startPosition"/> can reach within the given
         /// <paramref name="actionPoints"/> budget, using the pathfinder so impassable terrain, occupied
         /// tiles and difficult-terrain costs are all respected (not just straight-line distance).
-        /// Per-step cost is the unit's base <paramref name="moveCost"/> plus the destination tile's
-        /// extra terrain cost.
+        /// Costs come from <see cref="MovementRules"/>, so a trait that discounts terrain widens the
+        /// highlight by exactly as much as it widens what the unit can actually pay for.
         /// </summary>
-        public List<Tile> GetMoveableTiles(Vector2Int startPosition, int actionPoints, int moveCost)
+        public List<Tile> GetMoveableTiles(UnitState mover)
         {
             var moveableTiles = new List<Tile>();
 
-            var start = GetTileAtPosition(startPosition);
+            var start = mover?.Position;
             if (start == null)
                 return moveableTiles;
+
+            var actionPoints = mover.ActionPoints;
+
+            // No step can cost less than this, so a tile whose minimum step count already blows the
+            // budget can never be reached - skip it before paying for a pathfinding search.
+            var cheapestStep = MovementRules.GetStepCost(mover, start);
 
             foreach (var tile in Tiles)
             {
                 if (tile == start)
                     continue;
 
-                // Each step costs at least moveCost, so a tile whose minimum step count already blows
-                // the budget can never be reached - skip it before paying for a pathfinding search.
-                if (GetDistanceBetweenTiles(start, tile) * moveCost > actionPoints)
+                if (GetDistanceBetweenTiles(start, tile) * cheapestStep > actionPoints)
                     continue;
 
-                var path = _pathfinder.FindPath(start, tile);
+                var path = _pathfinder.FindPath(start, tile, mover: mover);
                 if (path.Count == 0)
                     continue;
 
-                if (GetPathCost(path, moveCost) <= actionPoints)
+                if (MovementRules.GetPathCost(mover, path) <= actionPoints)
                     moveableTiles.Add(tile);
             }
 
@@ -167,14 +171,6 @@ namespace Runtime.Core.Spawning
         /// Total movement cost of walking <paramref name="path"/> (excluding the start tile): the unit's
         /// base <paramref name="moveCost"/> per step plus each destination tile's extra terrain cost.
         /// </summary>
-        private static int GetPathCost(List<Tile> path, int moveCost)
-        {
-            var cost = 0;
-            for (var i = 1; i < path.Count; i++)
-                cost += moveCost + path[i].ExtraMoveCost;
-            return cost;
-        }
-
         private void ClearGrid()
         {
             foreach (var tile in Tiles)
