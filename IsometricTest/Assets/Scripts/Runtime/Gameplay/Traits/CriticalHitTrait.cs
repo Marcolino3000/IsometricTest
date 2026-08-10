@@ -1,3 +1,4 @@
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Traits
@@ -13,12 +14,23 @@ namespace Runtime.Gameplay.Traits
 
         public override int ModifyOutgoingDamage(int damage, CombatContext context)
         {
-            if (Random.value >= CritChance)
-                return damage;
+            // Rolled once whether or not it lands, so the log can report the roll that missed too.
+            var roll = Random.value;
 
-            var crit = Mathf.RoundToInt(damage * CritMultiplier);
-            Debug.Log($"{(context.Attacker != null ? context.Attacker.name : "Unit")} landed a critical hit! {damage} -> {crit}");
-            return crit;
+            if (roll >= CritChance)
+            {
+                // Names itself: a miss changes no number, so this note stands in for its whole line.
+                // Guarded so the message is only built while the log is asked for that much detail.
+                if (CombatLog.Details)
+                    CombatLog.Detail($"{name}: no crit ({roll:0.00} vs {CritChance:0.00})");
+
+                return damage;
+            }
+
+            if (CombatLog.Details)
+                CombatLog.Detail($"crit! ({roll:0.00} vs {CritChance:0.00}, x{CritMultiplier})");
+
+            return Mathf.RoundToInt(damage * CritMultiplier);
         }
     }
 }

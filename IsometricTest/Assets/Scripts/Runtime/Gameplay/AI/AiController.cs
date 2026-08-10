@@ -145,11 +145,23 @@ namespace Runtime.Gameplay.AI
         private IEnumerator RunTurn()
         {
             _running = true;
-            
+
+            // A turn nobody watches never waits, so without this the whole turn - handover included -
+            // would run inside the TurnStarted dispatch that started it: ToggleCurrentTeam would then
+            // compare against a previousState the raise has not written back yet, see no team change,
+            // and skip the player's own TurnReset. StartCoroutine runs the body up to the first yield
+            // immediately, so this one keeps everything below out of the event.
+            yield return null;
+
             // Snapshot: units can die mid-turn (combat retaliation), so iterate a copy and re-check.
             var myUnits = unitSpawner.AllUnits
                 .Where(u => u != null && u.IsAlive && u.CurrentState.Team == aiTeam)
                 .ToList();
+
+            // Every other action is paced by the one before it; the turn's first has nothing ahead of
+            // it. Give it the same beat, unless there is no unit of ours in sight to watch it move.
+            if (myUnits.Any(fogOfWar.IsShown))
+                yield return new WaitForSeconds(actionDelay);
 
             foreach (var unit in myUnits)
             {
@@ -174,20 +186,23 @@ namespace Runtime.Gameplay.AI
         {
             for (var i = 0; i < maxActionsPerUnit; i++)
             {
+                // Also the re-check after the pause below: the unit may have died to retaliation in its
+                // own previous action, or been taken off the board by an undo while we waited.
                 if (!aiEnabled || unit == null || !unit.IsAlive || !unit.CurrentState.HasActionsLeft)
                     yield break;
 
-                // Pause before every action — including each unit's first, and the turn's very first —
-                // so the player can follow along instead of the opening move snapping in instantly.
-                yield return new WaitForSeconds(actionDelay);
-
-                // Re-check the unit too: it may have died to retaliation in its own previous action,
-                // or been taken off the board by an undo during this pause.
-                if (!aiEnabled || unit == null || !unit.IsAlive)
-                    yield break; // switched off or unit gone: stop before acting
-
                 if (!TryActOnce(unit))
                     yield break; // nothing productive left for this unit this turn
+
+                // Pace the action that just happened, if it ended where the player can see it. Taken
+                // after rather than before, because only then is it known: a unit stepping out of the
+                // fog is invisible right up to the moment it arrives, and the turn's closing action is
+                // the one nothing follows. So the player gets a beat whenever a move lands in view -
+                // including the last one before the turn is handed back - while a turn that plays out
+                // entirely behind the fog (GameRules.ShowEnemyTurns off) never waits at all and
+                // resolves as fast as it computes.
+                if (fogOfWar.IsShown(unit))
+                    yield return new WaitForSeconds(actionDelay);
             }
         }
 

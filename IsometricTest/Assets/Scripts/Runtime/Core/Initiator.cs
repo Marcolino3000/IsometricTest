@@ -86,6 +86,7 @@ namespace Runtime.Core
         private void SetupReferences()
         {
             CombatRules.Setup(gameRules);
+            CombatLog.Setup(gameRules);
             gameStateManager.Setup();
             unitSpawner.Setup(gameStateManager, selector, fogOfWar);
             tileSpawner.Setup(selector);

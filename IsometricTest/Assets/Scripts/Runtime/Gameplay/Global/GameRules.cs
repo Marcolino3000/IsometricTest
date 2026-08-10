@@ -17,5 +17,17 @@ namespace Runtime.Gameplay.Global
                  "watch every move it makes. When off, the view stays with your own units and the AI's moves " +
                  "only show where you can actually see them. A turn you took over manually is never hidden.")]
         public bool ShowEnemyTurns = true;
+
+        [Header("Debug")]
+        [Tooltip("Prints every attack to the console with its damage breakdown: the weapon's base " +
+                 "damage, each trait that changed the number and what it changed it to, the damage " +
+                 "dealt and the health left, why nobody struck back and who died. Debugging only - " +
+                 "costs a formatted string per attack. Can be toggled during play.")]
+        public bool LogCombatCalculations;
+
+        [Tooltip("Adds everything around the numbers to that log: which tiles the two stood on and how " +
+                 "far apart they were, what a trait rolled (crit chances), and the traits that were " +
+                 "asked and changed nothing. Needs the switch above.")]
+        public bool LogCombatDetails;
     }
 }

@@ -49,13 +49,29 @@ namespace Runtime.Gameplay.Global
 
             var damage = attacker.CurrentState.AttackAction.Effect.Damage;
 
+            // The fold is written step by step rather than in place so CombatLog can report what each
+            // trait did to the number. It does nothing at all while logging is off.
+            CombatLog.BeginStrike(context, damage);
+
             foreach (var trait in TraitsAffecting(attacker))
-                damage = trait.ModifyOutgoingDamage(damage, context);
+            {
+                var modified = trait.ModifyOutgoingDamage(damage, context);
+                CombatLog.Modifier(trait, outgoing: true, damage, modified);
+                damage = modified;
+            }
 
             foreach (var trait in TraitsAffecting(defender))
-                damage = trait.ModifyIncomingDamage(damage, context);
+            {
+                var modified = trait.ModifyIncomingDamage(damage, context);
+                CombatLog.Modifier(trait, outgoing: false, damage, modified);
+                damage = modified;
+            }
 
-            return Mathf.Max(0, damage);
+            var final = Mathf.Max(0, damage);
+
+            CombatLog.EndStrike(damage, final);
+
+            return final;
         }
 
         /// <summary>
@@ -65,12 +81,28 @@ namespace Runtime.Gameplay.Global
         /// </summary>
         public static bool CanRetaliate(Unit defender, Unit attacker)
         {
+            // Only a refusal is logged: a counter-strike announces itself with its own line.
             if (!Rules.RetaliationEnabled)
+            {
+                CombatLog.Note("no retaliation (turned off in GameRules)");
                 return false;
+            }
 
             var distance = defender.CurrentState.Position.DistanceTo(attacker.CurrentState.Position);
+            var range = GetEffectiveAttackRange(defender);
 
-            return distance <= GetEffectiveAttackRange(defender);
+            if (distance > range)
+            {
+                // The refusal explains a damage number that never happened, so it is logged either
+                // way; how far out of reach it was is detail.
+                CombatLog.Note(CombatLog.Details
+                    ? $"no retaliation (distance {distance} > range {range})"
+                    : "no retaliation (out of range)");
+
+                return false;
+            }
+
+            return true;
         }
 
         public static int GetEffectiveAttackRange(Unit unit)
