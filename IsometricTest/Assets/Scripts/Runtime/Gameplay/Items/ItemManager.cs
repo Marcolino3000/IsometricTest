@@ -20,14 +20,23 @@ namespace Runtime.Gameplay.Items
         /// </summary>
         private readonly Item[] equippedByKind = new Item[Enum.GetValues(typeof(SlotKind)).Length];
 
+        /// <summary>
+        /// Everything already announced by the find popup. Deliberately outside the snapshot: undoing
+        /// a pickup and taking the same box again is the same find over, not a second one, and a find
+        /// only surprises once - so a card shows for as long as the match runs and no longer.
+        /// </summary>
+        private readonly HashSet<Item> announced = new();
+
         private ItemBar itemBar;
+        private ItemPopup itemPopup;
         private Unit playerUnit;
 
         public IReadOnlyList<Item> Items => items;
 
-        public void Setup(ItemBar bar)
+        public void Setup(ItemBar bar, ItemPopup popup)
         {
             itemBar = bar;
+            itemPopup = popup;
             itemBar.SlotActivated += HandleSlotActivated;
             itemBar.OptionChosen += HandleOptionChosen;
         }
@@ -37,7 +46,11 @@ namespace Runtime.Gameplay.Items
             playerUnit = unit;
 
             items.Clear();
+            announced.Clear();
             Array.Clear(equippedByKind, 0, equippedByKind.Length);
+
+            if (itemPopup != null)
+                itemPopup.Hide();
 
             var startingWeapon = playerUnit.CurrentState.AttackAction;
 
@@ -58,6 +71,34 @@ namespace Runtime.Gameplay.Items
 
             items.Add(item);
             ShowSlots();
+
+            // After the slots, not before: the card says where the item went, so it has to have gone
+            // there. Only the first find of a thing is announced - see <see cref="announced"/>.
+            if (announced.Add(item))
+                Announce(item);
+        }
+
+        /// <summary>
+        /// Puts a found item on the screen: everything it says about itself, plus the one thing only
+        /// the owner of the slots knows - which of them it landed in.
+        /// </summary>
+        private void Announce(Item item)
+        {
+            if (itemPopup == null)
+                return;
+
+            itemPopup.Show(new ItemCard(item.Symbol, item.Title, Item.NameOf(item.Slot), SlotNameOf(item.Slot),
+                item.Description, item.Stats));
+        }
+
+        /// <summary>
+        /// What the slot a category is shown in is called - the inverse of <see cref="KindForSlot"/>,
+        /// counted from one because that is the key the bar labels the slot with. Empty for a category
+        /// no slot stands for.
+        /// </summary>
+        private static string SlotNameOf(SlotKind kind)
+        {
+            return kind != SlotKind.None ? $"Slot {(int)kind + 1}" : string.Empty;
         }
 
         /// <summary>
@@ -82,6 +123,11 @@ namespace Runtime.Gameplay.Items
         {
             items.Clear();
             items.AddRange(recorded);
+
+            // A card saying where a find went is only true until that find is undone, which is the
+            // one case it can still be up for: nothing else rewinds the inventory.
+            if (itemPopup != null)
+                itemPopup.Hide();
 
             if (playerUnit != null && !items.Contains(playerUnit.CurrentState.AttackAction))
                 playerUnit.CurrentState.AttackAction = FirstOwned(SlotKind.Melee) as AttackActionData

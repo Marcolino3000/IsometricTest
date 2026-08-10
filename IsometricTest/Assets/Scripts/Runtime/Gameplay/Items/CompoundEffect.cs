@@ -16,6 +16,21 @@ namespace Runtime.Gameplay.Items
                  "direct case is caught, a longer cycle is not.")]
         public List<ActiveItemEffect> Effects = new();
 
+        /// <summary>The parts, in the order they are applied - the compound itself does nothing to say.</summary>
+        public override string Summary
+        {
+            get
+            {
+                var parts = new List<string>();
+
+                foreach (var effect in Effects)
+                    if (effect != null && effect != this)
+                        parts.Add(effect.Summary);
+
+                return string.Join(", ", parts);
+            }
+        }
+
         public override void Apply(Unit user)
         {
             foreach (var effect in Effects)

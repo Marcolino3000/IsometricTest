@@ -12,6 +12,8 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Damage multiplier applied on a critical hit.")]
         [Min(1f)] public float CritMultiplier = 2f;
 
+        public override string Summary => $"{CritChance:P0} chance of x{CritMultiplier:0.##} damage";
+
         public override int ModifyOutgoingDamage(int damage, CombatContext context)
         {
             // Rolled once whether or not it lands, so the log can report the roll that missed too.

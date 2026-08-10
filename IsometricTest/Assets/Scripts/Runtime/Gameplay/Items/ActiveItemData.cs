@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Actions;
 using Runtime.Gameplay.Actions;
 using UnityEngine;
@@ -18,6 +19,26 @@ namespace Runtime.Gameplay.Items
     public class ActiveItemData : ActionData<ActiveItemCondition, ActiveItemEffect>
     {
         public override SlotKind Slot => SlotKind.Active;
+
+        /// <summary>
+        /// What a use takes and what it gives: the cost every action has, and the effect speaking for
+        /// itself - which is why a new active item still needs no code beyond its effect.
+        /// </summary>
+        public override IReadOnlyList<string> Stats
+        {
+            get
+            {
+                var stats = new List<string>();
+
+                if (Condition != null)
+                    stats.Add($"Cost {Condition.Cost} AP");
+
+                if (Effect != null)
+                    stats.Add(Effect.Summary);
+
+                return stats;
+            }
+        }
 
         public override UnitAction<ActiveItemCondition, ActiveItemEffect> CreateAction(ActionContext context)
         {

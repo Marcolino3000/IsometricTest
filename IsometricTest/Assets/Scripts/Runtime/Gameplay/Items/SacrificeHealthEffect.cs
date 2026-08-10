@@ -14,6 +14,8 @@ namespace Runtime.Gameplay.Items
         [Tooltip("Health paid. The user is always left with at least one.")]
         [Min(1)] public int Amount = 4;
 
+        public override string Summary => $"Costs {Amount} health";
+
         public override void Apply(Unit user)
         {
             user.CurrentState.Health = Mathf.Max(1, user.CurrentState.Health - Amount);

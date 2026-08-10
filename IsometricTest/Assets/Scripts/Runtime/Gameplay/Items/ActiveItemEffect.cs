@@ -10,6 +10,13 @@ namespace Runtime.Gameplay.Items
     /// </summary>
     public abstract class ActiveItemEffect : ActionEffect
     {
+        /// <summary>
+        /// One short line saying what a use does, in numbers ("Restores 4 health"). Abstract rather
+        /// than defaulted: an effect is the authored part of an active item, so a new one has to say
+        /// what it does the same moment it does it, or the item it fills would announce itself blank.
+        /// </summary>
+        public abstract string Summary { get; }
+
         public abstract void Apply(Unit user);
     }
 }

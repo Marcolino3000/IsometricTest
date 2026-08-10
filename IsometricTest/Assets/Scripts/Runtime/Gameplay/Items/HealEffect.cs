@@ -13,6 +13,8 @@ namespace Runtime.Gameplay.Items
         [Tooltip("Health restored. Capped at the unit's starting health.")]
         [Min(1)] public int Amount = 5;
 
+        public override string Summary => $"Restores {Amount} health";
+
         public override void Apply(Unit user)
         {
             user.CurrentState.Health = Mathf.Min(user.CurrentState.Health + Amount, user.MaxHealth);

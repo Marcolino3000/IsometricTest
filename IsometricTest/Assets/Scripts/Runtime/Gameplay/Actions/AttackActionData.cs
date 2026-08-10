@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Items;
 using UnityEngine;
@@ -14,6 +15,29 @@ namespace Actions
         // Weapons are the only items whose category is authored as a kind of its own, so that a
         // weapon asset can only ever be tagged melee or ranged - never active or passive.
         public override SlotKind Slot => Kind == WeaponKind.Melee ? SlotKind.Melee : SlotKind.Ranged;
+
+        /// <summary>
+        /// The weapon as authored - what it hits for, how far it reaches, what a swing costs. Traits
+        /// move all three, so these are the numbers before anything the carrier or the ground adds.
+        /// </summary>
+        public override IReadOnlyList<string> Stats
+        {
+            get
+            {
+                var stats = new List<string>();
+
+                if (Effect != null)
+                    stats.Add($"Damage {Effect.Damage}");
+
+                if (Condition != null)
+                {
+                    stats.Add($"Range {Condition.Range}");
+                    stats.Add($"Cost {Condition.Cost} AP");
+                }
+
+                return stats;
+            }
+        }
 
         public override UnitAction<AttackCondition, AttackEffect> CreateAction(ActionContext context)
         {

@@ -19,6 +19,8 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Action points knocked off the cost of entering that terrain.")]
         [Min(0)] public int CostReduction = 1;
 
+        public override string Summary => $"-{CostReduction} AP to enter {Terrain}";
+
         public override int ModifyMoveCost(int cost, MoveContext context)
         {
             if (context.Tile != null && context.Tile.Terrain == Terrain)

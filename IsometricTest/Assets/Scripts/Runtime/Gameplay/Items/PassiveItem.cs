@@ -20,5 +20,27 @@ namespace Runtime.Gameplay.Items
         public List<UnitTrait> Traits = new();
 
         public override SlotKind Slot => SlotKind.Passive;
+
+        /// <summary>
+        /// The traits it hands out, each saying what it does. A passive item is nothing but that
+        /// bundle, so there is no number of its own to report.
+        /// </summary>
+        public override IReadOnlyList<string> Stats
+        {
+            get
+            {
+                var stats = new List<string>();
+
+                foreach (var trait in Traits)
+                {
+                    var summary = trait != null ? trait.Summary : null;
+
+                    if (!string.IsNullOrWhiteSpace(summary))
+                        stats.Add(summary);
+                }
+
+                return stats;
+            }
+        }
     }
 }

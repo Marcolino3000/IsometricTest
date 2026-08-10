@@ -40,6 +40,10 @@ namespace Runtime.Core
         [SerializeField] private NextTurnButton nextTurnButton;
         [SerializeField] private ItemBar itemBar;
 
+        [Tooltip("How a found item is announced: the tall card, symbol under the name and everything " +
+                 "centered, or the wide one with the symbol beside it.")]
+        [SerializeField] private bool verticalItemPopup;
+
 
         [Tooltip("Screen-space UI documents. A click that lands on one of them must not raycast into the world.")]
         [SerializeField] private UIDocument[] hudDocuments;
@@ -80,7 +84,22 @@ namespace Runtime.Core
         {
             nextTurnButton.Setup(gameStateManager, inputHandler);
             itemBar.Setup(inputHandler);
-            itemManager.Setup(itemBar);
+            itemManager.Setup(itemBar, CreateItemPopup());
+        }
+
+        /// <summary>
+        /// The find popup is built at runtime like the attack preview, so the Systems prefab needs no
+        /// further scene object. It borrows the item bar's panel settings, so it scales with the rest
+        /// of the HUD, and sorts above it, so a card that reaches the bar is not drawn behind it.
+        /// The two layouts differ in nothing but arrangement, so which one is used is a choice here.
+        /// </summary>
+        private ItemPopup CreateItemPopup()
+        {
+            var hud = itemBar.GetComponent<UIDocument>();
+
+            return verticalItemPopup
+                ? ItemPopup.Create<VerticalItemPopup>(hud.panelSettings, hud.sortingOrder + 1)
+                : ItemPopup.Create<ItemPopup>(hud.panelSettings, hud.sortingOrder + 1);
         }
 
         private void SetupReferences()

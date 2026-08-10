@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Actions;
 using Runtime.Gameplay.Entities;
 using UnityEngine;
@@ -45,6 +46,39 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Weapon the carrier must have drawn for any of the bonuses above to count. Any means " +
                  "it always applies; the other two make this a piece of gear that pays off one weapon.")]
         public WeaponRequirement RequiresWeapon = WeaponRequirement.Any;
+
+        /// <summary>
+        /// The bonuses that are actually set, and the weapon they hang on. One asset covers up to
+        /// three numbers, so the line is built from whichever of them a given piece of gear moves.
+        /// </summary>
+        public override string Summary
+        {
+            get
+            {
+                var parts = new List<string>();
+
+                if (DamageBonus != 0)
+                    parts.Add($"{Signed(DamageBonus)} Damage");
+
+                if (DefenseBonus != 0)
+                    parts.Add($"{Signed(DefenseBonus)} Defense");
+
+                if (RangeBonus != 0)
+                    parts.Add($"{Signed(RangeBonus)} Range");
+
+                if (parts.Count == 0)
+                    return base.Summary;
+
+                var bonuses = string.Join(", ", parts);
+
+                // The requirement is the whole point of gear that has one, so it is never left off.
+                return RequiresWeapon == WeaponRequirement.Any
+                    ? bonuses
+                    : $"{bonuses} (with a {RequiresWeapon.ToString().ToLowerInvariant()} weapon)";
+            }
+        }
+
+        private static string Signed(int value) => value > 0 ? $"+{value}" : value.ToString();
 
         public override int ModifyOutgoingDamage(int damage, CombatContext context)
         {

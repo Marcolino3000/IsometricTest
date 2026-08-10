@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Items
@@ -48,5 +50,32 @@ namespace Runtime.Gameplay.Items
         public virtual SlotKind Slot => SlotKind.None;
 
         public string Tooltip => string.IsNullOrWhiteSpace(Description) ? name : $"{name}\n{Description}";
+
+        /// <summary>What to call this item, falling back to the asset name while none is authored.</summary>
+        public string Title => string.IsNullOrWhiteSpace(DisplayName) ? name : DisplayName;
+
+        /// <summary>
+        /// What this item does in numbers, one short line each ("Damage 5", "+2 Defense") - what the
+        /// find popup shows under the description. An item answers this from its own fields: a kind of
+        /// item that carries different numbers overrides it rather than being taken apart from outside,
+        /// so nothing has to switch over the three kinds to describe one.
+        /// </summary>
+        public virtual IReadOnlyList<string> Stats => Array.Empty<string>();
+
+        /// <summary>
+        /// What a category is called to the player. Kept next to the enum it reads, since a further
+        /// category has to be given a name here the same moment it is given a slot.
+        /// </summary>
+        public static string NameOf(SlotKind kind)
+        {
+            return kind switch
+            {
+                SlotKind.Melee => "Melee Weapon",
+                SlotKind.Ranged => "Ranged Weapon",
+                SlotKind.Active => "Active Item",
+                SlotKind.Passive => "Passive Item",
+                _ => string.Empty
+            };
+        }
     }
 }

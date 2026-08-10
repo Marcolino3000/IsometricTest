@@ -14,6 +14,8 @@ namespace Runtime.Gameplay.Items
                  "amount of 3 nets the character 2.")]
         [Min(1)] public int Amount = 3;
 
+        public override string Summary => $"Grants {Amount} action points";
+
         public override void Apply(Unit user)
         {
             user.CurrentState.ActionPoints += Amount;
