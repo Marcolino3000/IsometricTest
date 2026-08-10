@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: Default GameRules
   m_EditorClassIdentifier: 
   RetaliationEnabled: 0
+  ShowEnemyTurns: 1

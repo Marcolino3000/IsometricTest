@@ -67,6 +67,13 @@ namespace Runtime.Gameplay.AI
         public void ToggleEnabled() => SetEnabled(!aiEnabled);
 
         /// <summary>
+        /// Whether the AI - rather than the player - is the one playing this team's turn.
+        /// <see cref="Fog.FogOfWar"/> asks before hiding a turn, so a turn the player took over manually
+        /// (AI switched off) is never hidden from them.
+        /// </summary>
+        public bool Drives(Team team) => aiEnabled && team == aiTeam;
+
+        /// <summary>
         /// Enables or disables the AI at runtime. Switching off lets a turn in progress finish in the
         /// player's hands (the coroutine stops and does not auto-advance). Switching on while it is
         /// already this team's turn makes the AI take over the remainder immediately.

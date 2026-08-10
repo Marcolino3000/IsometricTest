@@ -12,5 +12,10 @@ namespace Runtime.Gameplay.Global
     {
         [Tooltip("When off, a defender never strikes back after being attacked, no matter the range.")]
         public bool RetaliationEnabled = true;
+
+        [Tooltip("When on, the map switches to the acting team's vision while an AI plays its turn, so you " +
+                 "watch every move it makes. When off, the view stays with your own units and the AI's moves " +
+                 "only show where you can actually see them. A turn you took over manually is never hidden.")]
+        public bool ShowEnemyTurns = true;
     }
 }

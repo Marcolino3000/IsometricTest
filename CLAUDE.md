@@ -91,7 +91,7 @@ Every executed action announces itself through `ActionReporter.Report(...)` at t
 
 `Gameplay/Global/MovementRules.cs` is the same idea for the other half of a turn: `GetStepCost` / `GetPathCost` fold the base move cost, the tile's `ExtraMoveCost` and every trait's `ModifyMoveCost`, clamped so **a step is never free** (a free step would cross the map, since `MoveAction` only tests cost against AP). Four things used to compute this separately and drift — `Pathfinder` picking a route, `TileSpawner.GetMoveableTiles` deciding what is in reach, `AiController` budgeting, `MoveAction.Cost` charging. They all ask here now, so a discount changes the route, the highlight, the AI's plan and the bill together. `Pathfinder.FindPath` takes an optional `UnitState mover` for that reason; `GetMoveableTiles(UnitState)` takes the state instead of a position/AP/cost triple. `CombatRules.TraitsAffecting(UnitState, Tile)` is public so both rule sets fold the identical trait set.
 
-`Gameplay/Global/GameRules.cs` (SO, asset at `Resources/Settings/Default GameRules.asset`, injected into `CombatRules` as the *first* line of `Initiator.SetupReferences`) holds match-wide switches that belong to no unit or tile — today just `RetaliationEnabled`, read by `CombatRules.CanRetaliate` (rule first, then effective range). It is held as a live reference, so toggling it in the inspector applies mid-play. Rules that *do* belong to a unit or tile stay traits.
+`Gameplay/Global/GameRules.cs` (SO, asset at `Resources/Settings/Default GameRules.asset`, injected into `CombatRules` as the *first* line of `Initiator.SetupReferences`) holds match-wide switches that belong to no unit or tile — `RetaliationEnabled`, read by `CombatRules.CanRetaliate` (rule first, then effective range), and `ShowEnemyTurns`, read by `FogOfWar` (see Fog below). It is held as a live reference, so toggling it in the inspector applies mid-play. Rules that *do* belong to a unit or tile stay traits.
 
 ### Items and weapons
 
@@ -163,7 +163,15 @@ Because it costs AP it is world state, so `GameSnapshot` records **boxes and inv
 
 ### AI
 
-`Gameplay/AI/AiController.cs` drives a team on `TurnStarted`: per unit, attack the closest reachable enemy, else advance on the closest visible enemy, else move to uncover unexplored map; hands back via `ToggleCurrentTeam()`. Coroutine-paced by `actionDelay`, capped by `maxActionsPerUnit`. `aiEnabled` is live-toggleable (`ToggleEnabled` context menu) to play the AI team manually.
+`Gameplay/AI/AiController.cs` drives a team on `TurnStarted`: per unit, attack the closest reachable enemy, else advance on the closest visible enemy, else move to uncover unexplored map; hands back via `ToggleCurrentTeam()`. Coroutine-paced by `actionDelay`, capped by `maxActionsPerUnit`. `aiEnabled` is live-toggleable (`ToggleEnabled` context menu) to play the AI team manually; `Drives(team)` answers whether the AI — rather than the player — is playing a given turn, which is what lets the fog hide that turn without hiding a turn the player took over.
+
+### Fog of war
+
+`Gameplay/Fog/FogOfWar.cs` recomputes on `TurnReset` and after every unit move, and pushes the result onto tiles (lit / remembered / hidden) and units (shown / hidden). Radius-only — terrain does not block sight; sight is Euclidean while grid distance is Manhattan.
+
+**Two teams, deliberately split.** The **active** team is whose sight grows the explored map and answers `IsVisible` — the AI reasons with that, so it must always follow the turn. The **`ViewingTeam`** is only whose eyes the screen is drawn through. They are the same team except when `GameRules.ShowEnemyTurns` is off and `AiController.Drives(activeTeam)`: the view then stays on `Team.Player`, so the AI's moves surface only where the player's own units can see them, while the AI keeps seeing with its own eyes. Anything new that renders visibility takes the viewing team; anything that *reasons* about it takes the active team.
+
+Both `GameRules` and `aiEnabled` are live references but the fog is pushed rather than polled, so `Update` recomputes when `ViewingTeam` drifts from what was last drawn — that is the only reason the class has an `Update`.
 
 ### UI
 
@@ -195,3 +203,4 @@ Two behaviours to know: **clicks report one frame after the press**, and widgets
 - State snapshots are cloned into `ChangeEvent<T>`; observers get values, not live references.
 - Prefer `[Tooltip]` on designer-facing serialized fields — the existing traits and AI settings are documented that way.
 - `gitattributes` (no leading dot, at repo root) configures LFS and `unityyamlmerge` for Unity YAML.
+- answer in english unless the question is in german

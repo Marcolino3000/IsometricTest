@@ -96,7 +96,7 @@ namespace Runtime.Core
             actionHistory.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, aiController, selector,
                 lootSpawner, itemManager);
             actionAssigner.Setup(selector);
-            fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager);
+            fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager, aiController, gameRules);
             aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar);
             lootSpawner.Setup(tileSpawner, unitSpawner, itemManager, gameStateManager, inputHandler);
             Direction.Setup(gameStateManager);

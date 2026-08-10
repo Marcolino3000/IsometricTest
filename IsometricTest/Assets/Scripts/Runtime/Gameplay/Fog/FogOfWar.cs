@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
+using Runtime.Gameplay.AI;
 using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Fog
@@ -11,6 +13,12 @@ namespace Runtime.Gameplay.Fog
     /// which tiles the active team can see — the union of its units' sight ranges — and pushes that
     /// down to the tiles (lit / remembered / hidden) and to enemy units (shown / hidden).
     /// Radius-only: terrain does not block line of sight.
+    ///
+    /// Two teams are in play here and the split is load-bearing: the <b>active</b> team is the one whose
+    /// sight grows the explored map and answers <see cref="IsVisible"/> for the AI, while the
+    /// <see cref="ViewingTeam"/> is merely the one the screen is drawn for. They are the same team unless
+    /// <see cref="GameRules.ShowEnemyTurns"/> hides an AI turn — the AI keeps seeing with its own eyes
+    /// either way, so hiding its turn never blinds it.
     /// </summary>
     public class FogOfWar : MonoBehaviour
     {
@@ -20,7 +28,10 @@ namespace Runtime.Gameplay.Fog
 
         private TileSpawner _tileSpawner;
         private UnitSpawner _unitSpawner;
+        private AiController _aiController;
+        private GameRules _rules;
         private Team _activeTeam;
+        private Team _shownTeam;
         private readonly Dictionary<Team, HashSet<Vector2Int>> _exploredTiles = new();
         private HashSet<Vector2Int> _visiblePositions = new();
 
@@ -29,14 +40,41 @@ namespace Runtime.Gameplay.Fog
         private readonly Dictionary<Team, HashSet<Vector2Int>> _exploredForSnapshots = new();
         private bool _exploredChanged = true;
 
-        public void Setup(TileSpawner tileSpawner, UnitSpawner unitSpawner, GameStateManager gameStateManager)
+        public void Setup(TileSpawner tileSpawner, UnitSpawner unitSpawner, GameStateManager gameStateManager,
+            AiController aiController, GameRules gameRules)
         {
             _tileSpawner = tileSpawner;
             _unitSpawner = unitSpawner;
+            _aiController = aiController;
+            _rules = gameRules;
 
             ResetExploration();
 
             gameStateManager.TurnReset += HandleTurnReset;
+        }
+
+        /// <summary>
+        /// The team the map is drawn for. The team at the table, except while an AI plays a turn the
+        /// player is not meant to watch — then the view stays with the player and the AI's units only
+        /// surface where the player's own units can see them.
+        /// </summary>
+        public Team ViewingTeam =>
+            ShowEnemyTurns || _aiController == null || !_aiController.Drives(_activeTeam)
+                ? _activeTeam
+                : Team.Player;
+
+        // Missing asset falls back to the built-in default (shown), matching CombatRules' behaviour.
+        private bool ShowEnemyTurns => _rules == null || _rules.ShowEnemyTurns;
+
+        /// <summary>
+        /// Both the rules asset and the AI's switch are held live and may be toggled mid-play, but the
+        /// fog is pushed onto the tiles rather than polled by them — without this the new view would
+        /// only appear on the next action.
+        /// </summary>
+        private void Update()
+        {
+            if (_tileSpawner != null && ViewingTeam != _shownTeam)
+                Recompute();
         }
 
         public void ResetExploration()
@@ -84,39 +122,56 @@ namespace Runtime.Gameplay.Fog
 
         public void Recompute()
         {
-            var visible = CollectVisiblePositions();
+            // What the acting team sees. This is what grows the explored map and what the AI's own
+            // decisions read, so it always follows the turn — never the view.
+            var visible = CollectVisiblePositions(_activeTeam);
             _visiblePositions = visible;
 
-            if (!_exploredTiles.TryGetValue(_activeTeam, out var explored))
-                explored = _exploredTiles[_activeTeam] = new HashSet<Vector2Int>();
-
+            var explored = ExploredFor(_activeTeam);
             var exploredCount = explored.Count;
             explored.UnionWith(visible);
 
             if (explored.Count != exploredCount)
                 _exploredChanged = true;
 
-            ApplyTileVisibility(visible, explored);
-            ApplyUnitVisibility(visible);
+            // What is drawn. Same sight in the usual case; a second pass only while a hidden AI turn
+            // keeps the screen on the player's units.
+            _shownTeam = ViewingTeam;
+            var shown = _shownTeam == _activeTeam ? visible : CollectVisiblePositions(_shownTeam);
+
+            ApplyTileVisibility(shown, ExploredFor(_shownTeam));
+            ApplyUnitVisibility(shown, _shownTeam);
         }
 
         public bool IsExplored(Team team, Vector2Int position)
         {
             return _exploredTiles.TryGetValue(team, out var explored) && explored.Contains(position);
         }
-        
+
+        /// <summary>
+        /// Whether the team currently taking its turn can see the position — what the AI reasons with,
+        /// not what the screen shows. The two differ while an AI turn is hidden.
+        /// </summary>
         public bool IsVisible(Vector2Int position)
         {
             return _visiblePositions.Contains(position);
         }
 
-        private HashSet<Vector2Int> CollectVisiblePositions()
+        private HashSet<Vector2Int> ExploredFor(Team team)
+        {
+            if (!_exploredTiles.TryGetValue(team, out var explored))
+                explored = _exploredTiles[team] = new HashSet<Vector2Int>();
+
+            return explored;
+        }
+
+        private HashSet<Vector2Int> CollectVisiblePositions(Team team)
         {
             var visible = new HashSet<Vector2Int>();
 
             foreach (var unit in _unitSpawner.AllUnits)
             {
-                if (unit == null || unit.CurrentState.Team != _activeTeam)
+                if (unit == null || unit.CurrentState.Team != team)
                     continue;
 
                 var tile = unit.CurrentState.Position;
@@ -143,7 +198,7 @@ namespace Runtime.Gameplay.Fog
             }
         }
 
-        private void ApplyUnitVisibility(HashSet<Vector2Int> visible)
+        private void ApplyUnitVisibility(HashSet<Vector2Int> visible, Team viewingTeam)
         {
             foreach (var unit in _unitSpawner.AllUnits)
             {
@@ -154,7 +209,7 @@ namespace Runtime.Gameplay.Fog
                 var onVisibleTile = tile != null && visible.Contains(tile.Position);
 
                 // Your own units are always shown; enemies only when standing on a visible tile.
-                unit.SetRevealed(unit.CurrentState.Team == _activeTeam || onVisibleTile);
+                unit.SetRevealed(unit.CurrentState.Team == viewingTeam || onVisibleTile);
             }
         }
     }
