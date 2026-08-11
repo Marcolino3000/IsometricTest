@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: Default GameRules Settings
   m_EditorClassIdentifier: 
   RetaliationEnabled: 0
-  ShowEnemyTurns: 1
+  ShowEnemyTurns: 0
   StackDuplicateActiveItems: 1
+  ShowUnitBadges: 0
+  ShowUnitCard: 1
+  ShowThreatZone: 1
   WinByDefeatingAllEnemies: 1
   WinByExploringMap: 1
   LoseWhenCharacterFalls: 1

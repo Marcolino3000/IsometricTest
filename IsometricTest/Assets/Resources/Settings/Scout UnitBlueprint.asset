@@ -21,6 +21,6 @@ MonoBehaviour:
     AttackAction: {fileID: 11400000, guid: bd36f51258904d66852d68d43d60f03d, type: 2}
     Traits:
     - {fileID: 11400000, guid: 5034c1b13f434312be98d74f14fa95be, type: 2}
-    health: 8
+    health: 6
     actionPoints: 4
     hasActionsLeft: 0

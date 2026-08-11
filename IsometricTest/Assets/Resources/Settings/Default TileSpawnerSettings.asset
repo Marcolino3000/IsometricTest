@@ -17,8 +17,8 @@ MonoBehaviour:
   HalfTileOffsetX: 0.5
   HalfTileOffsetY: 0.25
   StartPosition: {x: -1, y: -1, z: 0}
-  GridSizeX: 15
-  GridSizeY: 15
+  GridSizeX: 20
+  GridSizeY: 20
   AllowMovementInAllDirections: 0
   PlayerSpawnRadius: 0
   OpponentSpawnZoneSize: 2
@@ -52,7 +52,7 @@ MonoBehaviour:
     OverrideSprite: {fileID: -402664073, guid: 510239b11da99442c80051e1aa316c0e, type: 3}
     Traits: []
   RandomTerrainPlacement: 1
-  RandomHillCount: 10
-  RandomMountainCount: 3
+  RandomHillCount: 40
+  RandomMountainCount: 20
   HillPositions: []
   MountainPositions: []
