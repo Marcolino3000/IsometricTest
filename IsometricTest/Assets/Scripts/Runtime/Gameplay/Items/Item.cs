@@ -55,12 +55,15 @@ namespace Runtime.Gameplay.Items
         /// as lines of one string, since the bar labels with a plain text element. Built from
         /// <see cref="Stats"/> like the card is, so a kind of item that carries different numbers says
         /// so in both places at once.
+        ///
+        /// The name is bold through a rich text tag rather than a style: the whole tooltip is one label,
+        /// so the lines cannot be styled apart from each other any other way.
         /// </summary>
         public string Tooltip
         {
             get
             {
-                var lines = new List<string> { Title };
+                var lines = new List<string> { $"<b>{Title}</b>" };
 
                 if (!string.IsNullOrWhiteSpace(Description))
                     lines.Add(Description);

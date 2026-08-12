@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
-  m_Name: DefaultMeleeAttack
+  m_Name: Wooden Bow
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
-  Condition: {fileID: 11400000, guid: 8948422c180ae45468ebfe48bb8b75db, type: 2}
-  Effect: {fileID: 11400000, guid: cac7534e04b0b4a969b3dd18a949dc56, type: 2}
-  Kind: 0
   DisplayName: 
-  Description: Wooden Sword. Kinda shitty tbh... uff
-  Symbol: {fileID: -34962715, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  Description: Kinda whack
+  Symbol: {fileID: -377700250, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  Condition: {fileID: 11400000, guid: 3bd0b82b3ebbb40c5a6a5ed1b82ccf9c, type: 2}
+  Effect: {fileID: 11400000, guid: cac7534e04b0b4a969b3dd18a949dc56, type: 2}
+  Kind: 1
