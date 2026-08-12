@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -44,6 +45,12 @@ namespace Runtime.Gameplay.Global
         [SerializeField] private float cameraPanSpeed = 10f;
         [SerializeField] private Transform cameraRig;
 
+        /// <summary>
+        /// Whatever currently stands in front of the game — the find popup is the only one today.
+        /// A list rather than a flag so nothing has to be unset: see <see cref="IInputBlocker"/>.
+        /// </summary>
+        private readonly List<IInputBlocker> blockers = new();
+
         private InputAction leftClickAction;
         private InputAction moveAction;
         private InputAction numberKeyAction;
@@ -57,6 +64,38 @@ namespace Runtime.Gameplay.Global
         private bool isDragging;
         private Vector3 dragWorldAnchor;
         private Vector2 dragScreenStart;
+
+        /// <summary>
+        /// Whether the right button went down while something was blocking. A right click is only
+        /// known to be one on release, by which time the card it dismissed is gone — so what the
+        /// press was worth has to be remembered from the press.
+        /// </summary>
+        private bool dragBlocked;
+
+        /// <summary>
+        /// True while something in front of the game is swallowing input. Nothing below is announced
+        /// then, so the press that puts a card away does nothing else.
+        /// </summary>
+        public bool Blocked
+        {
+            get
+            {
+                for (int i = 0; i < blockers.Count; i++)
+                {
+                    if (blockers[i] != null && blockers[i].BlocksInput)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>Registers a view that swallows input while it is up.</summary>
+        public void AddBlocker(IInputBlocker blocker)
+        {
+            if (blocker != null && !blockers.Contains(blocker))
+                blockers.Add(blocker);
+        }
 
         private void Update()
         {
@@ -100,13 +139,16 @@ namespace Runtime.Gameplay.Global
                 dragWorldAnchor = ScreenToWorld(screenPosition);
                 dragScreenStart = screenPosition;
                 isDragging = true;
+                dragBlocked = Blocked;
             }
             else if (!Mouse.current.rightButton.isPressed)
             {
-                if (isDragging && Vector2.Distance(screenPosition, dragScreenStart) <= ClickTravelThreshold)
+                if (isDragging && !dragBlocked
+                               && Vector2.Distance(screenPosition, dragScreenStart) <= ClickTravelThreshold)
                     RightClicked?.Invoke();
 
                 isDragging = false;
+                dragBlocked = false;
             }
 
             if (!isDragging || panTarget == null)
@@ -139,15 +181,26 @@ namespace Runtime.Gameplay.Global
             return main.transform.parent != null ? main.transform.parent : main.transform;
         }
 
-        private void OnLeftClickPerformed(InputAction.CallbackContext ctx) => LeftClicked?.Invoke();
+        /// <summary>
+        /// Announces <paramref name="input"/> unless something in front of the game swallows it.
+        /// Every event goes through here, so a card that blocks blocks all of them at once — the
+        /// camera is the exception and is left alone, since panning is nothing the game answers.
+        /// </summary>
+        private void Raise(Action input)
+        {
+            if (!Blocked)
+                input?.Invoke();
+        }
 
-        private void OnConfirmPerformed(InputAction.CallbackContext ctx) => ConfirmPressed?.Invoke();
+        private void OnLeftClickPerformed(InputAction.CallbackContext ctx) => Raise(LeftClicked);
 
-        private void OnCancelPerformed(InputAction.CallbackContext ctx) => CancelPressed?.Invoke();
+        private void OnConfirmPerformed(InputAction.CallbackContext ctx) => Raise(ConfirmPressed);
 
-        private void OnInteractPerformed(InputAction.CallbackContext ctx) => InteractPressed?.Invoke();
+        private void OnCancelPerformed(InputAction.CallbackContext ctx) => Raise(CancelPressed);
 
-        private void OnEndTurnPerformed(InputAction.CallbackContext ctx) => EndTurnPressed?.Invoke();
+        private void OnInteractPerformed(InputAction.CallbackContext ctx) => Raise(InteractPressed);
+
+        private void OnEndTurnPerformed(InputAction.CallbackContext ctx) => Raise(EndTurnPressed);
 
         /// <summary>
         /// The bindings are added in key order, so the binding index of the control that fired is
@@ -156,7 +209,7 @@ namespace Runtime.Gameplay.Global
         /// </summary>
         private void OnNumberKeyPerformed(InputAction.CallbackContext ctx)
         {
-            if (!ctx.ReadValueAsButton())
+            if (Blocked || !ctx.ReadValueAsButton())
                 return;
 
             int index = numberKeyAction.GetBindingIndexForControl(ctx.control);

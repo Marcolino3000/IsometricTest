@@ -129,14 +129,20 @@ namespace Runtime.Core
         /// further scene object. It borrows the item bar's panel settings, so it scales with the rest
         /// of the HUD, and sorts above it, so a card that reaches the bar is not drawn behind it.
         /// The two layouts differ in nothing but arrangement, so which one is used is a choice here.
+        /// It is registered with the input handler, so the press that reads it away is spent on it
+        /// and reaches neither the world nor the bar.
         /// </summary>
         private ItemPopup CreateItemPopup()
         {
             var hud = itemBar.GetComponent<UIDocument>();
 
-            return verticalItemPopup
+            var popup = verticalItemPopup
                 ? ItemPopup.Create<VerticalItemPopup>(hud.panelSettings, hud.sortingOrder + 2)
                 : ItemPopup.Create<ItemPopup>(hud.panelSettings, hud.sortingOrder + 2);
+
+            inputHandler.AddBlocker(popup);
+
+            return popup;
         }
 
         private void SetupReferences()

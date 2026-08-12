@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -46,13 +47,19 @@ namespace UI
     ///
     /// Built in code on a <see cref="UIDocument"/> of its own, like the floating damage text is, so
     /// the Systems prefab needs no further scene object — the Initiator creates it and hands it the
-    /// HUD's panel settings. It never takes a click: every element ignores picking, so the card is
-    /// transparent to the world raycast underneath it and needs no place in the raycaster's HUD list.
+    /// HUD's panel settings.
+    ///
+    /// <b>The press that puts it away does nothing else.</b> It swallows input on both roads into the
+    /// game while it is up: as an <see cref="IInputBlocker"/> the <see cref="InputHandler"/> announces
+    /// nothing, which covers the world raycast and every key, and the card itself takes the pointer
+    /// (its contents stay click-through, the card as a whole is what picks), which covers the HUD
+    /// lying under it on the same panel — a slot or the next-turn button would otherwise be pressed
+    /// through it. Both stop the moment it is dismissed, so the fade-out is already out of the way.
     ///
     /// A pure view, like <see cref="ItemBar"/>: it is handed strings and a sprite and knows nothing
     /// about items, slots or what a stat line means.
     /// </summary>
-    public class ItemPopup : MonoBehaviour
+    public class ItemPopup : MonoBehaviour, IInputBlocker
     {
         private const float FadeInDuration = 0.2f;
         private const float FadeOutDuration = 0.35f;
@@ -85,6 +92,13 @@ namespace UI
 
         /// <summary>How wide the card is allowed to get.</summary>
         protected virtual float CardWidth => 460f;
+
+        /// <summary>
+        /// True while the card is up and waiting to be read: the press that dismisses it is the
+        /// card's own and must reach nothing else. False again the moment it is, so the fade-out
+        /// costs the player no click.
+        /// </summary>
+        public bool BlocksInput => showing && !dismissed;
 
         /// <summary>
         /// Creates a popup of layout <typeparamref name="T"/> on a document of its own.
@@ -134,6 +148,7 @@ namespace UI
             age = 0f;
             showing = true;
             dismissed = false;
+            ApplyBlocking();
 
             // Starts transparent so the card does not flash at full opacity before the first Update.
             root.style.opacity = 0f;
@@ -144,8 +159,21 @@ namespace UI
         {
             showing = false;
 
+            if (root == null)
+                return;
+
+            root.style.display = DisplayStyle.None;
+            ApplyBlocking();
+        }
+
+        /// <summary>
+        /// Puts the pointer in step with <see cref="BlocksInput"/>: the card picks for exactly as
+        /// long as it swallows, so one answer covers the HUD under it and the game behind that.
+        /// </summary>
+        private void ApplyBlocking()
+        {
             if (root != null)
-                root.style.display = DisplayStyle.None;
+                root.pickingMode = BlocksInput ? PickingMode.Position : PickingMode.Ignore;
         }
 
         private void Update()
@@ -174,6 +202,7 @@ namespace UI
 
             dismissed = true;
             age = 0f;
+            ApplyBlocking();
         }
 
         /// <summary>
