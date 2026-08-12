@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c03cb04b53be54c25b559b8cc1ece521, type: 3}
   m_Name: Heartroot Extract
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ActiveItemData
-  Condition: {fileID: 11400000, guid: 4b9d78f8900e48b4ad9a17c394f0361a, type: 2}
-  Effect: {fileID: 11400000, guid: e2f05d5bba174245b7a56e2ab7000c28, type: 2}
   DisplayName: Heartroot Extract
-  Description: Raises maximum health by 3 for the rest of the match and fills the new room. Costs 2 AP and is used up.
+  Description: Raises maximum health by 3 for the rest of the match and fills the
+    new room.
   Symbol: {fileID: -1569564830, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  Condition: {fileID: 11400000, guid: a8618e14ba95a44819f245c10423b141, type: 2}
+  Effect: {fileID: 11400000, guid: e2f05d5bba174245b7a56e2ab7000c28, type: 2}

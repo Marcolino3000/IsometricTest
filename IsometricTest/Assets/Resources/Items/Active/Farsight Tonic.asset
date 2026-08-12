@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c03cb04b53be54c25b559b8cc1ece521, type: 3}
   m_Name: Farsight Tonic
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ActiveItemData
+  DisplayName: Farsight Tonic
+  Description: Widens the character's sight by 1 for the rest of the match.
+  Symbol: {fileID: -2065681830, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   Condition: {fileID: 11400000, guid: 4b9d78f8900e48b4ad9a17c394f0361a, type: 2}
   Effect: {fileID: 11400000, guid: d3dfce5333564c159fd55360eaf8f3a3, type: 2}
-  DisplayName: Farsight Tonic
-  Description: Widens the character's sight by 1 for the rest of the match. Costs 2 AP and is used up.
-  Symbol: {fileID: -2065681830, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

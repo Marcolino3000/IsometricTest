@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c03cb04b53be54c25b559b8cc1ece521, type: 3}
   m_Name: Traveller's Rations
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ActiveItemData
+  DisplayName: Traveller's Rations
+  Description: Restores 4 health and 2 action points.
+  Symbol: {fileID: 1761427543, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   Condition: {fileID: 11400000, guid: 7d4faea9233642fab63c69341fe7c7cb, type: 2}
   Effect: {fileID: 11400000, guid: 45be5348f1d841ae9d6ef00dc4c9df53, type: 2}
-  DisplayName: Traveller's Rations
-  Description: Restores 4 health and 2 action points for 1. Used up.
-  Symbol: {fileID: 1761427543, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

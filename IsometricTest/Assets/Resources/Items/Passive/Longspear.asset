@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Longspear
   m_EditorClassIdentifier: 
   DisplayName: Longspear
-  Description: +1 tile of attack range, melee and ranged alike.
+  Description: Bonus on attack range, melee and ranged.
   Symbol: {fileID: 1479591443, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   Traits:
   - {fileID: 11400000, guid: f0869c21bbc64ad99c04a141cf8b478f, type: 2}

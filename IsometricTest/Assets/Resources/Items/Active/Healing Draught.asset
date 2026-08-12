@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c03cb04b53be54c25b559b8cc1ece521, type: 3}
   m_Name: Healing Draught
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ActiveItemData
+  DisplayName: Healing Draught
+  Description: 'Drink to restore 6 health. '
+  Symbol: {fileID: -2088117019, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   Condition: {fileID: 11400000, guid: 7d4faea9233642fab63c69341fe7c7cb, type: 2}
   Effect: {fileID: 11400000, guid: 51207f413c584bcab1feef81c3a54537, type: 2}
-  DisplayName: Healing Draught
-  Description: Drink to restore 6 health. Costs 1 AP and is used up.
-  Symbol: {fileID: -2088117019, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
