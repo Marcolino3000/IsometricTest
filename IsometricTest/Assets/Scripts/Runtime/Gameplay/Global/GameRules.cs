@@ -27,6 +27,12 @@ namespace Runtime.Gameplay.Global
                  "lootbox holding something already carried is left where it lies.")]
         public bool StackDuplicateActiveItems = true;
 
+        [Tooltip("When on, walking onto a lootbox takes it - for free, and every box the path crosses " +
+                 "rather than only the one it ends on. Off, a box is taken by standing on it and " +
+                 "pressing the interact key, which costs action points. Either way a box holding " +
+                 "something that cannot be carried is left where it lies.")]
+        public bool AutoCollectLootboxes;
+
         [Header("Board overlays")]
         [Tooltip("When on, selecting or hovering a unit tints every tile it could walk to. The path " +
                  "preview under the cursor is drawn either way, so with this off the reach is read " +

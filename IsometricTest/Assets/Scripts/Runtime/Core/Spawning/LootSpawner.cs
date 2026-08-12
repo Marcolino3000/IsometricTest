@@ -36,6 +36,7 @@ namespace Runtime.Core.Spawning
         private UnitSpawner unitSpawner;
         private ItemManager itemManager;
         private GameStateManager gameStateManager;
+        private GameRules rules;
 
         public IReadOnlyList<Lootbox> AllLootboxes => lootboxes;
 
@@ -43,8 +44,9 @@ namespace Runtime.Core.Spawning
         public IEnumerable<Lootbox> AllSpawnedLootboxes => lootboxes.Concat(takenLootboxes);
 
         /// <summary>
-        /// Takes the box the player's character is standing on. A turn action like any other: it costs
-        /// <see cref="LootSpawnerSettings.PickupCost"/> action points, so it only works on the
+        /// Takes the box the player's character is standing on - the pressed way of taking one, see
+        /// <see cref="HandleUnitEnteredTile"/> for walking over it. A turn action like any other: it
+        /// costs <see cref="LootSpawnerSettings.PickupCost"/> action points, so it only works on the
         /// character's own turn and only while it can still afford it, and it announces itself so the
         /// history can undo it.
         /// </summary>
@@ -62,6 +64,46 @@ namespace Runtime.Core.Spawning
             if (lootbox == null || unit.CurrentState.ActionPoints < settings.PickupCost)
                 return;
 
+            if (!TryTake(unit, lootbox))
+                return;
+
+            unit.CurrentState.ActionPoints -= settings.PickupCost;
+
+            ActionReporter.Report(ActionReport.Pickup(unit));
+        }
+
+        /// <summary>
+        /// Takes the box a unit has just stepped onto, while
+        /// <see cref="GameRules.AutoCollectLootboxes"/> says walking over one is enough. Every tile of
+        /// a move arrives here, so a box on the way is picked up rather than only the one the path
+        /// ends on.
+        ///
+        /// Free and unannounced on purpose. It costs no action points, and it happens *inside* a
+        /// move - one step of one - so the move's own report is what records it: that report's
+        /// after-snapshot has the box gone and the item owned, and one undo takes back the step and
+        /// the find together. A report of its own here would capture a move half walked, its points
+        /// not yet paid, since the executor charges the whole plan at the end.
+        ///
+        /// Only the player's character: nobody else has an inventory to put anything in.
+        /// </summary>
+        private void HandleUnitEnteredTile(Unit unit)
+        {
+            if (rules == null || !rules.AutoCollectLootboxes || unit != unitSpawner.PlayerUnit)
+                return;
+
+            var lootbox = unit.CurrentState.Position.Lootbox;
+
+            if (lootbox != null)
+                TryTake(unit, lootbox);
+        }
+
+        /// <summary>
+        /// Hands what a box holds to the unit standing on it and takes the box off the board, or
+        /// leaves both where they are and says why. The two ways of taking a box - pressing for it
+        /// and walking over it - differ in what they cost and what they announce, not in this.
+        /// </summary>
+        private bool TryTake(Unit unit, Lootbox lootbox)
+        {
             // A box holding something the character cannot take is left where it lies, unopened and
             // costing nothing, so it can be come back for once a slot is free or the copy already
             // carried has been used up. The player is told why, since an unopened box looks exactly
@@ -72,15 +114,13 @@ namespace Runtime.Core.Spawning
                 if (!string.IsNullOrEmpty(reason))
                     unit.ShowNotice(reason);
 
-                return;
+                return false;
             }
 
             itemManager.Pickup(lootbox.Content);
             TakeLootbox(lootbox);
 
-            unit.CurrentState.ActionPoints -= settings.PickupCost;
-
-            ActionReporter.Report(ActionReport.Pickup(unit));
+            return true;
         }
 
         /// <summary>
@@ -213,15 +253,21 @@ namespace Runtime.Core.Spawning
         #region Setup
 
         public void Setup(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, ItemManager itemManagerArg,
-            GameStateManager gameStateManagerArg, InputHandler inputHandler)
+            GameStateManager gameStateManagerArg, InputHandler inputHandler, GameRules gameRules)
         {
             tileSpawner = tileSpawnerArg;
             unitSpawner = unitSpawnerArg;
             itemManager = itemManagerArg;
             gameStateManager = gameStateManagerArg;
+            rules = gameRules;
 
             inputHandler.InteractPressed += TryPickup;
             inputHandler.RightClicked += TryPickup;
+
+            // Both ways of taking a box stay wired whichever the rules allow: the switch is live, so
+            // it may be flipped mid-match, and pressing for a box that has already been walked over
+            // simply finds nothing there.
+            unitSpawner.UnitEnteredTile += HandleUnitEnteredTile;
         }
 
         /// <summary>

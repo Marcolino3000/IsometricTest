@@ -166,7 +166,7 @@ namespace Runtime.Core
             actionAssigner.Setup(selector);
             fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager, aiController, gameRules);
             aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, matchOutcomeWatcher);
-            lootSpawner.Setup(tileSpawner, unitSpawner, itemManager, gameStateManager, inputHandler);
+            lootSpawner.Setup(tileSpawner, unitSpawner, itemManager, gameStateManager, inputHandler, gameRules);
             Direction.Setup(gameStateManager);
         }
         

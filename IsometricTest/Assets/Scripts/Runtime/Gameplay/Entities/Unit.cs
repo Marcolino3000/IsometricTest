@@ -290,6 +290,10 @@ namespace Runtime.Gameplay.Entities
             selectedTile.SetUnit(this);
 
             fogOfWar.Recompute();
+
+            // Last, with the unit standing there and the fog caught up: what lies on the ground is
+            // nobody's business here, so the arrival is announced and whoever cares reads the tile.
+            unitSpawner.NotifyEnteredTile(this);
         }
 
         private void MoveTransformToTile(Tile tile)

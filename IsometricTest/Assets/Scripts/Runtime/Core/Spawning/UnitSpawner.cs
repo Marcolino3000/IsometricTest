@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Data;
@@ -31,6 +32,21 @@ namespace Runtime.Core.Spawning
 
         /// <summary>Every unit of this match, in play or removed. Used to snapshot the board.</summary>
         public IEnumerable<Unit> AllSpawnedUnits => units.Concat(removedUnits);
+
+        /// <summary>
+        /// A unit has arrived on a tile - once per step of a move, since a move is one action per
+        /// tile stepped on. Announced by the spawner that owns the units rather than by the unit
+        /// itself, so whoever cares what lies on the ground (the loot) needs no reference handing
+        /// down into every unit. Putting a unit back from a snapshot is not an arrival and is
+        /// silent: undo restores what walking over something did, it does not do it again.
+        /// </summary>
+        public event Action<Unit> UnitEnteredTile;
+
+        /// <summary>Says a unit has just been placed on a tile. Called by the unit that moved.</summary>
+        public void NotifyEnteredTile(Unit unit)
+        {
+            UnitEnteredTile?.Invoke(unit);
+        }
 
         [Header("References")]
         [SerializeField] private UnitSpawnerSettings settings;

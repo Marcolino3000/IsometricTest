@@ -15,6 +15,7 @@ MonoBehaviour:
   RetaliationEnabled: 0
   ShowEnemyTurns: 0
   StackDuplicateActiveItems: 1
+  AutoCollectLootboxes: 0
   ShowMovementRange: 0
   ShowUnitBadges: 0
   ShowUnitCard: 1
