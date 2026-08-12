@@ -26,6 +26,7 @@ namespace Runtime.Gameplay.Global
         private UnitSpawner unitSpawner;
         private TileSpawner tileSpawner;
         private FogOfWar fogOfWar;
+        private LootSpawner lootSpawner;
         private GameStateManager gameStateManager;
 
         // A state change that may have decided the match, to be read at the end of the frame rather
@@ -40,12 +41,13 @@ namespace Runtime.Gameplay.Global
         public bool IsOver => Result.IsOver;
 
         public void Setup(GameRules gameRules, UnitSpawner unitSpawnerArg, TileSpawner tileSpawnerArg,
-            FogOfWar fogOfWarArg, GameStateManager gameStateManagerArg)
+            FogOfWar fogOfWarArg, LootSpawner lootSpawnerArg, GameStateManager gameStateManagerArg)
         {
             rules = gameRules;
             unitSpawner = unitSpawnerArg;
             tileSpawner = tileSpawnerArg;
             fogOfWar = fogOfWarArg;
+            lootSpawner = lootSpawnerArg;
             gameStateManager = gameStateManagerArg;
 
             // Two channels cover everything that can decide a match. An action announces the deaths and
@@ -99,7 +101,7 @@ namespace Runtime.Gameplay.Global
         /// </summary>
         private void Evaluate()
         {
-            var result = VictoryRules.Evaluate(rules, unitSpawner, tileSpawner, fogOfWar);
+            var result = VictoryRules.Evaluate(rules, unitSpawner, tileSpawner, fogOfWar, lootSpawner);
 
             if (result.Outcome == Result.Outcome)
                 return;

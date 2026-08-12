@@ -57,7 +57,7 @@ namespace Runtime.Gameplay.Global
         /// retaliation of the last enemy it struck down has lost, rather than won by a hair.
         /// </summary>
         public static MatchResult Evaluate(GameRules rules, UnitSpawner unitSpawner, TileSpawner tileSpawner,
-            FogOfWar fogOfWar)
+            FogOfWar fogOfWar, LootSpawner lootSpawner)
         {
             if (rules == null || unitSpawner == null)
                 return MatchResult.Open;
@@ -70,6 +70,9 @@ namespace Runtime.Gameplay.Global
 
             if (rules.WinByExploringMap && IsMapUncovered(tileSpawner, fogOfWar))
                 return MatchResult.Won("The whole map has been uncovered.");
+
+            if (rules.WinByCollectingAllLoot && IsAllLootCollected(lootSpawner))
+                return MatchResult.Won("Every lootbox has been found.");
 
             return MatchResult.Open;
         }
@@ -115,6 +118,35 @@ namespace Runtime.Gameplay.Global
                     continue;
 
                 if (!fogOfWar.IsExplored(Team.Player, tile.Position))
+                    return false;
+
+                hadAny = true;
+            }
+
+            return hadAny;
+        }
+
+        /// <summary>
+        /// Whether every box that was scattered has been taken. Asked of the boxes rather than of the
+        /// inventory: a box holding something already carried is left where it lies, so what the
+        /// player owns says nothing about what is still out there. A board with no loot on it is not
+        /// a win, the way an unbuilt grid is not one.
+        /// </summary>
+        private static bool IsAllLootCollected(LootSpawner lootSpawner)
+        {
+            if (lootSpawner == null)
+                return false;
+
+            var hadAny = false;
+
+            // Taken boxes are only hidden, so this is the whole set - which is what tells "all
+            // collected" apart from "none scattered yet".
+            foreach (var lootbox in lootSpawner.AllSpawnedLootboxes)
+            {
+                if (lootbox == null)
+                    continue;
+
+                if (lootbox.IsInPlay)
                     return false;
 
                 hadAny = true;

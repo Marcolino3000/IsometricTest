@@ -73,6 +73,11 @@ namespace Runtime.Gameplay.Global
                  "of anywhere the character can stand.")]
         public bool WinByExploringMap = true;
 
+        [Tooltip("When on, the match is won once every lootbox on the map has been taken. A box " +
+                 "holding something that cannot be carried is left where it lies, so it has to be " +
+                 "come back for with a slot free - the win waits for it either way.")]
+        public bool WinByCollectingAllLoot = true;
+
         [Tooltip("When on, losing your character ends the match in defeat. Asked before the two above, " +
                  "so a character that falls to the retaliation of the last enemy it struck down has lost " +
                  "rather than won by a hair.")]

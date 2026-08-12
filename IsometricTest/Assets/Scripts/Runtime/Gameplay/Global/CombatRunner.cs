@@ -48,6 +48,11 @@ namespace Runtime.Gameplay.Global
             var healthBefore = target.CurrentState.Health;
             target.CurrentState.Health -= damage;
 
+            // The health setter raises the popup for anything it moves, and a strike everything was
+            // taken out of moves nothing - so the 0 is asked for here, and only here.
+            if (damage == 0)
+                target.ShowAbsorbedHit();
+
             CombatLog.Applied(healthBefore, target.CurrentState.Health);
 
             return target.CurrentState.Health <= 0;

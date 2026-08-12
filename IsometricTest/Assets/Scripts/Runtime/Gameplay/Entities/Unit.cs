@@ -200,21 +200,42 @@ namespace Runtime.Gameplay.Entities
             int delta = amount - lastHealth;
             lastHealth = amount;
 
-            // Taken whatever happens next, so a strike that ends up dealing nothing - or one taken
-            // back by an undo - cannot leave its word hanging over the following hit.
-            var note = damageNote;
-            damageNote = null;
-
             if (delta == 0 || restoringSnapshot)
+            {
+                // A hit taken back by an undo says nothing, and its word must not carry to the next one.
+                damageNote = null;
                 return;
+            }
 
+            ShowHealthPopup(delta);
+        }
+
+        /// <summary>
+        /// A hit that took nothing off - fully absorbed. Said by whoever resolved the strike, since
+        /// <see cref="UnitState.Health"/> raises nothing when the number does not move, and a hit
+        /// that is shrugged off has to read as a hit rather than as nothing having happened.
+        /// </summary>
+        public void ShowAbsorbedHit()
+        {
+            ShowHealthPopup(0);
+        }
+
+        /// <summary>
+        /// The number over the unit's head, with whatever the strike had to say beside it. The note
+        /// is spent here, so a hit that has nothing to say cannot inherit the last one's word.
+        /// </summary>
+        private void ShowHealthPopup(int delta)
+        {
             // Popups reuse the health bar's world-space panel settings so they render like the unit bars.
             var panelSettings = healthBar.GetComponent<UIDocument>().panelSettings;
 
-            if (delta < 0)
-                FloatingText.ShowDamage(delta, transform.position, panelSettings, note);
-            else
+            var note = damageNote;
+            damageNote = null;
+
+            if (delta > 0)
                 FloatingText.ShowHeal(delta, transform.position, panelSettings);
+            else
+                FloatingText.ShowDamage(delta, transform.position, panelSettings, note);
         }
         
         private void ActionPointsChangedCallback(int amount)

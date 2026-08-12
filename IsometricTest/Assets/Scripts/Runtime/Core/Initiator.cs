@@ -179,7 +179,7 @@ namespace Runtime.Core
         private void CreateMatchOutcomeWatcher()
         {
             matchOutcomeWatcher = gameObject.AddComponent<MatchOutcomeWatcher>();
-            matchOutcomeWatcher.Setup(gameRules, unitSpawner, tileSpawner, fogOfWar, gameStateManager);
+            matchOutcomeWatcher.Setup(gameRules, unitSpawner, tileSpawner, fogOfWar, lootSpawner, gameStateManager);
         }
 
         /// <summary>
