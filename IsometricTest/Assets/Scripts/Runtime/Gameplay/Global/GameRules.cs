@@ -27,6 +27,12 @@ namespace Runtime.Gameplay.Global
                  "lootbox holding something already carried is left where it lies.")]
         public bool StackDuplicateActiveItems = true;
 
+        [Header("Board overlays")]
+        [Tooltip("When on, selecting or hovering a unit tints every tile it could walk to. The path " +
+                 "preview under the cursor is drawn either way, so with this off the reach is read " +
+                 "off the blue line instead of the white field.")]
+        public bool ShowMovementRange = true;
+
         [Header("Reading the enemy")]
         [Tooltip("When on, every unit wears a row of badges: the weapon it has drawn, how far it " +
                  "moves in a turn, and one per trait it carries. A trait with no symbol authored is " +
@@ -59,6 +65,11 @@ namespace Runtime.Gameplay.Global
         public bool LoseWhenCharacterFalls = true;
 
         [Header("Debug")]
+        [Tooltip("Writes each tile's grid position onto it. Debugging only - it is the one thing on " +
+                 "the board that is not part of the game being played. Can be toggled during play.")]
+        public bool ShowTileCoordinates = true;
+
+
         [Tooltip("Prints every attack to the console with its damage breakdown: the weapon's base " +
                  "damage, each trait that changed the number and what it changed it to, the damage " +
                  "dealt and the health left, why nobody struck back and who died. Debugging only - " +

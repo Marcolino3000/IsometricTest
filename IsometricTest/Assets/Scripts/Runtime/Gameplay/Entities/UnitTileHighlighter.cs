@@ -16,8 +16,19 @@ namespace Runtime.Gameplay.Entities
 
         private UnitState state => owner != null ? owner.CurrentState : null;
 
+        /// <summary>
+        /// Every white tile on the board goes through here, so one switch covers the reach of a
+        /// selected unit, of a hovered one and the reach drawn over the threat zone. Unlike the
+        /// threat overlay this predates its switch, so a missing rules asset leaves it on rather
+        /// than blanking a board that always had it.
+        /// </summary>
+        private bool showMovementRange => rules == null || rules.ShowMovementRange;
+
         public void HighlightMoveableTiles()
         {
+            if (!showMovementRange)
+                return;
+
             var moveableTiles = _tileSpawner.GetMoveableTiles(state);
 
             foreach (var tile in moveableTiles)
@@ -36,7 +47,8 @@ namespace Runtime.Gameplay.Entities
         /// as a halo and both facts survive on one board - white is where it can walk, orange is
         /// where it can hit you without walking there. Only worth it where the white on the board
         /// means *this* unit: while one of the player's own is selected the white is that unit's
-        /// reach, and the danger has to win over it instead.
+        /// reach, and the danger has to win over it instead. It follows the same switch as every
+        /// other white tile, so with the reach overlay off the threat stays orange throughout.
         /// </summary>
         public void HighlightThreatenedTiles(bool markReachable = false)
         {
@@ -50,7 +62,7 @@ namespace Runtime.Gameplay.Entities
             foreach (var tile in _tileSpawner.GetThreatenedTiles(owner, reachable))
                 _tileSpawner.HighlightTile(tile, MarkerColor.TransparentOrange);
 
-            if (!markReachable)
+            if (!markReachable || !showMovementRange)
                 return;
 
             foreach (var tile in reachable)

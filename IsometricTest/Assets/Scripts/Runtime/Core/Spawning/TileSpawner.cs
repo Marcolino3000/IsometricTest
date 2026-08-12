@@ -4,7 +4,6 @@ using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Global;
-using TMPro;
 using UnityEngine;
 
 namespace Runtime.Core.Spawning
@@ -14,7 +13,13 @@ namespace Runtime.Core.Spawning
         [Header("References")]
         [SerializeField] private TileSpawnerSettings settings;
         [SerializeField] private Selector selector;
-        
+
+        private GameRules rules;
+
+        // What the tiles are currently showing. The label is pushed onto them rather than polled by
+        // them, so a switch flipped during play is only noticed by comparing against this.
+        private bool coordinatesShown = true;
+
         private readonly List<Tile> Tiles = new();
 
         // The same tiles keyed by grid position: sight walks a line tile by tile, and a search
@@ -293,10 +298,10 @@ namespace Runtime.Core.Spawning
             
             var instance = Instantiate(settings.TilePrefab, position, Quaternion.identity,transform);
             instance.name = $"Tile {xIndex}-{yIndex}";
-            instance.GetComponentInChildren<TextMeshPro>().text = xIndex + "-" + yIndex;
-            
+
             var tile = instance.GetComponent<Tile>();
             tile.Position = new Vector2Int(xIndex, yIndex);
+            tile.ShowCoordinates(coordinatesShown);
             tile.ApplyTerrain(GetTerrainProfile(tile.Position));
             Tiles.Add(tile);
             _tilesByPosition[tile.Position] = tile;
@@ -324,10 +329,33 @@ namespace Runtime.Core.Spawning
 
         #region Setup
 
-        public void Setup(Selector selectorArg)
+        public void Setup(Selector selectorArg, GameRules gameRules)
         {
             selector = selectorArg;
+            rules = gameRules;
+            coordinatesShown = ShowCoordinates;
             _pathfinder = new Pathfinder(this);
+        }
+
+        /// <summary>
+        /// The only reason this class has an Update: the coordinate labels are a debug switch meant to
+        /// be flipped while the game runs, and nothing else would tell the tiles about it. Without a
+        /// rules asset they stay on, which is what the board did before there was a switch.
+        /// </summary>
+        private void Update()
+        {
+            if (ShowCoordinates != coordinatesShown)
+                ApplyCoordinateLabels();
+        }
+
+        private bool ShowCoordinates => rules == null || rules.ShowTileCoordinates;
+
+        private void ApplyCoordinateLabels()
+        {
+            coordinatesShown = ShowCoordinates;
+
+            foreach (var tile in Tiles)
+                tile.ShowCoordinates(coordinatesShown);
         }
 
         [ContextMenu("Spawn Grid")]

@@ -5,6 +5,7 @@ using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Items;
 using Runtime.Gameplay.Traits;
+using TMPro;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Entities
@@ -48,11 +49,33 @@ namespace Runtime.Gameplay.Entities
         // Kept so a box placed after the last fog pass is tinted like the ground it lands on.
         private Color fogTint = Color.white;
 
+        // The debug label naming this tile's grid position. Found rather than serialized - it is the
+        // only text on the prefab - and held, because once switched off a lookup would no longer
+        // find it.
+        private TextMeshPro coordinateLabel;
+
         private void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+            coordinateLabel = GetComponentInChildren<TextMeshPro>(true);
         }
-        
+
+        /// <summary>
+        /// Writes this tile's grid position onto it, or takes the label away. Switched by
+        /// <see cref="Global.GameRules.ShowTileCoordinates"/> and pushed by the spawner, so it can be
+        /// flipped mid-play; the text is rewritten each time rather than at spawn, since a tile that
+        /// spawned with the label off has never had one written.
+        /// </summary>
+        public void ShowCoordinates(bool show)
+        {
+            if (coordinateLabel == null)
+                return;
+
+            coordinateLabel.text = $"{Position.x}-{Position.y}";
+            coordinateLabel.enabled = show;
+        }
+
+
         public int DistanceTo(Tile other)
         {
             return Mathf.Abs(Position.x - other.Position.x) + Mathf.Abs(Position.y - other.Position.y);

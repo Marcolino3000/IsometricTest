@@ -150,7 +150,7 @@ namespace Runtime.Core
             // before either is wired.
             CreateMatchOutcomeWatcher();
             unitSpawner.Setup(gameStateManager, selector, fogOfWar, gameRules);
-            tileSpawner.Setup(selector);
+            tileSpawner.Setup(selector, gameRules);
             selector.Setup(gameStateManager, raycaster, unitSpawner, matchOutcomeWatcher);
             raycaster.Setup(inputHandler, hudDocuments);
             outlineManager.Setup(selector);

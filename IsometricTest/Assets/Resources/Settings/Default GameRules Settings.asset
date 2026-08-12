@@ -15,11 +15,13 @@ MonoBehaviour:
   RetaliationEnabled: 0
   ShowEnemyTurns: 0
   StackDuplicateActiveItems: 1
+  ShowMovementRange: 0
   ShowUnitBadges: 0
   ShowUnitCard: 1
   ShowThreatZone: 1
   WinByDefeatingAllEnemies: 1
   WinByExploringMap: 1
   LoseWhenCharacterFalls: 1
+  ShowTileCoordinates: 0
   LogCombatCalculations: 1
   LogCombatDetails: 0
