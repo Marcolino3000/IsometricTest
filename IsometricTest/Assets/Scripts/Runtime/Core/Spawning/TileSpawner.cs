@@ -302,7 +302,9 @@ namespace Runtime.Core.Spawning
             var tile = instance.GetComponent<Tile>();
             tile.Position = new Vector2Int(xIndex, yIndex);
             tile.ShowCoordinates(coordinatesShown);
-            tile.ApplyTerrain(GetTerrainProfile(tile.Position));
+            // Flat ground is also what a tile is disguised as while the fog hides what it is, so the
+            // disguise follows however flat terrain itself is authored.
+            tile.ApplyTerrain(GetTerrainProfile(tile.Position), settings.FlatTerrain);
             Tiles.Add(tile);
             _tilesByPosition[tile.Position] = tile;
 

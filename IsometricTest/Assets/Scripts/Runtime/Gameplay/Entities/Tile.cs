@@ -49,6 +49,22 @@ namespace Runtime.Gameplay.Entities
         // Kept so a box placed after the last fog pass is tinted like the ground it lands on.
         private Color fogTint = Color.white;
 
+        // What this tile is, and what unscouted ground is drawn as. Both are held because the look is
+        // re-applied whenever the fog conceals or gives away the terrain; the unknown one is the flat
+        // profile the spawner hands over, so a disguised tile looks exactly like plain ground rather
+        // than merely like the bare prefab.
+        private TerrainProfile terrainProfile;
+        private TerrainProfile unknownTerrainProfile;
+        private bool terrainConcealed;
+
+        // The prefab's own look, which a profile overriding neither falls back to.
+        private Sprite defaultSprite;
+        private Color defaultColor = Color.white;
+
+        // How far the tile is currently raised. Tracked rather than remembering the unraised position,
+        // so the height can be taken back off without depending on when the grid position was written.
+        private float appliedHeightOffset;
+
         // The debug label naming this tile's grid position. Found rather than serialized - it is the
         // only text on the prefab - and held, because once switched off a lookup would no longer
         // find it.
@@ -58,6 +74,12 @@ namespace Runtime.Gameplay.Entities
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
             coordinateLabel = GetComponentInChildren<TextMeshPro>(true);
+
+            if (spriteRenderer != null)
+            {
+                defaultSprite = spriteRenderer.sprite;
+                defaultColor = spriteRenderer.color;
+            }
         }
 
         /// <summary>
@@ -96,12 +118,17 @@ namespace Runtime.Gameplay.Entities
 
         /// <summary>
         /// Applies a terrain profile to this tile: stores its movement rules, raises the tile
-        /// visually by the profile's height offset and optionally tints the tile sprite.
+        /// visually by the profile's height offset and optionally tints the tile sprite. The rules
+        /// are always this tile's own; <paramref name="unknownProfile"/> is merely how it is drawn
+        /// while the fog is hiding what it is - see <see cref="SetVisibility"/>.
         /// </summary>
-        public void ApplyTerrain(TerrainProfile profile)
+        public void ApplyTerrain(TerrainProfile profile, TerrainProfile unknownProfile = null)
         {
             if (profile == null)
                 return;
+
+            terrainProfile = profile;
+            unknownTerrainProfile = unknownProfile;
 
             Terrain = profile.Type;
             IsPassable = profile.Passable;
@@ -110,27 +137,17 @@ namespace Runtime.Gameplay.Entities
             Elevation = profile.Elevation;
             Traits = profile.Traits ?? (IReadOnlyList<TerrainTrait>)Array.Empty<TerrainTrait>();
 
-            transform.position += Vector3.up * profile.HeightOffset;
-
-            if (spriteRenderer != null)
-            {
-                if (profile.OverrideSprite != null)
-                    spriteRenderer.sprite = profile.OverrideSprite;
-
-                if (profile.OverrideColor)
-                    spriteRenderer.color = profile.Color;
-
-                // Remember the lit colour so fog tinting can multiply against it (and restore it later).
-                baseTerrainColor = spriteRenderer.color;
-            }
+            ApplyLook();
         }
 
         /// <summary>
-        /// Applies a fog state to the tile: tints the terrain sprite and hides the tile marker
-        /// (e.g. the "occupied" highlight) unless the tile is currently visible, so enemy
+        /// Applies a fog state to the tile: tints the terrain sprite, disguises unscouted ground as
+        /// plain terrain when <paramref name="hideUnknownTerrain"/> asks for it, and hides the tile
+        /// marker (e.g. the "occupied" highlight) unless the tile is currently visible, so enemy
         /// positions don't leak through fog.
         /// </summary>
-        public void SetVisibility(TileVisibility visibility, Color exploredTint, Color hiddenTint)
+        public void SetVisibility(TileVisibility visibility, Color exploredTint, Color hiddenTint,
+            bool hideUnknownTerrain = false)
         {
             Visibility = visibility;
 
@@ -141,11 +158,42 @@ namespace Runtime.Gameplay.Entities
                 _ => hiddenTint
             };
 
-            if (spriteRenderer != null)
-                spriteRenderer.color = baseTerrainColor * fogTint;
+            // Only ground nobody has seen is disguised. Remembered ground keeps its own look, the way
+            // a lootbox stays on it: terrain does not move, so what was seen there is still true.
+            terrainConcealed = hideUnknownTerrain && visibility == TileVisibility.Hidden;
 
+            ApplyLook();
             RefreshMarker();
             RefreshLootbox();
+        }
+
+        /// <summary>
+        /// Draws the tile as whichever terrain it is currently showing - its own, or the plain ground
+        /// unscouted tiles are disguised as - and tints the result with the fog. Sprite, colour and
+        /// height go together: a mountain gives itself away by its silhouette as surely as by its rock.
+        /// Only the look moves; <see cref="HeightOffset"/> and every rule stay this tile's own, so what
+        /// stands on it is still placed on top of the real terrain.
+        /// </summary>
+        private void ApplyLook()
+        {
+            var profile = terrainConcealed ? unknownTerrainProfile : terrainProfile;
+
+            // Adjusted by the difference rather than written outright, so the grid position the tile
+            // was spawned at is never assumed to be known here.
+            var height = profile != null ? profile.HeightOffset : 0f;
+            transform.position += Vector3.up * (height - appliedHeightOffset);
+            appliedHeightOffset = height;
+
+            if (spriteRenderer == null)
+                return;
+
+            spriteRenderer.sprite = profile != null && profile.OverrideSprite != null
+                ? profile.OverrideSprite
+                : defaultSprite;
+
+            // Remembered so fog tinting can multiply against the lit colour (and restore it later).
+            baseTerrainColor = profile != null && profile.OverrideColor ? profile.Color : defaultColor;
+            spriteRenderer.color = baseTerrainColor * fogTint;
         }
 
         private void SetOccupied(bool occupied)

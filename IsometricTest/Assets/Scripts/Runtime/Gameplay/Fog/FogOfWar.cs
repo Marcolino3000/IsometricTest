@@ -33,6 +33,10 @@ namespace Runtime.Gameplay.Fog
         private GameRules _rules;
         private Team _activeTeam;
         private Team _shownTeam;
+
+        // Whether the tiles were last drawn with unscouted terrain disguised, so a switch flipped
+        // during play is noticed - the same reason _shownTeam is kept.
+        private bool _terrainHidden;
         private readonly Dictionary<Team, HashSet<Vector2Int>> _exploredTiles = new();
         private HashSet<Vector2Int> _visiblePositions = new();
         private HashSet<Vector2Int> _shownPositions = new();
@@ -69,13 +73,20 @@ namespace Runtime.Gameplay.Fog
         private bool ShowEnemyTurns => _rules == null || _rules.ShowEnemyTurns;
 
         /// <summary>
+        /// Whether ground nobody has scouted is drawn as plain terrain instead of its own. Without a
+        /// rules asset the whole board's terrain stays readable, which is what the fog did before
+        /// there was a switch.
+        /// </summary>
+        private bool HideUnexploredTerrain => _rules != null && _rules.HideUnexploredTerrain;
+
+        /// <summary>
         /// Both the rules asset and the AI's switch are held live and may be toggled mid-play, but the
         /// fog is pushed onto the tiles rather than polled by them — without this the new view would
         /// only appear on the next action.
         /// </summary>
         private void Update()
         {
-            if (_tileSpawner != null && ViewingTeam != _shownTeam)
+            if (_tileSpawner != null && (ViewingTeam != _shownTeam || HideUnexploredTerrain != _terrainHidden))
                 Recompute();
         }
 
@@ -140,6 +151,7 @@ namespace Runtime.Gameplay.Fog
             // keeps the screen on the player's units. Assigned before it is applied, so IsShown always
             // answers with what the tiles and units were last given.
             _shownTeam = ViewingTeam;
+            _terrainHidden = HideUnexploredTerrain;
             _shownPositions = _shownTeam == _activeTeam ? visible : CollectVisiblePositions(_shownTeam);
 
             ApplyTileVisibility(_shownPositions, ExploredFor(_shownTeam));
@@ -214,7 +226,7 @@ namespace Runtime.Gameplay.Fog
                     explored.Contains(tile.Position) ? TileVisibility.Explored :
                     TileVisibility.Hidden;
 
-                tile.SetVisibility(visibility, exploredTint, hiddenTint);
+                tile.SetVisibility(visibility, exploredTint, hiddenTint, _terrainHidden);
             }
         }
 

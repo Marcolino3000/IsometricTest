@@ -15,11 +15,19 @@ namespace Runtime.Gameplay.Global
                  "or forgo one while it is on. A counter-strike still has to reach the attacker.")]
         public bool RetaliationEnabled = true;
 
+        [Header("Fog of war")]
         [Tooltip("When on, the map switches to the acting team's vision while an AI plays its turn, so you " +
                  "watch every move it makes. When off, the view stays with your own units and the AI's moves " +
                  "only show where you can actually see them. A turn you took over manually is never hidden.")]
         public bool ShowEnemyTurns = true;
 
+        [Tooltip("When on, ground nobody has scouted is drawn as plain flat terrain - a hill or a " +
+                 "mountain only shows what it is once it has been seen. Remembered ground keeps its " +
+                 "own look: terrain does not move, so what was seen there is still true. Off, the " +
+                 "whole board's terrain is readable from the start and the fog only darkens it.")]
+        public bool HideUnexploredTerrain = true;
+
+        [Header("Items and loot")]
         [Tooltip("When on, the same active item may be carried more than once - three Healing Draughts " +
                  "fill the three active slots. Only active items can stack: a weapon or a passive is " +
                  "identified by its asset and shares one slot with its whole category, so a second " +

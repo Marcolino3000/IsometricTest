@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RetaliationEnabled: 0
   ShowEnemyTurns: 0
+  HideUnexploredTerrain: 1
   StackDuplicateActiveItems: 1
   AutoCollectLootboxes: 0
   ShowMovementRange: 0
