@@ -29,7 +29,7 @@ namespace Runtime.Gameplay.Entities
         /// separate maximum on <see cref="UnitState"/>, and the health bar is built from this very
         /// value. What healing clamps against.
         /// </summary>
-        public int MaxHealth => blueprint.DefaultState.Health;
+        public int MaxHealth => blueprint.DefaultState.Health + currentState.GetBonus(UnitStat.Health);
 
         /// <summary>
         /// The action points the unit is given at the start of each of its turns - the counterpart to
@@ -37,7 +37,14 @@ namespace Runtime.Gameplay.Entities
         /// could this unit do on its turn" has to budget with: <see cref="UnitState.ActionPoints"/> is
         /// what is left of them, which for an enemy on the player's turn is usually nothing.
         /// </summary>
-        public int MaxActionPoints => blueprint.DefaultState.ActionPoints;
+        public int MaxActionPoints => blueprint.DefaultState.ActionPoints + currentState.GetBonus(UnitStat.ActionPoints);
+
+        /// <summary>
+        /// How far the unit sees - what the fog is drawn from and what the AI weighs a step by. The
+        /// third of the queries that fold a permanent bonus into a base; unlike the other two the base
+        /// is on the state rather than the blueprint, which is why nobody asks the state directly.
+        /// </summary>
+        public int SightRange => currentState.SightRange + currentState.GetBonus(UnitStat.SightRange);
 
         [Header("Debug")]
         [SerializeField] private UnitState currentState;
@@ -82,7 +89,7 @@ namespace Runtime.Gameplay.Entities
             gameStateManager = gameStateManagerArg;
             gameStateManager.TurnReset += HandleTurnReset;
 
-            healthBar.Setup(blueprint.DefaultState.Health);
+            healthBar.Setup(MaxHealth);
             actionExecutor.Setup(this, tileSpawner);
 
             TileHighlighter.Setup(this, tileSpawner, gameRules);
@@ -115,6 +122,55 @@ namespace Runtime.Gameplay.Entities
         public void ShowNotice(string text)
         {
             FloatingText.ShowNotice(text, transform.position, healthBar.GetComponent<UIDocument>().panelSettings);
+        }
+
+        /// <summary>
+        /// Raises one of the unit's stats for the rest of the match - what an item that improves the
+        /// character rather than spending itself on the moment does. The number goes on
+        /// <see cref="UnitState"/>, so it travels with the history snapshot and an undo takes it back
+        /// along with the item that granted it.
+        ///
+        /// What it takes for a raise to be *felt* differs per stat, and this is the one place that
+        /// knows: sight has to be recomputed or the ground it uncovers stays dark until the next step;
+        /// action points are handed out at the start of a turn, so the same amount is added to what is
+        /// left of this one, and the drink is worth something on the turn it is drunk; health is a row
+        /// of blobs built once, so the row is rebuilt and the new room filled - a ceiling with nothing
+        /// under it would be no gift.
+        /// </summary>
+        public void GrantStatBonus(UnitStat stat, int amount)
+        {
+            if (amount == 0)
+                return;
+
+            currentState.AddBonus(stat, amount);
+
+            switch (stat)
+            {
+                case UnitStat.SightRange:
+                    fogOfWar.Recompute();
+                    break;
+
+                case UnitStat.ActionPoints:
+                    actionExecutor.RefreshActionPointsBar();
+                    currentState.ActionPoints += amount;
+                    break;
+
+                case UnitStat.Health:
+                    RefreshHealthBar();
+                    currentState.Health += amount;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Brings the health bar in line with the unit's maximum, which an item can move. Sets the
+        /// blobs shown as well as how many there are: the row is rebuilt from nothing, and a restore
+        /// that changes the maximum without changing the health would otherwise leave it blank.
+        /// </summary>
+        private void RefreshHealthBar()
+        {
+            healthBar.SetMaxBlobs(MaxHealth);
+            healthBar.SetBlobAmount(currentState.Health);
         }
 
         private void HealthChangedCallback(int amount)
@@ -186,9 +242,16 @@ namespace Runtime.Gameplay.Entities
         /// real action would trigger around it: no damage popup, and no fog recompute per unit - the
         /// caller does a single pass once every unit is back in place.
         /// </summary>
-        public void RestoreSnapshot(Tile tile, int health, int actionPoints)
+        public void RestoreSnapshot(Tile tile, int health, int actionPoints, int[] statBonuses)
         {
             restoringSnapshot = true;
+
+            // Before the vitals: both bars have to have room for the recorded values, and both
+            // maxima are things an item moves. The wider sight a bonus may bring back needs no help -
+            // the caller recomputes the fog once every unit is back in place.
+            currentState.RestoreBonuses(statBonuses);
+            RefreshHealthBar();
+            actionExecutor.RefreshActionPointsBar();
 
             if (tile != null)
             {
@@ -260,7 +323,7 @@ namespace Runtime.Gameplay.Entities
                 return;
 
             if (changeEvent.NewValue.Team == currentState.Team)
-                currentState.ActionPoints = blueprint.DefaultState.ActionPoints;
+                currentState.ActionPoints = MaxActionPoints;
         }
     }
 

@@ -197,7 +197,7 @@ namespace Runtime.Gameplay.Fog
                 if (tile == null)
                     continue;
 
-                foreach (var seen in _tileSpawner.GetTilesInSightRange(tile.Position, unit.CurrentState.SightRange))
+                foreach (var seen in _tileSpawner.GetTilesInSightRange(tile.Position, unit.SightRange))
                     visible.Add(seen.Position);
             }
 

@@ -365,7 +365,7 @@ namespace Runtime.Gameplay.AI
 
         private bool Explore(Unit unit)
         {
-            var sightRange = unit.CurrentState.SightRange;
+            var sightRange = unit.SightRange;
 
             Tile best = null;
             var bestReveal = 0;

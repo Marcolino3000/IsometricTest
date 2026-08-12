@@ -36,6 +36,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 79fe97f23e3b460c99affaad2a68f39f, type: 2}
   - {fileID: 11400000, guid: 3a7c77a40e34431e8fe31ccb9b061ddb, type: 2}
   - {fileID: 11400000, guid: 0a3202b84ebc4cc0a0829cd28f4b6779, type: 2}
+  - {fileID: 11400000, guid: 3302d828e5054e868adb0af08e3b49f0, type: 2}
+  - {fileID: 11400000, guid: ab6c25446a694d44a5f659570d8c36b1, type: 2}
+  - {fileID: 11400000, guid: 3e8bf0c3605d42f0a9ad2ab986d68723, type: 2}
   MeleeWeaponCount: 3
   RangedWeaponCount: 3
   ActiveItemCount: 12

@@ -17,8 +17,31 @@ namespace UI
 
         public void Setup(int maxBlobs)
         {
-            maxElements = maxBlobs;
             container = GetComponent<UIDocument>().rootVisualElement.Q<VisualElement>("container");
+
+            Build(maxBlobs);
+
+            SetBlobAmount(maxElements);
+        }
+
+        /// <summary>
+        /// Rebuilds the row for a new maximum. The blobs are built once at setup and
+        /// <see cref="SetBlobAmount"/> clamps to how many there are, so an item that raises the unit's
+        /// action points for good has to ask for another one - or the point it grants every turn would
+        /// be spendable but never shown. How many are *lit* is left to the caller, which knows what is
+        /// left of the turn.
+        /// </summary>
+        public void SetMaxBlobs(int maxBlobs)
+        {
+            if (container == null || maxBlobs == maxElements)
+                return;
+
+            Build(maxBlobs);
+        }
+
+        private void Build(int maxBlobs)
+        {
+            maxElements = maxBlobs;
 
             activeBlobs.Clear();
             previewInactiveBlobs.Clear();
@@ -39,8 +62,6 @@ namespace UI
                 container.Add(previewInactiveBlob);
                 container.Add(inactiveBlob);
             }
-
-            SetBlobAmount(maxElements);
         }
 
         /// <summary>

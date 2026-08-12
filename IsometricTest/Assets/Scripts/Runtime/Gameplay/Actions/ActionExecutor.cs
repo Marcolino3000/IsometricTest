@@ -198,7 +198,20 @@ namespace Runtime.Gameplay.Actions
         {
             this.unit = unit;
             this.tileSpawner = tileSpawner;
-            actionsPointsBar.Setup(unit.CurrentState.ActionPoints); //todo: add max action  points to blueprint
+            // The points a turn hands out, not what is left of one: that is how many blobs the row
+            // needs, and SetBlobAmount clamps to them.
+            actionsPointsBar.Setup(unit.MaxActionPoints);
+        }
+
+        /// <summary>
+        /// Rebuilds the bar for a maximum that has moved - an item raising the unit's action points
+        /// for good, or an undo taking that back. Here rather than on the unit because the bar is the
+        /// executor's, like every other thing it shows about the points.
+        /// </summary>
+        public void RefreshActionPointsBar()
+        {
+            actionsPointsBar.SetMaxBlobs(unit.MaxActionPoints);
+            actionsPointsBar.SetBlobAmount(unit.CurrentState.ActionPoints);
         }
 
         private int PlannedCost => plannedActions.Sum(action => action.Cost);

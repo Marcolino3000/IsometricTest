@@ -126,6 +126,11 @@ namespace Runtime.Gameplay.History
         public readonly int Health;
         public readonly int ActionPoints;
 
+        // What items have permanently added to the unit's stats. Recorded although the weapon in hand
+        // is not, and the difference is the point: a gain that cost action points and cannot be given
+        // back by choosing differently is world state, so it can only come back by being written down.
+        public readonly int[] StatBonuses;
+
         // The equipped weapon and the worn passive are deliberately not recorded: they are the
         // player's loadout rather than world state - free to swap, costing no turn and reported as no
         // action - and the item bar owns which of them is in use. Both are re-derived from the
@@ -139,11 +144,12 @@ namespace Runtime.Gameplay.History
             Position = unit.CurrentState.Position;
             Health = unit.CurrentState.Health;
             ActionPoints = unit.CurrentState.ActionPoints;
+            StatBonuses = unit.CurrentState.CaptureBonuses();
         }
 
         public void ApplyTo()
         {
-            Unit.RestoreSnapshot(Position, Health, ActionPoints);
+            Unit.RestoreSnapshot(Position, Health, ActionPoints, StatBonuses);
         }
     }
 

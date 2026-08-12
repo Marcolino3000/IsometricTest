@@ -110,7 +110,8 @@ namespace UI
             title.text = unit.Blueprint != null ? unit.Blueprint.name : unit.name;
             subtitle.text = state.Team.ToString();
             vitals.text = $"Health {state.Health}/{unit.MaxHealth}    " +
-                          $"AP {state.ActionPoints}/{unit.MaxActionPoints}";
+                          $"AP {state.ActionPoints}/{unit.MaxActionPoints}    " +
+                          $"Sight {unit.SightRange}";
 
             capabilities.Clear();
 
