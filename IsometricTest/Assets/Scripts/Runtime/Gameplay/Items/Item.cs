@@ -50,7 +50,43 @@ namespace Runtime.Gameplay.Items
         /// <summary>The slot category this item is offered in.</summary>
         public virtual SlotKind Slot => SlotKind.None;
 
-        public string Tooltip => string.IsNullOrWhiteSpace(Description) ? name : $"{name}\n{Description}";
+        /// <summary>
+        /// What the item bar shows on hover — the same three things the find popup puts on its card,
+        /// as lines of one string, since the bar labels with a plain text element. Built from
+        /// <see cref="Stats"/> like the card is, so a kind of item that carries different numbers says
+        /// so in both places at once.
+        /// </summary>
+        public string Tooltip
+        {
+            get
+            {
+                var lines = new List<string> { Title };
+
+                if (!string.IsNullOrWhiteSpace(Description))
+                    lines.Add(Description);
+
+                bool separated = false;
+
+                foreach (var stat in Stats)
+                {
+                    if (string.IsNullOrWhiteSpace(stat))
+                        continue;
+
+                    // The numbers are set off by a blank line so they read as a block rather than as
+                    // further sentences. Written before the first line that survives the filter, so an
+                    // item whose numbers all come out empty ends on its description rather than a gap.
+                    if (!separated)
+                    {
+                        lines.Add(string.Empty);
+                        separated = true;
+                    }
+
+                    lines.Add(stat);
+                }
+
+                return string.Join("\n", lines);
+            }
+        }
 
         /// <summary>What to call this item, falling back to the asset name while none is authored.</summary>
         public string Title => string.IsNullOrWhiteSpace(DisplayName) ? name : DisplayName;
