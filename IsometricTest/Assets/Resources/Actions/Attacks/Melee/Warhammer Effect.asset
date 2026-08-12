@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5398cd34aeb4ba493d9f85482eb049e, type: 3}
   m_Name: Warhammer Effect
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackEffect
-  Damage: 11
+  Damage: 10

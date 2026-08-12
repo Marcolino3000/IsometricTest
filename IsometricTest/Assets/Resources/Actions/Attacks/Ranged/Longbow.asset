@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
   m_Name: Longbow
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
+  DisplayName: Longbow
+  Description: Huuuuge range
+  Symbol: {fileID: -1365905632, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   Condition: {fileID: 11400000, guid: f94dde1d6a254e2283685f1a9443f34e, type: 2}
   Effect: {fileID: 11400000, guid: 54534073a1fa443096540ae41c69aae8, type: 2}
   Kind: 1
-  DisplayName: Longbow
-  Description: Reaches five tiles, further than anything else can answer.
-  Symbol: {fileID: -1365905632, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
   m_Name: Halberd
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
+  DisplayName: Halberd
+  Description: "A melee weapon that strikes from two tiles. Fancy!\u2728"
+  Symbol: {fileID: 500599679, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   Condition: {fileID: 11400000, guid: db93c5a89c4e4747867a388d59900134, type: 2}
   Effect: {fileID: 11400000, guid: 8d19a596770d4d929e1068582fb155e0, type: 2}
   Kind: 0
-  DisplayName: Halberd
-  Description: A melee weapon that strikes from two tiles - outside a swordsman's reach.
-  Symbol: {fileID: 500599679, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}

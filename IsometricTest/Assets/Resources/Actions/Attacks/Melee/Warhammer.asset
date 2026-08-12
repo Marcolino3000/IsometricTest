@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
   m_Name: Warhammer
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
+  DisplayName: Warhammer
+  Description: Hits hard
+  Symbol: {fileID: 820335677, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   Condition: {fileID: 11400000, guid: f9e642ea935d4994aa6fb9e68e1cdf01, type: 2}
   Effect: {fileID: 11400000, guid: a42ea4f2d11448f6a296db7442b0e619, type: 2}
   Kind: 0
-  DisplayName: Warhammer
-  Description: One enormous swing a turn, and a single point left to move with.
-  Symbol: {fileID: 820335677, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
