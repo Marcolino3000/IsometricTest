@@ -27,6 +27,7 @@ MonoBehaviour:
     Passable: 1
     ExtraMoveCost: 0
     HeightOffset: 0
+    Elevation: 0
     OverrideColor: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     OverrideSprite: {fileID: 0}
@@ -36,17 +37,20 @@ MonoBehaviour:
     Passable: 1
     ExtraMoveCost: 1
     HeightOffset: 0.1
+    Elevation: 1
     OverrideColor: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     OverrideSprite: {fileID: 0}
     Traits:
     - {fileID: 11400000, guid: 97a23ea35c5f4f92baa5c040cb1a6511, type: 2}
     - {fileID: 11400000, guid: 16db3596278448759e4f87a9c40fdbf3, type: 2}
+    - {fileID: 11400000, guid: cd4c3dea1db24523b78a46a66ca050ca, type: 2}
   MountainTerrain:
     Type: 2
     Passable: 0
     ExtraMoveCost: 0
     HeightOffset: 0.2
+    Elevation: 2
     OverrideColor: 0
     Color: {r: 1, g: 1, b: 1, a: 1}
     OverrideSprite: {fileID: -402664073, guid: 510239b11da99442c80051e1aa316c0e, type: 3}

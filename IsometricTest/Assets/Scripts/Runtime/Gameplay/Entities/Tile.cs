@@ -26,6 +26,13 @@ namespace Runtime.Gameplay.Entities
         public int ExtraMoveCost { get; private set; }
         public float HeightOffset { get; private set; }
 
+        /// <summary>
+        /// How high this tile stands for the sight rules - see <see cref="Global.SightRules.BlocksSight"/>.
+        /// Not the visual <see cref="HeightOffset"/>: what a tile looks like and what can be seen
+        /// over it are authored apart.
+        /// </summary>
+        public int Elevation { get; private set; }
+
         // Traits this tile's terrain grants to the unit standing on it (e.g. hill defence/range).
         public IReadOnlyList<TerrainTrait> Traits { get; private set; } = Array.Empty<TerrainTrait>();
 
@@ -77,6 +84,7 @@ namespace Runtime.Gameplay.Entities
             IsPassable = profile.Passable;
             ExtraMoveCost = profile.ExtraMoveCost;
             HeightOffset = profile.HeightOffset;
+            Elevation = profile.Elevation;
             Traits = profile.Traits ?? (IReadOnlyList<TerrainTrait>)Array.Empty<TerrainTrait>();
 
             transform.position += Vector3.up * profile.HeightOffset;

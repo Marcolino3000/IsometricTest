@@ -25,6 +25,13 @@ namespace Runtime.Gameplay.Traits
         public virtual int ModifyAttackRange(int range, RangeContext context) => range;
 
         /// <summary>
+        /// How far the carrier sees from <see cref="SightContext.Tile"/>. Folded by
+        /// <see cref="Global.SightRules"/>, which never lets it fall below zero. Only the reach of
+        /// the eye - what higher ground hides from it is decided by the tiles in between.
+        /// </summary>
+        public virtual int ModifySightRange(int range, SightContext context) => range;
+
+        /// <summary>
         /// Whether the carrier strikes back after being hit, given what the match rules allow.
         /// Folded by <see cref="Global.CombatRules.CanRetaliate"/> over the traits of whoever would
         /// answer, so gear can grant a counter-strike the rules withhold or take one away. The

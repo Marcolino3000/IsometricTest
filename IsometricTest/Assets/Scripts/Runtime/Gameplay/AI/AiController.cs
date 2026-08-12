@@ -291,8 +291,9 @@ namespace Runtime.Gameplay.AI
 
         private bool EngageEnemy(Unit unit, Unit enemy)
         {
-            // Can we reach attack range and strike this turn? PlanAttackAction tests AP + range and
-            // stops just inside range (GetPathWithinRange), so this is the cheapest approach-and-hit.
+            // Can we reach a shot and take it this turn? PlanAttackAction tests AP and asks
+            // CombatRules.CanAttackFrom where to stop, so this is the cheapest approach-and-hit -
+            // and a blocked shot simply falls through to closing the distance below.
             if (unit.ActionExecutor.PlanAttackAction(new ExecuteArgs(null, enemy)).IsValid)
             {
                 unit.ActionExecutor.ExecuteAttackAction(new ExecuteArgs(null, enemy));
@@ -365,14 +366,12 @@ namespace Runtime.Gameplay.AI
 
         private bool Explore(Unit unit)
         {
-            var sightRange = unit.SightRange;
-
             Tile best = null;
             var bestReveal = 0;
 
             foreach (var tile in ReachableTiles(unit))
             {
-                var reveal = CountNewlyRevealed(tile, sightRange);
+                var reveal = CountNewlyRevealed(unit, tile);
                 if (reveal > bestReveal)
                 {
                     bestReveal = reveal;
@@ -391,10 +390,15 @@ namespace Runtime.Gameplay.AI
             return frontier != null && MoveToward(unit, frontier);
         }
 
-        private int CountNewlyRevealed(Tile from, int sightRange)
+        /// <summary>
+        /// How much unseen ground <paramref name="unit"/> would uncover by standing on
+        /// <paramref name="from"/> - asked of the same query the fog is drawn from, so a hill counts
+        /// for both the further it sees and the further it sees over.
+        /// </summary>
+        private int CountNewlyRevealed(Unit unit, Tile from)
         {
             var count = 0;
-            foreach (var seen in tileSpawner.GetTilesInSightRange(from.Position, sightRange))
+            foreach (var seen in tileSpawner.GetVisibleTiles(unit, from))
             {
                 if (!fogOfWar.IsExplored(aiTeam, seen.Position))
                     count++;

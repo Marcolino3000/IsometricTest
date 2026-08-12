@@ -42,6 +42,25 @@ namespace Runtime.Gameplay.Traits
         }
     }
 
+    /// <summary>
+    /// A unit looking out from a tile - what <see cref="Trait.ModifySightRange"/> is handed. The
+    /// tile is passed rather than read off the unit for the same reason <see cref="RangeContext"/>
+    /// carries one: the AI asks what it would see from a tile it is only considering stepping onto.
+    /// </summary>
+    public readonly struct SightContext
+    {
+        public readonly Unit Unit;
+        public readonly Tile Tile;
+        public readonly int BaseRange;
+
+        public SightContext(Unit unit, Tile tile, int baseRange)
+        {
+            Unit = unit;
+            Tile = tile;
+            BaseRange = baseRange;
+        }
+    }
+
     public readonly struct RangeContext
     {
         public readonly Unit Unit;

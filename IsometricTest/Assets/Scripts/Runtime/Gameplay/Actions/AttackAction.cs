@@ -12,11 +12,11 @@ namespace Actions
             if(Condition.Cost > Context.ActionPoints)
                 return false;
 
-            // Effective range includes terrain bonuses (e.g. a ranged unit on a hill reaches further).
-            if(CombatRules.GetEffectiveAttackRange(Context.Unit) < Context.Distance)
-                return false;
-
-            return true;
+            // Asked of the tile the strike is made from - the end of the approach path for a planned
+            // attack, where the unit stands for an immediate one - since both the effective range
+            // (terrain bonuses) and the line of fire are properties of where it shoots from.
+            return CombatRules.CanAttackFrom(Context.Unit, Context.FromTile ?? Context.Unit.CurrentState.Position,
+                Context.TargetTile);
         }
 
         public override void ExecuteEffects()

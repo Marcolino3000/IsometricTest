@@ -10,9 +10,10 @@ namespace Runtime.Gameplay.Fog
 {
     /// <summary>
     /// Owns per-team visibility. On every turn change (and whenever a unit moves) it recomputes
-    /// which tiles the active team can see — the union of its units' sight ranges — and pushes that
+    /// which tiles the active team can see — the union of its units' sight — and pushes that
     /// down to the tiles (lit / remembered / hidden) and to enemy units (shown / hidden).
-    /// Radius-only: terrain does not block line of sight.
+    /// How far each unit sees and what the ground hides from it is <see cref="Global.SightRules"/>'
+    /// business, asked through <c>TileSpawner.GetVisibleTiles</c>; the fog only collects the answers.
     ///
     /// Two teams are in play here and the split is load-bearing: the <b>active</b> team is the one whose
     /// sight grows the explored map and answers <see cref="IsVisible"/> for the AI, while the
@@ -197,7 +198,7 @@ namespace Runtime.Gameplay.Fog
                 if (tile == null)
                     continue;
 
-                foreach (var seen in _tileSpawner.GetTilesInSightRange(tile.Position, unit.SightRange))
+                foreach (var seen in _tileSpawner.GetVisibleTiles(unit, tile))
                     visible.Add(seen.Position);
             }
 

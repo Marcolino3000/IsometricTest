@@ -98,14 +98,18 @@ namespace Runtime.Core.Spawning
         /// <paramref name="range"/> (Manhattan) of it, dropping the remaining steps. Lets ranged
         /// attackers close the distance only enough to reach instead of walking right up to it.
         /// </summary>
-        public List<Tile> FindPathWithinRange(Tile start, Tile target, int range, bool ignoreOccupied = false)
+        /// <summary>
+        /// The walk up to <paramref name="target"/>, cut at the first tile <paramref name="attacker"/>
+        /// could actually strike from. "Could strike" is <see cref="CombatRules.CanAttackFrom"/>, the
+        /// same question the attack condition asks, so the path never ends somewhere the strike is
+        /// then refused - which is what makes a unit walk on around a mountain rather than stop
+        /// behind it with the target in range and no line to it.
+        /// </summary>
+        public List<Tile> FindAttackApproachPath(Unit attacker, Tile target, bool ignoreOccupied = false)
         {
+            var start = attacker != null ? attacker.CurrentState.Position : null;
             var path = FindPath(start, target, ignoreOccupied, ignoreGoalOccupied: true, excludeGoal: true);
-            return TruncateWithinRange(path, target, range);
-        }
 
-        private static List<Tile> TruncateWithinRange(List<Tile> path, Tile target, int range)
-        {
             var result = new List<Tile>();
 
             if (path == null)
@@ -115,7 +119,7 @@ namespace Runtime.Core.Spawning
             {
                 result.Add(tile);
 
-                if (Heuristic(tile.Position, target.Position) <= range)
+                if (CombatRules.CanAttackFrom(attacker, tile, target))
                     break;
             }
 

@@ -16,6 +16,11 @@ namespace Runtime.Core.Spawning
         [SerializeField] private Selector selector;
         
         private readonly List<Tile> Tiles = new();
+
+        // The same tiles keyed by grid position: sight walks a line tile by tile, and a search
+        // through the whole board per step of every line adds up over a fog pass.
+        private readonly Dictionary<Vector2Int, Tile> _tilesByPosition = new();
+
         private Pathfinder _pathfinder;
 
         public IReadOnlyList<Tile> AllTiles => Tiles;
@@ -32,31 +37,27 @@ namespace Runtime.Core.Spawning
             return _pathfinder.FindPath(start, goal, ignoreOccupied, ignoreGoalOccupied, excludeGoal);
         }
 
-        public List<Tile> GetPathWithinRange(Tile start, Tile target, int range, bool ignoreOccupied = false)
-        {
-            return _pathfinder.FindPathWithinRange(start, target, range, ignoreOccupied);
-        }
-
         /// <summary>
-        /// The path a unit would walk to bring <paramref name="targetTile"/> within its effective
-        /// attack range (terrain bonuses included, so a unit on a hill stops further out). Starts at
-        /// the unit's own tile and contains just that tile when it can already attack from where it
-        /// stands. Shared by the attack planner and the attack preview so they always agree.
+        /// The path a unit would walk until it can strike <paramref name="targetTile"/> - within its
+        /// effective attack range (terrain bonuses included, so a unit on a hill stops further out)
+        /// and with a clear line to it. Starts at the unit's own tile and contains just that tile when
+        /// it can already attack from where it stands. Shared by the attack planner and the attack
+        /// preview so they always agree.
         /// </summary>
         public List<Tile> GetAttackApproachPath(Unit attacker, Tile targetTile)
         {
-            var range = CombatRules.GetEffectiveAttackRange(attacker);
-            return GetPathWithinRange(attacker.CurrentState.Position, targetTile, range);
+            return _pathfinder.FindAttackApproachPath(attacker, targetTile);
         }
       
         public Tile GetTileAtPosition(Vector2Int position)
         {
-            return Tiles.Find(t => t.Position == position);
+            return _tilesByPosition.TryGetValue(position, out var tile) ? tile : null;
         }
 
         /// <summary>
         /// All existing tiles within a circular (Euclidean) radius of <paramref name="center"/>,
-        /// including the centre tile. Used for fog-of-war sight; ignores terrain and occupancy.
+        /// including the centre tile. The bare circle - terrain, occupancy and line of sight are
+        /// <see cref="GetVisibleTiles"/>'s business.
         /// </summary>
         public IEnumerable<Tile> GetTilesInSightRange(Vector2Int center, int range)
         {
@@ -68,6 +69,24 @@ namespace Runtime.Core.Spawning
 
                 var tile = GetTileAtPosition(center + new Vector2Int(dx, dy));
                 if (tile != null)
+                    yield return tile;
+            }
+        }
+
+        /// <summary>
+        /// What <paramref name="viewer"/> actually sees from <paramref name="fromTile"/>: the circle
+        /// its effective sight reaches, minus whatever higher ground hides. Both halves come from
+        /// <see cref="SightRules"/> - the fog and the AI ask this one question, so ground that widens
+        /// the fog widens what the AI expects to uncover by exactly as much.
+        /// </summary>
+        public IEnumerable<Tile> GetVisibleTiles(Unit viewer, Tile fromTile)
+        {
+            if (viewer == null || fromTile == null)
+                yield break;
+
+            foreach (var tile in GetTilesInSightRange(fromTile.Position, SightRules.GetSightRange(viewer, fromTile)))
+            {
+                if (SightRules.HasClearLine(fromTile, tile))
                     yield return tile;
             }
         }
@@ -152,9 +171,9 @@ namespace Runtime.Core.Spawning
             if (start == null)
                 return new List<Tile>();
 
-            // Collected as positions rather than tiles so the same tile reached from two directions
-            // costs one hash rather than a search through every tile on the board.
-            var threatened = new HashSet<Vector2Int>();
+            // Collected as tiles rather than positions: the line of fire has to be walked over real
+            // ground anyway, and the same tile threatened from two directions costs one hash.
+            var threatened = new HashSet<Tile>();
 
             foreach (var tile in Prepend(start, standingOn))
             {
@@ -164,10 +183,17 @@ namespace Runtime.Core.Spawning
                 // condition tests against, and a diamond is what the player will actually be hit in.
                 for (int dx = -range; dx <= range; dx++)
                 for (int dy = -range + Mathf.Abs(dx); dy <= range - Mathf.Abs(dx); dy++)
-                    threatened.Add(tile.Position + new Vector2Int(dx, dy));
+                {
+                    var reached = GetTileAtPosition(tile.Position + new Vector2Int(dx, dy));
+
+                    // Range is already settled by the diamond; what is left is whether the shot has
+                    // anywhere to travel, so the tint never promises a hit through a mountain.
+                    if (reached != null && !threatened.Contains(reached) && SightRules.HasClearLine(tile, reached))
+                        threatened.Add(reached);
+                }
             }
 
-            return Tiles.FindAll(tile => threatened.Contains(tile.Position));
+            return threatened;
         }
 
         private static IEnumerable<Tile> Prepend(Tile first, IEnumerable<Tile> rest)
@@ -258,6 +284,7 @@ namespace Runtime.Core.Spawning
             }
 
             Tiles.Clear();
+            _tilesByPosition.Clear();
         }
 
         private void SpawnTile(int xIndex, int yIndex)
@@ -272,6 +299,7 @@ namespace Runtime.Core.Spawning
             tile.Position = new Vector2Int(xIndex, yIndex);
             tile.ApplyTerrain(GetTerrainProfile(tile.Position));
             Tiles.Add(tile);
+            _tilesByPosition[tile.Position] = tile;
 
             selector.RegisterClickable(tile.GetComponent<Clickable>());
         }

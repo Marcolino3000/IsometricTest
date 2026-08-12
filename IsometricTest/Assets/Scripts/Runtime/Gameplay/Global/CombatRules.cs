@@ -133,7 +133,37 @@ namespace Runtime.Gameplay.Global
                 return false;
             }
 
+            // Reach is not enough - the counter-strike still has to have somewhere to travel. Asked
+            // after the distance so a shot that is both too far and blocked reports the shorter answer.
+            if (!SightRules.HasClearLine(defender.CurrentState.Position, attacker.CurrentState.Position))
+            {
+                CombatLog.Note("no retaliation (no line of fire)");
+                return false;
+            }
+
             return true;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="attacker"/> could strike <paramref name="targetTile"/> standing on
+        /// <paramref name="fromTile"/>: close enough for its effective range, and with a clear line to
+        /// it. One query rather than two tests spread about, because four things ask it and have to
+        /// agree - the attack condition, the path that walks up to shoot, the threat overlay and the
+        /// AI choosing a target.
+        ///
+        /// The line is the same one sight travels (<see cref="SightRules.HasClearLine"/>), so a shot
+        /// goes exactly as far as the eye: an archer on a hill shoots over the hills and no further
+        /// than the mountains. Melee needs no exception - adjacent tiles have nothing in between.
+        /// </summary>
+        public static bool CanAttackFrom(Unit attacker, Tile fromTile, Tile targetTile)
+        {
+            if (attacker == null || fromTile == null || targetTile == null)
+                return false;
+
+            if (fromTile.DistanceTo(targetTile) > GetEffectiveAttackRange(attacker, fromTile))
+                return false;
+
+            return SightRules.HasClearLine(fromTile, targetTile);
         }
 
         public static int GetEffectiveAttackRange(Unit unit)

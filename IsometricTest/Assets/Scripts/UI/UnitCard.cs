@@ -111,7 +111,9 @@ namespace UI
             subtitle.text = state.Team.ToString();
             vitals.text = $"Health {state.Health}/{unit.MaxHealth}    " +
                           $"AP {state.ActionPoints}/{unit.MaxActionPoints}    " +
-                          $"Sight {unit.SightRange}";
+                          // What it sees from where it stands, ground included - the number the fog
+                          // is actually drawn from, not the one on the blueprint.
+                          $"Sight {SightRules.GetSightRange(unit)}";
 
             capabilities.Clear();
 

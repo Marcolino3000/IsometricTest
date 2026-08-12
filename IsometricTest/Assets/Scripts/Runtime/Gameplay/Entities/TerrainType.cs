@@ -31,6 +31,12 @@ namespace Runtime.Gameplay.Entities
         [Tooltip("How far the tile is raised visually, in world units.")]
         public float HeightOffset;
 
+        [Tooltip("How high this terrain stands, as a rule rather than a look: sight is stopped by " +
+                 "terrain standing higher than the viewer, so a unit on flat ground sees nothing " +
+                 "past a hill while one standing on a hill does. Kept separate from Height Offset " +
+                 "so raising a tile visually never changes what can be seen over it.")]
+        public int Elevation;
+
         [Tooltip("When enabled, the tile sprite is tinted with Color instead of keeping its default look.")]
         public bool OverrideColor;
 

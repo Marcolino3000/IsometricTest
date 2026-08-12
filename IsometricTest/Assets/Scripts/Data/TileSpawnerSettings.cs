@@ -32,8 +32,8 @@ namespace Data
 
         [Header("Terrain Settings")]
         public TerrainProfile FlatTerrain = new() { Type = TerrainType.Flat };
-        public TerrainProfile HillTerrain = new() { Type = TerrainType.Hills, ExtraMoveCost = 1, HeightOffset = 0.1f };
-        public TerrainProfile MountainTerrain = new() { Type = TerrainType.Mountain, Passable = false, HeightOffset = 0.2f, OverrideColor = true, Color = Color.white };
+        public TerrainProfile HillTerrain = new() { Type = TerrainType.Hills, ExtraMoveCost = 1, HeightOffset = 0.1f, Elevation = 1 };
+        public TerrainProfile MountainTerrain = new() { Type = TerrainType.Mountain, Passable = false, HeightOffset = 0.2f, Elevation = 2, OverrideColor = true, Color = Color.white };
 
         [Tooltip("When enabled, hills and mountains are scattered on random tiles (outside spawn zones) instead of using the fixed position lists below.")]
         public bool RandomTerrainPlacement;

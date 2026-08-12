@@ -40,9 +40,13 @@ namespace Runtime.Gameplay.Entities
         public int MaxActionPoints => blueprint.DefaultState.ActionPoints + currentState.GetBonus(UnitStat.ActionPoints);
 
         /// <summary>
-        /// How far the unit sees - what the fog is drawn from and what the AI weighs a step by. The
-        /// third of the queries that fold a permanent bonus into a base; unlike the other two the base
-        /// is on the state rather than the blueprint, which is why nobody asks the state directly.
+        /// How far the unit sees before the ground it stands on has its say. The third of the queries
+        /// that fold a permanent bonus into a base; unlike the other two the base is on the state
+        /// rather than the blueprint, which is why nobody asks the state directly.
+        ///
+        /// The base of a base: what the fog is drawn from and what the AI weighs a step by is
+        /// <see cref="Global.SightRules.GetSightRange(Unit)"/>, which folds the terrain's traits into
+        /// this the way <c>CombatRules.GetEffectiveAttackRange</c> folds them into a weapon's range.
         /// </summary>
         public int SightRange => currentState.SightRange + currentState.GetBonus(UnitStat.SightRange);
 

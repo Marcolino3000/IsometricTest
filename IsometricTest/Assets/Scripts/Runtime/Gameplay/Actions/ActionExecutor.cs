@@ -52,8 +52,9 @@ namespace Runtime.Gameplay.Actions
 
             var targetTile = executeArgs.TargetUnit.CurrentState.Position;
 
-            // Only move close enough that the target lands within attack range,
-            // so ranged units stop short instead of walking right up to it.
+            // Only move close enough that the target lands within attack range and in plain sight,
+            // so ranged units stop short instead of walking right up to it - and walk on around a
+            // mountain that stands in the way instead of stopping behind it.
             var pathIntoRange = tileSpawner.GetAttackApproachPath(unit, targetTile);
 
             var remainingAP = PlanMoveActionsFromPath(pathIntoRange);
@@ -66,7 +67,7 @@ namespace Runtime.Gameplay.Actions
                 TargetUnit = executeArgs.TargetUnit,
                 ActionPoints = remainingAP,
                 TargetTile = targetTile,
-                Distance = tileSpawner.GetDistanceBetweenTiles(attackFromTile, targetTile)
+                FromTile = attackFromTile
             };
 
             plannedActions.Add(unit.CurrentState.AttackAction.CreateAction(context));
@@ -109,8 +110,6 @@ namespace Runtime.Gameplay.Actions
                     ActionPoints = availableActionPoints,
                     TargetTile = tile
                 };
-
-                // Debug.Log("Action points: " + context.ActionPoints + " Distance: " + context.Distance + " Target tile: " + context.TargetTile);
 
                 var action = unit.CurrentState.MoveAction.CreateAction(context);
                 plannedActions.Add(action);

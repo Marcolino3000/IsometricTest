@@ -142,6 +142,8 @@ namespace Runtime.Core
         private void SetupReferences()
         {
             CombatRules.Setup(gameRules);
+            // Before anything asks what can be seen or shot at: the line is walked over the tiles.
+            SightRules.Setup(tileSpawner);
             CombatLog.Setup(gameRules);
             gameStateManager.Setup();
             // Early: the selector and the AI are both told to stand down by it, so it has to exist
