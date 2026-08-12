@@ -41,6 +41,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3e8bf0c3605d42f0a9ad2ab986d68723, type: 2}
   MeleeWeaponCount: 3
   RangedWeaponCount: 3
-  ActiveItemCount: 12
-  PassiveItemCount: 6
+  ActiveItemCount: 8
+  PassiveItemCount: 4
   OrderInLayer: 1

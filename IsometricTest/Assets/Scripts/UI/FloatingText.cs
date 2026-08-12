@@ -39,9 +39,16 @@ namespace UI
         private Vector3 basePosition;
         private float age;
 
-        public static void ShowDamage(int healthDelta, Vector3 unitPosition, PanelSettings panelSettings)
+        /// <summary>
+        /// The damage number, and beside it whatever the strike had to say for itself - "Crit!" and
+        /// anything else a trait added to <see cref="Runtime.Gameplay.Global.StrikeNotes"/>. One
+        /// popup rather than two, so the word cannot drift away from the number it explains.
+        /// </summary>
+        public static void ShowDamage(int healthDelta, Vector3 unitPosition, PanelSettings panelSettings,
+            string note = null)
         {
-            Show(healthDelta.ToString(), Settings.DamageColor, unitPosition + Settings.SpawnOffset, panelSettings);
+            Show(healthDelta.ToString(), Settings.DamageColor, unitPosition + Settings.SpawnOffset, panelSettings,
+                note: note);
         }
 
         /// <summary>Health going back up, e.g. from an active item. Signed, so it reads as a gain.</summary>
@@ -64,9 +71,10 @@ namespace UI
         /// <summary>
         /// Puts <paramref name="text"/> over a world position. <paramref name="fontSize"/> defaults to
         /// the settings' - a whole sentence needs to be smaller than a damage number to fit.
+        /// <paramref name="note"/> is a smaller word set beside it, in its own colour.
         /// </summary>
         public static void Show(string text, Color color, Vector3 worldPosition, PanelSettings panelSettings,
-            int fontSize = 0)
+            int fontSize = 0, string note = null)
         {
             var popup = new GameObject("FloatingText");
             popup.transform.position = worldPosition;
@@ -78,17 +86,17 @@ namespace UI
 
             var floatingText = popup.AddComponent<FloatingText>();
             floatingText.basePosition = worldPosition;
-            floatingText.BuildLabel(document, text, color, fontSize > 0 ? fontSize : Settings.FontSize);
+            floatingText.BuildLabel(document, text, color, fontSize > 0 ? fontSize : Settings.FontSize, note);
         }
 
-        private void BuildLabel(UIDocument document, string text, Color color, int fontSize)
+        private void BuildLabel(UIDocument document, string text, Color color, int fontSize, string note)
         {
             root = document.rootVisualElement;
             root.pickingMode = PickingMode.Ignore;
             // Start invisible so the label doesn't flash at full opacity before the first Update.
             root.style.opacity = 0f;
 
-            var label = new Label(text) { pickingMode = PickingMode.Ignore };
+            var label = new Label(Compose(text, note, fontSize)) { pickingMode = PickingMode.Ignore };
             label.style.fontSize = fontSize;
             label.style.color = color;
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
@@ -96,6 +104,24 @@ namespace UI
             label.style.unityTextOutlineWidth = Settings.OutlineWidth;
             label.style.unityTextOutlineColor = Settings.OutlineColor;
             root.Add(label);
+        }
+
+        /// <summary>
+        /// The number, and after it what the strike had to say for itself, marked up in its own size
+        /// and colour. One label rather than two elements in a row: the popup builds its document in
+        /// code, so its root is sized by its content and two elements in it end up drawn over each
+        /// other - and one line of text puts the note on the number's baseline for nothing.
+        /// </summary>
+        private static string Compose(string text, string note, int fontSize)
+        {
+            if (string.IsNullOrEmpty(note))
+                return text;
+
+            // Relative, so the note keeps its proportion whatever size the text it stands beside is.
+            var scale = Mathf.RoundToInt(100f * Settings.StrikeNoteFontSize / Mathf.Max(1, fontSize));
+            var colour = ColorUtility.ToHtmlStringRGB(Settings.StrikeNoteColor);
+
+            return $"{text} <size={scale}%><color=#{colour}>{note}</color></size>";
         }
 
         // Timing and movement are read from the settings every frame, so tweaking the

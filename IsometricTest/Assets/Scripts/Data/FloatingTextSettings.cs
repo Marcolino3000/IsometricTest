@@ -40,5 +40,11 @@ namespace Data
 
         [Tooltip("Font size of those popups. Smaller than the numbers, since they are whole sentences.")]
         public int NoticeFontSize = 55;
+
+        [Tooltip("Colour of the word a strike shows beside its damage number, e.g. \"Crit!\".")]
+        public Color StrikeNoteColor = new(1f, 0.79f, 0.24f);
+
+        [Tooltip("Font size of that word. Smaller than the number it stands beside, which is what is being explained.")]
+        public int StrikeNoteFontSize = 60;
     }
 }

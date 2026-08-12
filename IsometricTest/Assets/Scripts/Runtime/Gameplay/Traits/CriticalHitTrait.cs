@@ -12,6 +12,9 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Damage multiplier applied on a critical hit.")]
         [Min(1f)] public float CritMultiplier = 2f;
 
+        [Tooltip("Shown beside the damage number when the crit lands. Leave empty to show nothing.")]
+        public string Note = "Crit!";
+
         public override string Summary => $"{CritChance:P0} chance of x{CritMultiplier:0.##} damage";
 
         public override int ModifyOutgoingDamage(int damage, CombatContext context)
@@ -31,6 +34,9 @@ namespace Runtime.Gameplay.Traits
 
             if (CombatLog.Details)
                 CombatLog.Detail($"crit! ({roll:0.00} vs {CritChance:0.00}, x{CritMultiplier})");
+
+            // Said to the player as well as to the log: the number alone does not explain itself.
+            StrikeNotes.Add(Note);
 
             return Mathf.RoundToInt(damage * CritMultiplier);
         }

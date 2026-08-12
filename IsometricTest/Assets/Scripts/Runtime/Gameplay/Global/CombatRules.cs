@@ -53,6 +53,9 @@ namespace Runtime.Gameplay.Global
             // trait did to the number. It does nothing at all while logging is off.
             CombatLog.BeginStrike(context, damage);
 
+            // The player-facing counterpart: whatever a trait wants shown beside the damage number.
+            StrikeNotes.Begin();
+
             foreach (var trait in TraitsAffecting(attacker))
             {
                 var modified = trait.ModifyOutgoingDamage(damage, context);

@@ -67,6 +67,11 @@ namespace Runtime.Gameplay.Entities
 
         private int lastHealth;
 
+        // What the popup for the next damage taken says beside the number, e.g. "Crit!". Handed over
+        // by whoever resolved the strike rather than looked up here, since the popup is raised by the
+        // health setter and that knows only how much changed.
+        private string damageNote;
+
         // Set while undo/redo puts recorded values back, so replaying a hit does not replay its
         // damage popup.
         private bool restoringSnapshot;
@@ -129,6 +134,17 @@ namespace Runtime.Gameplay.Entities
         }
 
         /// <summary>
+        /// What the popup for the damage this unit is about to take says beside the number - "Crit!"
+        /// and whatever else a trait had to say about the strike (see
+        /// <see cref="Global.StrikeNotes"/>). Said just before the health is reduced, and spent on
+        /// that one popup: a hit that has nothing to say leaves the previous hit's word behind.
+        /// </summary>
+        public void NoteNextDamage(string note)
+        {
+            damageNote = note;
+        }
+
+        /// <summary>
         /// Raises one of the unit's stats for the rest of the match - what an item that improves the
         /// character rather than spending itself on the moment does. The number goes on
         /// <see cref="UnitState"/>, so it travels with the history snapshot and an undo takes it back
@@ -184,6 +200,11 @@ namespace Runtime.Gameplay.Entities
             int delta = amount - lastHealth;
             lastHealth = amount;
 
+            // Taken whatever happens next, so a strike that ends up dealing nothing - or one taken
+            // back by an undo - cannot leave its word hanging over the following hit.
+            var note = damageNote;
+            damageNote = null;
+
             if (delta == 0 || restoringSnapshot)
                 return;
 
@@ -191,7 +212,7 @@ namespace Runtime.Gameplay.Entities
             var panelSettings = healthBar.GetComponent<UIDocument>().panelSettings;
 
             if (delta < 0)
-                FloatingText.ShowDamage(delta, transform.position, panelSettings);
+                FloatingText.ShowDamage(delta, transform.position, panelSettings, note);
             else
                 FloatingText.ShowHeal(delta, transform.position, panelSettings);
         }

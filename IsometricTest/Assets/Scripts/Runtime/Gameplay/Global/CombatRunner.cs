@@ -41,6 +41,10 @@ namespace Runtime.Gameplay.Global
             // terrain damage bonuses) are all folded in consistently.
             var damage = CombatRules.CalculateDamage(attacker, target, isRetaliation);
 
+            // Whatever a trait had to say about this strike goes to the unit before the health does:
+            // the popup is raised by the health change below, which knows only how much was lost.
+            target.NoteNextDamage(StrikeNotes.Collect());
+
             var healthBefore = target.CurrentState.Health;
             target.CurrentState.Health -= damage;
 

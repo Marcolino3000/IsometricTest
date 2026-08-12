@@ -19,8 +19,9 @@ MonoBehaviour:
     SightRange: 3
     MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
     AttackAction: {fileID: 11400000, guid: db0aa245c745641109f55f8c5816167a, type: 2}
-    Traits: []
-    health: 20
+    Traits:
+    - {fileID: 11400000, guid: e39ef3961e384f18a5424164e0b6b823, type: 2}
+    health: 30
     actionPoints: 5
     hasActionsLeft: 0
     statBonuses: 

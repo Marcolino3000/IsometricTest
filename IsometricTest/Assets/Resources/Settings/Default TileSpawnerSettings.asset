@@ -56,7 +56,7 @@ MonoBehaviour:
     OverrideSprite: {fileID: -402664073, guid: 510239b11da99442c80051e1aa316c0e, type: 3}
     Traits: []
   RandomTerrainPlacement: 1
-  RandomHillCount: 100
-  RandomMountainCount: 40
+  RandomHillCount: 110
+  RandomMountainCount: 50
   HillPositions: []
   MountainPositions: []
