@@ -40,6 +40,13 @@
     border-bottom-right-radius: 6px;
 }
 
+/* First slot of a category. The row is grouped by what its slots are for, so the three actives read
+   as one thing rather than as three of nine, and the gap says where one category ends. Declared
+   after .slot so it wins on the margin; picker entries never get it. */
+.slot--group-start {
+    margin-left: 22px;
+}
+
 .slot:hover {
     border-top-color: rgba(255, 255, 255, 0.65);
     border-right-color: rgba(255, 255, 255, 0.65);
@@ -125,6 +132,26 @@
     background-position: center;
 }
 
+/* The category's colour, worn by every slot of it whether or not it holds anything - which is the
+   point of it: the row has to say what each slot is for before anything has been found to put in it.
+   Along the bottom edge rather than in the frame, where the yellow of an item in use already lives.
+   Left uncoloured it draws nothing, which is what a picker entry does with it. */
+.slot__accent {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 5px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+/* The category's symbol standing in for an item the slot does not hold. Faded, so it reads as a
+   place for something rather than as something. */
+.slot__icon--ghost {
+    opacity: 0.22;
+}
+
 /* Anchored to the top center of the hovered slot; the translate lifts it above that point
    and centers it, so the code never has to measure the tooltip. */
 .slot-tooltip {
@@ -163,7 +190,7 @@
 
 .slot__hotkey {
     position: absolute;
-    bottom: 2px;
+    bottom: 7px;
     right: 6px;
     font-size: 18px;
     color: rgba(255, 255, 255, 0.7);

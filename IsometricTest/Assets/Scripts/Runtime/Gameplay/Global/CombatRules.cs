@@ -203,15 +203,28 @@ namespace Runtime.Gameplay.Global
 
         /// <summary>
         /// Every trait that has a say about <paramref name="state"/> standing on <paramref name="tile"/>:
-        /// the ones it carries, then the ones the ground grants. Public because it is not a combat
-        /// question - <see cref="MovementRules"/> asks it too - and both have to fold the same set or
-        /// a trait would apply to one and not the other.
+        /// the ones it carries, the ones the weapon in its hand grants, then the ones the ground
+        /// grants. Public because it is not a combat question - <see cref="MovementRules"/> asks it
+        /// too - and all of them have to fold the same set or a trait would apply to one and not the
+        /// other.
+        ///
+        /// A weapon's traits are read off <see cref="UnitState.AttackAction"/> rather than copied
+        /// onto the trait list when it is drawn, which is what keeps them free of bookkeeping: the
+        /// weapon in the other hand is not the attack, so its traits are simply never asked; a swap
+        /// carries them without anything being put on or taken off; every unit gets them, not only
+        /// the one the player is equipping through <c>ItemManager</c>; and since nothing is stored,
+        /// an undo puts them back with the weapon it puts back.
         /// </summary>
         public static IEnumerable<Trait> TraitsAffecting(UnitState state, Tile tile)
         {
             foreach (var trait in state.Traits)
                 if (trait != null)
                     yield return trait;
+
+            if (state.AttackAction != null)
+                foreach (var trait in state.AttackAction.Traits)
+                    if (trait != null)
+                        yield return trait;
 
             if (tile == null)
             {

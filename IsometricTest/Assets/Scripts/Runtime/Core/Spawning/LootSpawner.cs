@@ -36,7 +36,7 @@ namespace Runtime.Core.Spawning
         [SerializeField] private LootSpawnerSettings settings;
 
         [Header("Debug")]
-        // Every box made for this match, whatever state it is in - lying about, taken, or waiting for
+        // Every box made for this match, whatever state it is in - lying about, taken, or waiting for I've gone
         // a unit to fall. One list rather than one per state: which of the three a box is in is the
         // box's own (see LootboxState), the way Unit.IsAlive rather than list membership is what says
         // a unit is in play.

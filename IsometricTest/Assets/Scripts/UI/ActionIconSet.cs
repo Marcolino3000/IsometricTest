@@ -56,35 +56,9 @@ namespace UI
 
         private Sprite Cut(ActionKind kind)
         {
-            if (sheet == null || cellSize <= 0)
-                return null;
-
             foreach (var entry in icons)
-            {
-                if (entry.Kind != kind)
-                    continue;
-
-                // Cells are counted from the top left while a texture is measured from the bottom
-                // left, so the row is mirrored - the sheet is read the way it is looked at.
-                var rect = new Rect(
-                    (entry.Cell.x - 1) * cellSize,
-                    sheet.height - entry.Cell.y * cellSize,
-                    cellSize,
-                    cellSize);
-
-                if (rect.xMin < 0 || rect.yMin < 0 || rect.xMax > sheet.width || rect.yMax > sheet.height)
-                {
-                    Debug.LogWarning($"{name}: cell {entry.Cell} for {kind} lies outside {sheet.name}.", this);
-                    return null;
-                }
-
-                var sprite = Sprite.Create(sheet, rect, new Vector2(0.5f, 0.5f), cellSize);
-                sprite.name = $"{sheet.name} {entry.Cell.x},{entry.Cell.y}";
-                // Made at runtime, so it must never be written into the asset that made it.
-                sprite.hideFlags = HideFlags.HideAndDontSave;
-
-                return sprite;
-            }
+                if (entry.Kind == kind)
+                    return IconSheet.Cut(sheet, cellSize, entry.Cell, this, kind.ToString());
 
             return null;
         }
@@ -94,15 +68,7 @@ namespace UI
             // The sprites are made here, so they are dropped here rather than leaking one per domain
             // reload; the next For() cuts them again.
             foreach (var sprite in cut.Values)
-            {
-                if (sprite == null)
-                    continue;
-
-                if (Application.isPlaying)
-                    Destroy(sprite);
-                else
-                    DestroyImmediate(sprite);
-            }
+                IconSheet.Release(sprite);
 
             cut.Clear();
         }

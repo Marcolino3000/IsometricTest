@@ -24,7 +24,7 @@ MonoBehaviour:
   WinByDefeatingAllEnemies: 1
   WinByExploringMap: 0
   WinByCollectingAllArtefacts: 1
-  WinByCollectingAllLoot: 1
+  WinByCollectingAllLoot: 0
   LoseWhenCharacterFalls: 1
   ShowTileCoordinates: 0
   LogCombatCalculations: 1

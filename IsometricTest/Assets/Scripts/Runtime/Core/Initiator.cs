@@ -57,6 +57,7 @@ namespace Runtime.Core
         {
             SetupReferences();
             SpawnEntities();
+            CenterCameraOnPlayer();
             SetupUI();
             itemManager.Begin(unitSpawner.PlayerUnit);
             actionHistory.Begin();
@@ -77,11 +78,25 @@ namespace Runtime.Core
             gameStateManager.Setup();
             fogOfWar.ResetExploration();
             SpawnEntities();
+            CenterCameraOnPlayer();
             // A restart replaces every unit: the ones the recorded snapshots refer to, and the
             // character the inventory belongs to. Both start over.
             itemManager.Begin(unitSpawner.PlayerUnit);
             actionHistory.Begin();
             StartGame();
+        }
+
+        /// <summary>
+        /// The match opens looking at the character. Right after <see cref="SpawnEntities"/>, since
+        /// that is when it stands where the spawn zone put it, and on a restart too - the new
+        /// character lands somewhere else and the camera would otherwise stay where it was left.
+        /// </summary>
+        private void CenterCameraOnPlayer()
+        {
+            var player = unitSpawner.PlayerUnit;
+
+            if (player != null)
+                inputHandler.CenterCameraOn(player.transform);
         }
 
         private void SetupUI()

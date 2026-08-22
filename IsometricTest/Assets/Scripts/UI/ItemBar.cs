@@ -23,6 +23,31 @@ namespace UI
     }
 
     /// <summary>
+    /// What a slot looks like whatever is in it - the category's own look, pushed by the owner of the
+    /// items the way an <see cref="ItemOption"/> is. The bar never learns what a category is: it draws
+    /// the <see cref="Ghost"/> while the slot holds nothing, wears the <see cref="Accent"/> either
+    /// way, and leaves a gap in front of a slot that opens a group.
+    /// </summary>
+    public readonly struct SlotLook
+    {
+        /// <summary>Symbol shown, faded, while the slot is empty - what belongs in it.</summary>
+        public readonly Sprite Ghost;
+
+        /// <summary>Colour of the strip along the slot's bottom edge.</summary>
+        public readonly Color Accent;
+
+        /// <summary>Whether the row is broken in front of this slot.</summary>
+        public readonly bool StartsGroup;
+
+        public SlotLook(Sprite ghost, Color accent, bool startsGroup)
+        {
+            Ghost = ghost;
+            Accent = accent;
+            StartsGroup = startsGroup;
+        }
+    }
+
+    /// <summary>
     /// Row of item slots at the bottom of the screen. A slot stands for a category and shows what is
     /// equipped of it; pressing its number key or clicking it asks the owner of the items for
     /// everything that fits, which is then offered in a column above the slot. Repeating the key
@@ -68,7 +93,15 @@ namespace UI
 
         private readonly List<VisualElement> slots = new();
         private readonly List<VisualElement> slotIcons = new();
+        private readonly List<VisualElement> slotAccents = new();
         private readonly List<string> slotTooltips = new();
+
+        /// <summary>
+        /// What each slot holds, and what its category shows in place of what it does not hold. Kept
+        /// apart because they are pushed apart - see <see cref="ApplyIcon"/>.
+        /// </summary>
+        private readonly List<Sprite> slotSymbols = new();
+        private readonly List<Sprite> slotGhosts = new();
 
         private readonly List<VisualElement> options = new();
         private readonly List<string> optionTooltips = new();
@@ -167,14 +200,46 @@ namespace UI
         }
 
         /// <summary>
-        /// Sets the symbol a slot shows. A null sprite leaves the slot empty.
+        /// Sets the symbol a slot shows. A null sprite falls back to the category's own symbol from
+        /// <see cref="SetSlotLook"/>, so an empty slot still says what belongs in it.
         /// </summary>
         public void SetSlotIcon(int index, Sprite sprite)
         {
             if (index < 0 || index >= slotIcons.Count)
                 return;
 
-            SetIcon(slotIcons[index], sprite);
+            slotSymbols[index] = sprite;
+
+            ApplyIcon(index);
+        }
+
+        /// <summary>
+        /// Sets what a slot looks like whatever it holds - see <see cref="SlotLook"/>.
+        /// </summary>
+        public void SetSlotLook(int index, SlotLook look)
+        {
+            if (index < 0 || index >= slots.Count)
+                return;
+
+            slotGhosts[index] = look.Ghost;
+            slotAccents[index].style.backgroundColor = look.Accent;
+            slots[index].EnableInClassList("slot--group-start", look.StartsGroup);
+
+            ApplyIcon(index);
+        }
+
+        /// <summary>
+        /// Draws what a slot holds, or its category's symbol faded out while it holds nothing. The two
+        /// are pushed separately and in no fixed order, so which of them shows is decided here rather
+        /// than by whichever arrived last.
+        /// </summary>
+        private void ApplyIcon(int index)
+        {
+            var symbol = slotSymbols[index];
+            var empty = symbol == null;
+
+            SetIcon(slotIcons[index], empty ? slotGhosts[index] : symbol);
+            slotIcons[index].EnableInClassList("slot__icon--ghost", empty);
         }
 
         /// <summary>
@@ -303,6 +368,9 @@ namespace UI
 
             slots.Clear();
             slotIcons.Clear();
+            slotAccents.Clear();
+            slotSymbols.Clear();
+            slotGhosts.Clear();
             slotTooltips.Clear();
             container.Clear();
 
@@ -320,7 +388,11 @@ namespace UI
 
                 slots.Add(slot);
                 slotIcons.Add(slot.Q<VisualElement>("icon"));
-                // Filled by the ItemManager from the equipped item; empty means no tooltip.
+                slotAccents.Add(slot.Q<VisualElement>("accent"));
+                // All three are pushed by the ItemManager - the item the slot holds, what its
+                // category shows in place of it, and the label. Empty means none of them.
+                slotSymbols.Add(null);
+                slotGhosts.Add(null);
                 slotTooltips.Add(string.Empty);
                 container.Add(slot);
             }

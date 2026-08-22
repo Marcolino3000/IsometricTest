@@ -97,6 +97,29 @@ namespace Runtime.Gameplay.Global
                 blockers.Add(blocker);
         }
 
+        /// <summary>
+        /// Puts <paramref name="target"/> in the middle of the screen by moving the same rig WASD and
+        /// the drag pan move, so the match opens on the character wherever the spawn zone put it.
+        /// The offset is measured the way the drag measures its own: the world point currently at the
+        /// screen centre is what has to become the target, so a camera sitting off-centre inside the
+        /// rig keeps its offset instead of being corrected away.
+        /// </summary>
+        public void CenterCameraOn(Transform target)
+        {
+            if (target == null)
+                return;
+
+            ResolveCamera();
+
+            if (cam == null || panTarget == null)
+                return;
+
+            Vector3 screenCenter = ScreenToWorld(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f));
+            Vector3 delta = target.position - screenCenter;
+            delta.z = 0f;
+            panTarget.position += delta;
+        }
+
         private void Update()
         {
             PanCamera();
@@ -166,6 +189,19 @@ namespace Runtime.Gameplay.Global
         }
 
         /// <summary>
+        /// Resolves the camera and the transform it pans. Asked again before centring, since that is
+        /// requested from the Initiator's Awake, which may run before this component's own OnEnable.
+        /// </summary>
+        private void ResolveCamera()
+        {
+            if (cam == null)
+                cam = Camera.main;
+
+            if (panTarget == null)
+                panTarget = ResolvePanTarget();
+        }
+
+        /// <summary>
         /// Resolves what WASD pans. Defaults to the main camera's parent to move all cameras
         /// at once (also UI-Cam).
         /// </summary>
@@ -222,8 +258,7 @@ namespace Runtime.Gameplay.Global
 
         private void OnEnable()
         {
-            cam = Camera.main;
-            panTarget = ResolvePanTarget();
+            ResolveCamera();
 
             leftClickAction = new InputAction(
                 type: InputActionType.Button,

@@ -740,6 +740,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4a4a43397ff541f28de43db11d1280d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ItemManager
+  slotIcons: {fileID: 11400000, guid: c681417e96104ba1aae03fe166b25952, type: 2}
   items: []
 --- !u!1 &7546018301929403739
 GameObject:

@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c57b57f56edf45d8b8874cc882661d61, type: 3}
+  m_Name: Default SlotIconSet
+  m_EditorClassIdentifier: 
+  sheet: {fileID: 2800000, guid: a9790877294e9475fb7bf25cb05eb034, type: 3}
+  cellSize: 16
+  categories:
+  - Kind: 0
+    Cell: {x: 1, y: 1}
+    Accent: {r: 0.82, g: 0.34, b: 0.29, a: 1}
+  - Kind: 1
+    Cell: {x: 6, y: 1}
+    Accent: {r: 0.88, g: 0.54, b: 0.24, a: 1}
+  - Kind: 3
+    Cell: {x: 9, y: 4}
+    Accent: {r: 0.38, g: 0.55, b: 0.85, a: 1}
+  - Kind: 2
+    Cell: {x: 8, y: 3}
+    Accent: {r: 0.38, g: 0.73, b: 0.41, a: 1}
+  - Kind: 4
+    Cell: {x: 3, y: 6}
+    Accent: {r: 0.69, g: 0.44, b: 0.85, a: 1}

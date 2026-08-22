@@ -42,6 +42,12 @@ namespace Runtime.Gameplay.Items
         private const string NoRoomNotice = "No free item slot";
         private const string AlreadyCarriedNotice = "Already carried";
 
+        [Header("Look")]
+        [Tooltip("What each category of item looks like in the bar: the symbol an empty slot of it " +
+                 "shows in place of what it does not hold, and the colour every slot of it wears. " +
+                 "Left empty, a slot looks as it did - blank while empty, and with no accent.")]
+        [SerializeField] private SlotIconSet slotIcons;
+
         [Header("Debug")]
         [Tooltip("Items the player owns.")]
         [SerializeField] private List<Item> items = new();
@@ -362,6 +368,7 @@ namespace Runtime.Gameplay.Items
             {
                 var item = EquippedIn(i);
 
+                itemBar.SetSlotLook(i, LookOf(i));
                 itemBar.SetSlotIcon(i, item != null ? item.Symbol : null);
                 itemBar.SetSlotTooltip(i, item != null ? item.Tooltip : string.Empty);
                 itemBar.SetSlotActive(i, IsInUse(i, item));
@@ -370,6 +377,20 @@ namespace Runtime.Gameplay.Items
             // The cursor may still be resting on a slot that has just changed hands - a potion drunk
             // out of it, a looted one dropped into it - and it will not enter it a second time.
             ShowHoverPreview();
+        }
+
+        /// <summary>
+        /// What the bar draws a slot as whatever it holds: the symbol of its category for while it is
+        /// empty, that category's colour, and whether the row breaks in front of it. Pushed on every
+        /// refresh beside the item, because a slot has to say what it is for before anything has been
+        /// found to put in it - and which category a slot stands for is only known here.
+        /// </summary>
+        private SlotLook LookOf(int slot)
+        {
+            if (slotIcons == null || !KindForSlot(slot, out var kind))
+                return default;
+
+            return new SlotLook(slotIcons.IconFor(kind), slotIcons.AccentFor(kind), StartsGroup(slot));
         }
 
         /// <summary>
@@ -494,8 +515,8 @@ namespace Runtime.Gameplay.Items
         }
 
         // The methods below are the whole seam between slots and categories: which category a slot
-        // stands for, how many slots it has, what one offers, what it holds, whether that is in
-        // effect, and what choosing it does. A further category is a further entry in the layout and
+        // stands for, how many slots it has, where the row breaks between two of them, what one
+        // offers, what it holds, whether that is in effect, and what choosing it does. A further category is a further entry in the layout and
         // a further branch here, and nowhere else - the bar never learns that items exist.
 
         /// <summary>
@@ -537,6 +558,29 @@ namespace Runtime.Gameplay.Items
             slot = -1;
 
             return false;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="slot"/> opens a run of the row - where the bar breaks it, so that
+        /// the three actives read as one thing rather than as three of nine. Read off the layout
+        /// rather than authored beside it: a category's slots are contiguous there, so a run ending
+        /// is a <see cref="GroupOf"/> changing between two slots.
+        /// </summary>
+        private static bool StartsGroup(int slot)
+        {
+            return slot > 0 && slot < SlotKinds.Length &&
+                   GroupOf(SlotKinds[slot]) != GroupOf(SlotKinds[slot - 1]);
+        }
+
+        /// <summary>
+        /// Which run of the row a category belongs to, which is the category itself but for the two
+        /// weapons: they are one thing to the player - the weapon in hand, split only by what kind it
+        /// is - and both are drawn from the same gesture for free, so they stand together rather than
+        /// as two runs of one. Told apart by their accent, as every category is.
+        /// </summary>
+        private static SlotKind GroupOf(SlotKind kind)
+        {
+            return kind == SlotKind.Ranged ? SlotKind.Melee : kind;
         }
 
         /// <summary>
