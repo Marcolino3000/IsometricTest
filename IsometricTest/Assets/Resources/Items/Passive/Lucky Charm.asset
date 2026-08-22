@@ -15,5 +15,6 @@ MonoBehaviour:
   DisplayName: Lucky Charm
   Description: A 40% chance for any attack to crit for double damage.
   Symbol: {fileID: 29364167, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
   Traits:
   - {fileID: 11400000, guid: 1e4977f7550940ea9072408012f61698, type: 2}

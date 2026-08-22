@@ -15,5 +15,6 @@ MonoBehaviour:
   DisplayName: Tower Shield
   Description: -4 damage taken but -2 dealt - only while a melee weapon is drawn.
   Symbol: {fileID: 1120977052, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
   Traits:
   - {fileID: 11400000, guid: 83a803f86dda4423a8ae6fa68382e439, type: 2}

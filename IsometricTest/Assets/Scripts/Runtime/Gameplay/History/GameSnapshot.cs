@@ -24,10 +24,11 @@ namespace Runtime.Gameplay.History
 
         public readonly List<UnitSnapshot> Units = new();
 
-        // Which boxes were still lying about, and what the player owned at the time. Taking a box
-        // costs action points, so it is a turn action and has to come back on undo - box and loot
-        // together, or undoing one would hand out the same item twice. Using up an active item is
-        // a turn action for the same reason, and it shortens this very list.
+        // Where every box stood, and what the player owned at the time. Taking a box costs action
+        // points, so it is a turn action and has to come back on undo - box and loot together, or
+        // undoing one would hand out the same item twice. Using up an active item is a turn action
+        // for the same reason, and it shortens this very list. A box a fallen enemy left behind
+        // comes back the same way: undoing the kill puts the box back out of play with it.
         public readonly List<LootboxSnapshot> Lootboxes = new();
         public readonly List<Item> Items = new();
 
@@ -154,28 +155,33 @@ namespace Runtime.Gameplay.History
     }
 
     /// <summary>
-    /// Whether one box was still lying about at the moment of capture. Only that: a box never moves
-    /// and what is in it is rolled once when it is placed, so there is nothing else about it to
-    /// record. Holding the box itself is safe for the same reason it is for units - a taken box is
-    /// only hidden, and the whole history is dropped whenever the board is respawned.
+    /// Where one box stood at the moment of capture: which of the three states it was in, and the
+    /// tile that goes with it. What is in it is not recorded - that is rolled once when the box is
+    /// made and never changes.
+    ///
+    /// The tile is recorded because a box *can* move: a scattered one never leaves the tile it was
+    /// put down on, but a dropped one is off the board until an opposing unit falls and then lies
+    /// where it fell, so undoing that kill has to take the box back off that tile.
+    ///
+    /// Holding the box itself is safe for the same reason it is for units - a taken box is only
+    /// hidden, and the whole history is dropped whenever the board is respawned.
     /// </summary>
     public readonly struct LootboxSnapshot
     {
         public readonly Lootbox Lootbox;
-        public readonly bool InPlay;
+        public readonly LootboxState State;
+        public readonly Tile Tile;
 
         public LootboxSnapshot(Lootbox lootbox)
         {
             Lootbox = lootbox;
-            InPlay = lootbox.IsInPlay;
+            State = lootbox.State;
+            Tile = lootbox.Tile;
         }
 
         public void ApplyTo(LootSpawner lootSpawner)
         {
-            if (InPlay)
-                lootSpawner.RestoreLootbox(Lootbox);
-            else
-                lootSpawner.TakeLootbox(Lootbox);
+            lootSpawner.RestoreLootbox(Lootbox, State, Tile);
         }
     }
 }

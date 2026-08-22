@@ -71,7 +71,7 @@ namespace Runtime.Gameplay.Global
             if (rules.WinByExploringMap && IsMapUncovered(tileSpawner, fogOfWar))
                 return MatchResult.Won("The whole map has been uncovered.");
 
-            if (rules.WinByCollectingAllLoot && IsAllLootCollected(lootSpawner))
+            if (rules.WinByCollectingAllLoot && IsAllLootCollected(lootSpawner, unitSpawner))
                 return MatchResult.Won("Every lootbox has been found.");
 
             return MatchResult.Open;
@@ -127,26 +127,32 @@ namespace Runtime.Gameplay.Global
         }
 
         /// <summary>
-        /// Whether every box that was scattered has been taken. Asked of the boxes rather than of the
+        /// Whether every box of the match has been taken. Asked of the boxes rather than of the
         /// inventory: a box holding something already carried is left where it lies, so what the
         /// player owns says nothing about what is still out there. A board with no loot on it is not
         /// a win, the way an unbuilt grid is not one.
+        ///
+        /// A box waiting to be dropped counts as uncollected too, though it is on no tile yet - but
+        /// only while somebody is left standing to leave it behind. Once nobody is, it never will
+        /// be, and a box that can no longer reach the board must not hold up the win forever.
         /// </summary>
-        private static bool IsAllLootCollected(LootSpawner lootSpawner)
+        private static bool IsAllLootCollected(LootSpawner lootSpawner, UnitSpawner unitSpawner)
         {
             if (lootSpawner == null)
                 return false;
 
+            var dropsStillComing = !IsWipedOut(unitSpawner, Team.Opponent);
             var hadAny = false;
 
             // Taken boxes are only hidden, so this is the whole set - which is what tells "all
-            // collected" apart from "none scattered yet".
+            // collected" apart from "none made yet".
             foreach (var lootbox in lootSpawner.AllSpawnedLootboxes)
             {
                 if (lootbox == null)
                     continue;
 
-                if (lootbox.IsInPlay)
+                // Taken, rather than merely off the board: a drop nobody has died for yet is neither.
+                if (lootbox.IsInPlay || (lootbox.IsPending && dropsStillComing))
                     return false;
 
                 hadAny = true;

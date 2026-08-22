@@ -52,6 +52,7 @@ MonoBehaviour:
     Status: 0
   activeTeam: 0
   unitSpawner: {fileID: 0}
+  outcomeWatcher: {fileID: 0}
 --- !u!1 &125376349985527540
 GameObject:
   m_ObjectHideFlags: 0
@@ -150,6 +151,7 @@ MonoBehaviour:
   selector: {fileID: 0}
   gameStateManager: {fileID: 0}
   fogOfWar: {fileID: 6967780869941050052}
+  gameRules: {fileID: 0}
 --- !u!1 &1014679833672591487
 GameObject:
   m_ObjectHideFlags: 0
@@ -288,10 +290,59 @@ MonoBehaviour:
   aiEnabled: 1
   actionDelay: 1.3
   maxActionsPerUnit: 20
+  advanceOnLostEnemies: 1
   gameStateManager: {fileID: 0}
   unitSpawner: {fileID: 0}
   tileSpawner: {fileID: 0}
   fogOfWar: {fileID: 0}
+  outcomeWatcher: {fileID: 0}
+--- !u!1 &3157402861094735218
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8843017225560913447}
+  - component: {fileID: 6420958871133264903}
+  m_Layer: 0
+  m_Name: LootSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8843017225560913447
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3157402861094735218}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2528925431592090402}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6420958871133264903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3157402861094735218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8211618170124126ae4173fa1117b84b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Core.Spawning.LootSpawner
+  GroundClearance: {x: 0, y: 0.3, z: 0}
+  settings: {fileID: 11400000, guid: 1ce1c83b85034f62b37cb36d5164e75e, type: 2}
+  lootboxes: []
 --- !u!1 &3423799313263346322
 GameObject:
   m_ObjectHideFlags: 0
@@ -689,7 +740,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4a4a43397ff541f28de43db11d1280d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ItemManager
-  weapons: []
+  items: []
 --- !u!1 &7546018301929403739
 GameObject:
   m_ObjectHideFlags: 0
@@ -874,6 +925,7 @@ MonoBehaviour:
   lootSpawner: {fileID: 6420958871133264903}
   nextTurnButton: {fileID: 3454670680114467044}
   itemBar: {fileID: 4820137755690214304}
+  verticalItemPopup: 0
   hudDocuments:
   - {fileID: 8722650819136852705}
   - {fileID: 4820137755690214303}
@@ -927,49 +979,3 @@ MonoBehaviour:
   tileLayerMask:
     serializedVersion: 2
     m_Bits: 64
---- !u!1 &3157402861094735218
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8843017225560913447}
-  - component: {fileID: 6420958871133264903}
-  m_Layer: 0
-  m_Name: LootSpawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8843017225560913447
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3157402861094735218}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2528925431592090402}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6420958871133264903
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3157402861094735218}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8211618170124126ae4173fa1117b84b, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Core.Spawning.LootSpawner
-  settings: {fileID: 11400000, guid: 1ce1c83b85034f62b37cb36d5164e75e, type: 2}
-  lootboxes: []

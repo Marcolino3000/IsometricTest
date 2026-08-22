@@ -266,8 +266,17 @@ namespace Runtime.Gameplay.Entities
 
         public void Remove()
         {
+            // A unit falls once. Removing an already removed one does nothing to the board, but it
+            // would announce a second fall - and the loot would leave a second lot of spoils for it.
+            if (!IsAlive)
+                return;
+
             currentState.Position.SetUnit(null);
             unitSpawner.RemoveUnit(this);
+
+            // Last, with the unit off the board and the tile it stood on free: what a fall leaves
+            // behind is nobody's business here, the way what lies on a tile it walks onto is not.
+            unitSpawner.NotifyRemoved(this);
         }
 
         /// <summary>

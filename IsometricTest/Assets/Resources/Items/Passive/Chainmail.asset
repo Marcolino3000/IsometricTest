@@ -15,5 +15,6 @@ MonoBehaviour:
   DisplayName: Chainmail
   Description: -2 damage from every hit taken while carried.
   Symbol: {fileID: -1343826562, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
   Traits:
   - {fileID: 11400000, guid: 8351fe911721431bac10d216e2d68847, type: 2}

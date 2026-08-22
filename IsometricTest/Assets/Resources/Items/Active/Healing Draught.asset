@@ -15,5 +15,6 @@ MonoBehaviour:
   DisplayName: Healing Draught
   Description: 'Drink to restore 6 health. '
   Symbol: {fileID: -2088117019, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
   Condition: {fileID: 11400000, guid: 7d4faea9233642fab63c69341fe7c7cb, type: 2}
   Effect: {fileID: 11400000, guid: 51207f413c584bcab1feef81c3a54537, type: 2}

@@ -15,5 +15,6 @@ MonoBehaviour:
   DisplayName: Hunter's Bracers
   Description: Bonus damage and range while a ranged weapon is drawn.
   Symbol: {fileID: 1557238743, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
   Traits:
   - {fileID: 11400000, guid: 55535b6937f04d4f8a260b2cb21876e6, type: 2}

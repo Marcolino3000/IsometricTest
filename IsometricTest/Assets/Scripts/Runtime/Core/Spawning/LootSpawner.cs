@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Data;
 using Runtime.Core.State;
 using Runtime.Gameplay.Entities;
@@ -11,26 +11,52 @@ using UnityEngine;
 namespace Runtime.Core.Spawning
 {
     /// <summary>
-    /// Scatters lootboxes over the map once it has been generated and owns them, the way the other
-    /// spawners own their tiles and units. Taking one happens here too: the boxes are its, so the
-    /// inventory only has to be told what was found.
+    /// Makes every box of the match and owns them, the way the other spawners own their tiles and
+    /// units. Taking one happens here too: the boxes are its, so the inventory only has to be told
+    /// what was found.
+    ///
+    /// A box's kind (<see cref="LootboxType"/>) says what it looks like, what it costs and how many
+    /// of it there are. What may be *inside* it is authored the other way round - every
+    /// <see cref="Item"/> names the kind it turns up in - so the loot goes and asks the items rather
+    /// than being handed a list; see <see cref="CollectItems"/>.
+    ///
+    /// Each kind's boxes are split between the two ways one can turn up. Scattered ones are put down
+    /// over the map when it is generated. Dropped ones are made at the same moment and simply wait:
+    /// they are handed to the tile of an opposing unit as it falls. Making them up front is what
+    /// keeps a drop undoable and repeatable - its contents are rolled once, so redo hands back the
+    /// very item undo took away.
     /// </summary>
     public class LootSpawner : MonoBehaviour
     {
+        
+        [Header("Settings")]
+        [SerializeField] private Vector3 GroundClearance = new(0, 0.25f, 0);
+
         [Header("References")]
         [SerializeField] private LootSpawnerSettings settings;
 
         [Header("Debug")]
+        // Every box made for this match, whatever state it is in - lying about, taken, or waiting for
+        // a unit to fall. One list rather than one per state: which of the three a box is in is the
+        // box's own (see LootboxState), the way Unit.IsAlive rather than list membership is what says
+        // a unit is in play.
         [SerializeField] private List<Lootbox> lootboxes = new();
 
-        // Boxes that have been taken. Kept (hidden) rather than destroyed so undo can put them back,
-        // the same way UnitSpawner keeps a fallen unit; a respawn clears them out for good.
-        [SerializeField] private List<Lootbox> takenLootboxes = new();
+        // The order dropped boxes are left behind in, shuffled once when they are made. The next drop
+        // is the first one in here still pending, so nothing about the drops has to be recorded: undo
+        // puts a box back to pending and it is next again, and redo takes that same one out.
+        private readonly List<Lootbox> dropOrder = new();
 
-        // One bag per category, so each category's box count can be honoured on its own. Each is
-        // dealt from a shuffled copy and only refilled once it runs out: rolling every box
+        // Every item that named a kind of box, filed under that kind and its own category - the loot
+        // table, gathered from the items themselves rather than authored here. Rebuilt on every spawn
+        // so an item reassigned in the inspector takes effect on the next match.
+        private readonly Dictionary<LootboxType, List<Item>[]> pools = new();
+
+        // One bag per kind of box and per category within it, so each category's box count can be
+        // honoured on its own and two kinds offering the same item do not deal from one pile. Each is
+        // a shuffled copy of the matching pool, refilled only once it runs out: rolling every box
         // independently would keep handing out the same one out of a handful.
-        private readonly List<Item>[] bags = new List<Item>[(int)SlotKind.None];
+        private readonly Dictionary<LootboxType, List<Item>[]> bags = new();
 
         private TileSpawner tileSpawner;
         private UnitSpawner unitSpawner;
@@ -38,17 +64,14 @@ namespace Runtime.Core.Spawning
         private GameStateManager gameStateManager;
         private GameRules rules;
 
-        public IReadOnlyList<Lootbox> AllLootboxes => lootboxes;
-
-        /// <summary>Every box of this match, lying about or taken. Used to snapshot the board.</summary>
-        public IEnumerable<Lootbox> AllSpawnedLootboxes => lootboxes.Concat(takenLootboxes);
+        /// <summary>Every box of this match, lying about, taken or pending. Used to snapshot the board.</summary>
+        public IReadOnlyList<Lootbox> AllSpawnedLootboxes => lootboxes;
 
         /// <summary>
         /// Takes the box the player's character is standing on - the pressed way of taking one, see
         /// <see cref="HandleUnitEnteredTile"/> for walking over it. A turn action like any other: it
-        /// costs <see cref="LootSpawnerSettings.PickupCost"/> action points, so it only works on the
-        /// character's own turn and only while it can still afford it, and it announces itself so the
-        /// history can undo it.
+        /// costs what <see cref="PickupCostOf"/> asks, so it only works on the character's own turn
+        /// and only while it can still afford it, and it announces itself so the history can undo it.
         /// </summary>
         public void TryPickup()
         {
@@ -60,16 +83,41 @@ namespace Runtime.Core.Spawning
 
             var lootbox = unit.CurrentState.Position.Lootbox;
 
-            // The two conditions of the action: something to take, and the points to take it with.
-            if (lootbox == null || unit.CurrentState.ActionPoints < settings.PickupCost)
+            if (lootbox == null)
+                return;
+
+            // The other condition of the action: the points it asks for, which is none at all while
+            // walking over a box is enough to have it.
+            var cost = PickupCostOf(lootbox);
+
+            if (unit.CurrentState.ActionPoints < cost)
                 return;
 
             if (!TryTake(unit, lootbox))
                 return;
 
-            unit.CurrentState.ActionPoints -= settings.PickupCost;
+            unit.CurrentState.ActionPoints -= cost;
 
             ActionReporter.Report(ActionReport.Pickup(unit));
+        }
+
+        /// <summary>
+        /// What taking <paramref name="lootbox"/> costs. Nothing at all while
+        /// <see cref="GameRules.AutoCollectLootboxes"/> is on: a box is then had by stepping onto its
+        /// tile, so pressing for the one already underfoot must not be the expensive way of doing
+        /// what a step does for free. That is not a corner case - a box holding something there was
+        /// no room for is left lying where it is, and no further arrival will pick it up, so pressing
+        /// is the only way back to it once a slot has been freed.
+        ///
+        /// One query rather than a number read twice, so what the action tests and what it charges
+        /// can never disagree.
+        /// </summary>
+        private int PickupCostOf(Lootbox lootbox)
+        {
+            if (lootbox == null || (rules != null && rules.AutoCollectLootboxes))
+                return 0;
+
+            return lootbox.PickupCost;
         }
 
         /// <summary>
@@ -95,6 +143,38 @@ namespace Runtime.Core.Spawning
 
             if (lootbox != null)
                 TryTake(unit, lootbox);
+        }
+
+        /// <summary>
+        /// Leaves a box behind on the tile of a unit that has just fallen - what a dropped
+        /// <see cref="LootboxType"/> is for. Nothing is made here: the drop was rolled and built with
+        /// all the other boxes, so what a given match yields is fixed the moment it starts and a
+        /// redone kill hands back exactly what the undone one took away.
+        ///
+        /// Unannounced, for the same reason walking over a box is: the fall happens inside the attack
+        /// that caused it, and the attack reports itself afterwards - so the drop is already on the
+        /// board in that report's after-snapshot, and one undo takes back the blow and the spoils
+        /// together.
+        /// </summary>
+        private void HandleUnitRemoved(Unit unit)
+        {
+            // Only what the opponents leave behind. The player commands a single character, and its
+            // fall ends the match rather than furnishing it.
+            if (unit == null || unit.CurrentState.Team == Team.Player)
+                return;
+
+            var tile = unit.CurrentState.Position;
+
+            // A tile already holding a box keeps the one it has - two cannot lie on one tile - and
+            // ground a box may not lie on leaves nothing behind either. Neither loses the drop: it
+            // stays pending and the next unit to fall leaves it instead.
+            if (!CanLieOn(tile) || tile.Lootbox != null)
+                return;
+
+            var drop = NextPendingDrop();
+
+            if (drop != null)
+                Place(drop, LootboxState.InPlay, tile);
         }
 
         /// <summary>
@@ -125,65 +205,150 @@ namespace Runtime.Core.Spawning
 
         /// <summary>
         /// Takes a box off the board. It is kept aside rather than destroyed - see
-        /// <see cref="Lootbox.IsInPlay"/> - so undo can put it back. Does nothing for one already gone.
+        /// <see cref="LootboxState.Taken"/> - so undo can put it back on the tile it remembers.
+        /// Does nothing for one already gone or one that was never put down.
         /// </summary>
         public void TakeLootbox(Lootbox lootbox)
         {
-            if (!lootboxes.Remove(lootbox))
+            if (lootbox == null || !lootbox.IsInPlay)
                 return;
 
-            takenLootboxes.Add(lootbox);
-            lootbox.SetInPlay(false);
+            Place(lootbox, LootboxState.Taken, lootbox.Tile);
         }
 
-        /// <summary>Puts a previously taken box back. Does nothing for one still lying about.</summary>
-        public void RestoreLootbox(Lootbox lootbox)
+        /// <summary>
+        /// Puts a box back into a state a snapshot recorded - which is a state *and* a tile, since a
+        /// dropped box lies wherever a unit happened to fall and undoing that kill has to take it
+        /// back off that tile.
+        /// </summary>
+        public void RestoreLootbox(Lootbox lootbox, LootboxState state, Tile tile)
         {
-            if (!takenLootboxes.Remove(lootbox))
-                return;
-
-            lootboxes.Add(lootbox);
-            lootbox.SetInPlay(true);
+            if (lootbox != null)
+                Place(lootbox, state, tile);
         }
 
         #region Helpers
 
+        /// <summary>
+        /// The one place a box changes state, because where it stands and whether it is on the board
+        /// are the same question: a scattered box is put down here, a drop arrives here, a taken one
+        /// is set aside here and undo brings it back through here.
+        ///
+        /// Which is also why the ground is asked here rather than at each caller: a box is taken by
+        /// standing on it, so it may only ever lie where a unit can stand (<see cref="CanLieOn"/>).
+        /// A box refused a tile is left where it was - a drop stays pending and the next unit to fall
+        /// leaves it instead - rather than being put somewhere nobody could ever reach it.
+        /// </summary>
+        private void Place(Lootbox lootbox, LootboxState state, Tile tile)
+        {
+            if (state == LootboxState.InPlay && !CanLieOn(tile))
+            {
+                Debug.LogWarning($"{lootbox.name} was not put down: a box cannot lie on ground that " +
+                                 "cannot be walked on, since it is taken by standing on it.", lootbox);
+                return;
+            }
+
+            lootbox.SetState(state, tile);
+
+            if (tile != null)
+                lootbox.transform.position = tileSpawner.GridIndexToWorldPosition(tile.Position)
+                                             + Vector3.up * tile.HeightOffset + GroundClearance;
+        }
+
+        /// <summary>The next box a fallen unit leaves behind, or null once they have all been left.</summary>
+        private Lootbox NextPendingDrop()
+        {
+            foreach (var lootbox in dropOrder)
+                if (lootbox != null && lootbox.State == LootboxState.Pending)
+                    return lootbox;
+
+            return null;
+        }
+
         private void ClearLootboxes()
         {
-            foreach (var lootbox in AllSpawnedLootboxes.ToList())
+            foreach (var lootbox in lootboxes)
             {
                 if (lootbox == null)
                     continue;
 
                 // A respawn rebuilds the grid first, so the tile a box remembers may already be gone.
-                if (lootbox.Tile != null)
+                if (lootbox.Tile != null && lootbox.Tile.Lootbox == lootbox)
                     lootbox.Tile.SetLootbox(null);
 
                 Destroy(lootbox.gameObject);
             }
 
             lootboxes.Clear();
-            takenLootboxes.Clear();
-
-            foreach (var bag in bags)
-                bag?.Clear();
+            dropOrder.Clear();
+            bags.Clear();
         }
 
-        private void SpawnLootbox(Tile tile, Item content)
+        /// <summary>
+        /// Builds the loot table by reading it off the items. Every <see cref="Item"/> authored
+        /// anywhere under a Resources folder is asked which kind of box it belongs in
+        /// (<see cref="Item.FoundIn"/>) and filed under that kind and its own category; one naming
+        /// none is simply never found, which is what the starting weapon wants.
+        ///
+        /// Loaded rather than listed because the assignment lives on the item: nothing may hold a
+        /// second copy of which items are in play, or the two would drift apart the first time an
+        /// item was added and only half wired up.
+        /// </summary>
+        private void CollectItems()
         {
-            var position = tileSpawner.GridIndexToWorldPosition(tile.Position) + Vector3.up * tile.HeightOffset + new Vector3(0, 0.25f, 0);
+            pools.Clear();
 
-            var lootbox = Instantiate(settings.LootboxPrefab, position, Quaternion.identity, transform);
-            lootbox.name = $"Lootbox {tile.Position.x}-{tile.Position.y}";
-            lootbox.Setup(tile, content, settings.OrderInLayer);
+            foreach (var item in Resources.LoadAll<Item>(string.Empty))
+            {
+                if (item == null || item.FoundIn == null || item.Slot == SlotKind.None)
+                    continue;
+
+                if (!pools.TryGetValue(item.FoundIn, out var byKind))
+                    pools[item.FoundIn] = byKind = new List<Item>[(int)SlotKind.None];
+
+                (byKind[(int)item.Slot] ??= new List<Item>()).Add(item);
+            }
+        }
+
+        /// <summary>Everything assigned to <paramref name="type"/> in <paramref name="kind"/>.</summary>
+        private IReadOnlyList<Item> PoolFor(LootboxType type, SlotKind kind)
+        {
+            if (pools.TryGetValue(type, out var byKind) && byKind[(int)kind] != null)
+                return byKind[(int)kind];
+
+            return Array.Empty<Item>();
+        }
+
+        /// <summary>
+        /// Builds a box of <paramref name="type"/> around <paramref name="content"/>. It is not on
+        /// the board yet: putting it somewhere is <see cref="Place"/>, which is what a drop waits for.
+        /// </summary>
+        private Lootbox CreateLootbox(LootboxType type, Item content)
+        {
+            var lootbox = Instantiate(settings.LootboxPrefab, transform);
+            lootbox.name = $"{type.Title} {lootboxes.Count}";
+            lootbox.Setup(type, content, settings.OrderInLayer);
 
             lootboxes.Add(lootbox);
+
+            return lootbox;
+        }
+
+        /// <summary>
+        /// Whether a box may lie on <paramref name="tile"/> at all: it is taken by standing on it, so
+        /// it may only ever be put on ground a unit can walk onto. A box on a mountain could never be
+        /// reached, and would hold up the win for collecting all the loot for as long as an opponent
+        /// was left standing.
+        /// </summary>
+        private static bool CanLieOn(Tile tile)
+        {
+            return tile != null && tile.IsPassable;
         }
 
         /// <summary>
         /// The tiles a box may lie on, in randomized order: walkable ground with nobody standing on
-        /// it. Impassable terrain is ruled out because a box there could never be reached, and an
-        /// occupied tile because the unit spawned there would be standing on free loot.
+        /// it. Impassable terrain is ruled out by <see cref="CanLieOn"/>, and an occupied tile because
+        /// the unit spawned there would be standing on free loot.
         /// </summary>
         private List<Tile> GetShuffledLootTiles()
         {
@@ -191,7 +356,7 @@ namespace Runtime.Core.Spawning
 
             foreach (var tile in tileSpawner.AllTiles)
             {
-                if (tile.IsPassable && !tile.IsOccupied)
+                if (CanLieOn(tile) && !tile.IsOccupied)
                     candidates.Add(tile);
             }
 
@@ -200,29 +365,48 @@ namespace Runtime.Core.Spawning
             return candidates;
         }
 
+        /// <summary>
+        /// How many boxes can be dropped at most: a fallen unit leaves one, so there is no point in
+        /// making more than there are units to fall. Without the cap a box nobody could ever reach
+        /// would sit pending forever - and hold up the win for collecting all the loot.
+        /// </summary>
+        private int CountDroppableUnits()
+        {
+            var count = 0;
+
+            foreach (var unit in unitSpawner.AllUnits)
+                if (unit != null && unit.CurrentState.Team != Team.Player)
+                    count++;
+
+            return count;
+        }
+
         private static void Shuffle<T>(List<T> list)
         {
             // Fisher-Yates
             for (var i = list.Count - 1; i > 0; i--)
             {
-                var j = Random.Range(0, i + 1);
+                var j = UnityEngine.Random.Range(0, i + 1);
                 (list[i], list[j]) = (list[j], list[i]);
             }
         }
 
-        /// <summary>The bag <paramref name="kind"/> is dealt from, created on first use.</summary>
-        private List<Item> BagFor(SlotKind kind)
+        /// <summary>The bag <paramref name="kind"/> is dealt from for this type, created on first use.</summary>
+        private List<Item> BagFor(LootboxType type, SlotKind kind)
         {
-            return bags[(int)kind] ??= new List<Item>();
+            if (!bags.TryGetValue(type, out var typeBags))
+                bags[type] = typeBags = new List<Item>[(int)SlotKind.None];
+
+            return typeBags[(int)kind] ??= new List<Item>();
         }
 
-        /// <summary>The next item of <paramref name="kind"/>, or null if none is authored at all.</summary>
-        private Item TakeItem(SlotKind kind)
+        /// <summary>The next item of <paramref name="kind"/> this type offers, or null if it lists none.</summary>
+        private Item TakeItem(LootboxType type, SlotKind kind)
         {
-            var bag = BagFor(kind);
+            var bag = BagFor(type, kind);
 
             if (bag.Count == 0)
-                RefillBag(bag, kind);
+                RefillBag(bag, type, kind);
 
             if (bag.Count == 0)
                 return null;
@@ -234,18 +418,39 @@ namespace Runtime.Core.Spawning
             return item;
         }
 
-        private void RefillBag(List<Item> bag, SlotKind kind)
+        private void RefillBag(List<Item> bag, LootboxType type, SlotKind kind)
         {
-            if (settings.Items == null)
-                return;
-
-            foreach (var item in settings.Items)
-            {
-                if (item != null && item.Slot == kind)
-                    bag.Add(item);
-            }
-
+            bag.AddRange(PoolFor(type, kind));
             Shuffle(bag);
+        }
+
+        /// <summary>
+        /// What every box of this kind holds, one item at a time: the categories in turn, as many of
+        /// each as the kind asks for. Lazy on purpose - a caller that runs out of tiles or of units
+        /// to fall stops asking, and nothing is drawn from the bag that no box will hold.
+        /// </summary>
+        private IEnumerable<Item> RollContents(LootboxType type)
+        {
+            for (var kind = 0; kind < (int)SlotKind.None; kind++)
+            {
+                var wanted = type.CountFor((SlotKind)kind);
+
+                for (var i = 0; i < wanted; i++)
+                {
+                    var content = TakeItem(type, (SlotKind)kind);
+
+                    // No item of this category named this kind of box, so no box of it can be
+                    // filled. The item is what says where it belongs, so that is where to look.
+                    if (content == null)
+                    {
+                        Debug.LogWarning($"{type.name} asks for {wanted} {(SlotKind)kind} box(es), " +
+                                         "but no item of that category names it in FoundIn.", type);
+                        break;
+                    }
+
+                    yield return content;
+                }
+            }
         }
 
         #endregion
@@ -268,11 +473,20 @@ namespace Runtime.Core.Spawning
             // it may be flipped mid-match, and pressing for a box that has already been walked over
             // simply finds nothing there.
             unitSpawner.UnitEnteredTile += HandleUnitEnteredTile;
+
+            // What a fallen unit leaves behind. Announced by the spawner that owns the units, so a
+            // unit needs no more idea of what it is worth than it has of what it is standing on.
+            unitSpawner.UnitRemoved += HandleUnitRemoved;
         }
 
         /// <summary>
-        /// Scatters a fresh set of boxes. Runs after the units are placed so no box ends up under
-        /// someone, which is why the Initiator calls it last in its spawning step.
+        /// Makes a fresh set of boxes: the scattered ones straight onto the map, the dropped ones
+        /// aside to wait for a unit to fall. Runs after the units are placed, which is why the
+        /// Initiator calls it last in its spawning step - a scattered box must not end up under
+        /// somebody, and how many drops are worth making is how many units there are to fall.
+        ///
+        /// The loot table is read off the items first (<see cref="CollectItems"/>), so an item moved
+        /// to another kind of box in the inspector is in the right one from the next match on.
         /// </summary>
         [ContextMenu("Spawn Lootboxes")]
         public void SpawnLootboxes()
@@ -285,39 +499,61 @@ namespace Runtime.Core.Spawning
                 return;
             }
 
-            if (settings.Items == null || settings.Items.Count == 0)
+            if (settings.Types == null || settings.Types.Count == 0)
             {
-                Debug.LogWarning($"No items to fill lootboxes with in {nameof(LootSpawnerSettings)}.", settings);
+                Debug.LogWarning($"No kinds of lootbox listed in {nameof(LootSpawnerSettings)}.", settings);
                 return;
             }
 
+            CollectItems();
+
             var tiles = GetShuffledLootTiles();
             var placed = 0;
+            var dropsLeft = CountDroppableUnits();
 
-            // One category at a time, so each gets the number of boxes it was asked for. The tiles
-            // were shuffled beforehand, so handing them out in order still scatters the categories.
-            for (var kind = 0; kind < (int)SlotKind.None; kind++)
+            // One kind at a time, and within a kind one category at a time, so each gets the number
+            // of boxes it was asked for. The tiles were shuffled beforehand, so handing them out in
+            // order still scatters the kinds over the whole map.
+            foreach (var type in settings.Types)
             {
-                var wanted = settings.CountFor((SlotKind)kind);
+                if (type == null)
+                    continue;
 
-                for (var i = 0; i < wanted; i++)
+                var contents = new List<Item>();
+
+                foreach (var content in RollContents(type))
+                    contents.Add(content);
+
+                // Which of a kind's boxes wait for a unit to fall is drawn from its own boxes at
+                // random, so a drop is that kind's authored mix rather than whichever category was
+                // listed first. Capped by how many enemies there are: a box nobody could ever leave
+                // behind would sit pending forever and hold up the win for collecting all the loot.
+                Shuffle(contents);
+
+                var dropping = Math.Min(Math.Min(type.DroppedCount, contents.Count), dropsLeft);
+                dropsLeft -= dropping;
+
+                for (var i = 0; i < contents.Count; i++)
                 {
-                    if (placed >= tiles.Count)
-                        return;
-
-                    var content = TakeItem((SlotKind)kind);
-
-                    // Nothing of this category is authored, so no further box of it can be filled.
-                    if (content == null)
+                    if (i < dropping)
                     {
-                        Debug.LogWarning($"{nameof(LootSpawnerSettings)} asks for {wanted} " +
-                                         $"{(SlotKind)kind} box(es) but lists no item of that category.", settings);
-                        break;
+                        dropOrder.Add(CreateLootbox(type, contents[i]));
+                        continue;
                     }
 
-                    SpawnLootbox(tiles[placed++], content);
+                    // Nothing left to scatter onto. The box is not made at all rather than left
+                    // pending: a pending box no fall will ever place could never be collected.
+                    if (placed >= tiles.Count)
+                        break;
+
+                    Place(CreateLootbox(type, contents[i]), LootboxState.InPlay, tiles[placed++]);
                 }
             }
+
+            // Shuffled so the authored mix arrives in no particular order: the first kill leaves a
+            // random one of the drops rather than always the first category listed. Fixed from here
+            // on, which is what lets undo and redo agree about which box a fall leaves behind.
+            Shuffle(dropOrder);
         }
 
         #endregion

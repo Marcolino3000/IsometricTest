@@ -15,6 +15,7 @@ MonoBehaviour:
   DisplayName: Warhammer
   Description: Hits hard
   Symbol: {fileID: 820335677, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
   Condition: {fileID: 11400000, guid: f9e642ea935d4994aa6fb9e68e1cdf01, type: 2}
   Effect: {fileID: 11400000, guid: a42ea4f2d11448f6a296db7442b0e619, type: 2}
   Kind: 0

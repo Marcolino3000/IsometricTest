@@ -15,5 +15,6 @@ MonoBehaviour:
   DisplayName: Elixir of Vigour
   Description: Restores 12 health.
   Symbol: {fileID: -1527640156, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
   Condition: {fileID: 11400000, guid: 4b9d78f8900e48b4ad9a17c394f0361a, type: 2}
   Effect: {fileID: 11400000, guid: 520be59dd30f4a5faec4915abfe84b76, type: 2}

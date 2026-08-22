@@ -15,6 +15,7 @@ MonoBehaviour:
   DisplayName: Dagger
   Description: smol attack
   Symbol: {fileID: -1999230048, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
   Condition: {fileID: 11400000, guid: 67861b00383541eaadca1e08121c1f38, type: 2}
   Effect: {fileID: 11400000, guid: 4d6e810ce2554cbf92e18c39b1571d5a, type: 2}
   Kind: 0

@@ -16,5 +16,6 @@ MonoBehaviour:
   Description: Raises maximum health by 3 for the rest of the match and fills the
     new room.
   Symbol: {fileID: -1569564830, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
   Condition: {fileID: 11400000, guid: a8618e14ba95a44819f245c10423b141, type: 2}
   Effect: {fileID: 11400000, guid: e2f05d5bba174245b7a56e2ab7000c28, type: 2}

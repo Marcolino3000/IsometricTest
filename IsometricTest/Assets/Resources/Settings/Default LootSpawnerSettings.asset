@@ -13,34 +13,8 @@ MonoBehaviour:
   m_Name: Default LootSpawnerSettings
   m_EditorClassIdentifier: 
   LootboxPrefab: {fileID: 2295367724618930731, guid: 05367eb55461417e97b73345ce78b4e3, type: 3}
-  PickupCost: 1
-  Items:
-  - {fileID: 11400000, guid: 4bc5839b04cac487c897e0a7ed7e18bf, type: 2}
-  - {fileID: 11400000, guid: c0e747be1401e4a289b7ae18e0773dc5, type: 2}
-  - {fileID: 11400000, guid: 4d8fa0c565b647b2911bed43569d2ed0, type: 2}
-  - {fileID: 11400000, guid: aa8278dfcc674bbc94542781d709f3c5, type: 2}
-  - {fileID: 11400000, guid: dceb026f78704a8c91081ca2f04d5514, type: 2}
-  - {fileID: 11400000, guid: 47604a9812b94397b97e5dd7d1c57854, type: 2}
-  - {fileID: 11400000, guid: aea564e23ae14cd98e11fce7c865fd66, type: 2}
-  - {fileID: 11400000, guid: ce9e83f07cf04f7aa75e2862f5f18137, type: 2}
-  - {fileID: 11400000, guid: 878df74447314e9594ff5f6a2acffedb, type: 2}
-  - {fileID: 11400000, guid: cd4e9e92d2ca40ecacad63977c5cdf61, type: 2}
-  - {fileID: 11400000, guid: a2ecf27457974f4d97b23f2b2ca86b6d, type: 2}
-  - {fileID: 11400000, guid: 48a3c534eb0d464185766a8fa138eaf3, type: 2}
-  - {fileID: 11400000, guid: 404a6a1a10d7496181458b3eb7509e2d, type: 2}
-  - {fileID: 11400000, guid: a967ce8239bb4e3eb5d483b45875bde2, type: 2}
-  - {fileID: 11400000, guid: bcb5ab163afb4c82bfdce7968dc693c2, type: 2}
-  - {fileID: 11400000, guid: b58b641ec08f4a0f88035940b163f4ad, type: 2}
-  - {fileID: 11400000, guid: 35e0935b13fc456c8cd23291c434aecf, type: 2}
-  - {fileID: 11400000, guid: bd36f51258904d66852d68d43d60f03d, type: 2}
-  - {fileID: 11400000, guid: 79fe97f23e3b460c99affaad2a68f39f, type: 2}
-  - {fileID: 11400000, guid: 3a7c77a40e34431e8fe31ccb9b061ddb, type: 2}
-  - {fileID: 11400000, guid: 0a3202b84ebc4cc0a0829cd28f4b6779, type: 2}
-  - {fileID: 11400000, guid: 3302d828e5054e868adb0af08e3b49f0, type: 2}
-  - {fileID: 11400000, guid: ab6c25446a694d44a5f659570d8c36b1, type: 2}
-  - {fileID: 11400000, guid: 3e8bf0c3605d42f0a9ad2ab986d68723, type: 2}
-  MeleeWeaponCount: 3
-  RangedWeaponCount: 3
-  ActiveItemCount: 8
-  PassiveItemCount: 4
+  Types:
+  - {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
+  - {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
+  - {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
   OrderInLayer: 1

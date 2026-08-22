@@ -42,10 +42,24 @@ namespace Runtime.Core.Spawning
         /// </summary>
         public event Action<Unit> UnitEnteredTile;
 
+        /// <summary>
+        /// A unit has fallen - announced by the spawner that owns the units, for the same reason an
+        /// arrival is: whoever cares what a death leaves behind (the loot) needs no reference handing
+        /// down into every unit. Restoring a snapshot takes units off the board without going
+        /// through here on purpose - undo puts back what a death did, it does not do it again.
+        /// </summary>
+        public event Action<Unit> UnitRemoved;
+
         /// <summary>Says a unit has just been placed on a tile. Called by the unit that moved.</summary>
         public void NotifyEnteredTile(Unit unit)
         {
             UnitEnteredTile?.Invoke(unit);
+        }
+
+        /// <summary>Says a unit has just fallen. Called by the unit that was removed.</summary>
+        public void NotifyRemoved(Unit unit)
+        {
+            UnitRemoved?.Invoke(unit);
         }
 
         [Header("References")]

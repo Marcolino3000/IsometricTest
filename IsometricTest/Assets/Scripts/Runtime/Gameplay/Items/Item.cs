@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Data;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Items
@@ -46,6 +47,12 @@ namespace Runtime.Gameplay.Items
         [TextArea] public string Description;
 
         public Sprite Symbol;
+
+        [Tooltip("Which kind of lootbox this item turns up in - in practice which tier it belongs " +
+                 "to. Left empty it is never found, which is what the weapon the character starts " +
+                 "with wants. The loot table is authored from this side: a box lists no contents, " +
+                 "so an item is put in play by the same asset that defines it.")]
+        public LootboxType FoundIn;
 
         /// <summary>The slot category this item is offered in.</summary>
         public virtual SlotKind Slot => SlotKind.None;

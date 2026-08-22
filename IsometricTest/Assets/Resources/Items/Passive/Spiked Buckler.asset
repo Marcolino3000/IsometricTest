@@ -15,5 +15,6 @@ MonoBehaviour:
   DisplayName: Spiked Buckler
   Description: Strike back at anyone who attacks you from within your reach.
   Symbol: {fileID: 1332440471, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
   Traits:
   - {fileID: 11400000, guid: bb9b31f40b1746b292fc04c862cb3a22, type: 2}

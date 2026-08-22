@@ -18,3 +18,4 @@ MonoBehaviour:
   DisplayName: Shortbow
   Description: Little damage per shot, but four shots fit in a turn.
   Symbol: {fileID: -1572880990, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
