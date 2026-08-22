@@ -22,8 +22,15 @@ namespace Runtime.Gameplay.Actions
         [SerializeField] private ActionsPointsBar actionsPointsBar;
         [SerializeField] private TileSpawner tileSpawner;
 
+        [Tooltip("Which icon stands for which kind of action. Left empty, a previewed point falls " +
+                 "back to the plain faded blob.")]
+        [SerializeField] private ActionIconSet actionIcons;
+
         private Unit unit;
         private List<IUnitAction> plannedActions = new();
+
+        // Rebuilt on every hovered tile, so it is kept rather than allocated per preview.
+        private readonly List<Sprite> previewIcons = new();
 
         public ConditionTestResult PlanMoveAction(ExecuteArgs executeArgs)
         {
@@ -147,14 +154,15 @@ namespace Runtime.Gameplay.Actions
         }
 
         /// <summary>
-        /// Uses a self-targeted active item, and says whether it was actually used. Runs the same
-        /// plan / test / execute path an attack does, so the cost is tested before anything happens,
-        /// spent afterwards and announced once - which is what makes an item undoable without any
-        /// history code of its own. There is nothing to preview: the item has no target to hover.
+        /// Plans one use of a self-targeted active item and shows what it would cost, without using
+        /// it. What a hovered item slot answers with - the item bar's equivalent of hovering a tile,
+        /// which is the only hover an item has: it is aimed at the character, so there is nothing on
+        /// the map to highlight. Deliberately untested, like a move plan reaching further than the
+        /// turn does: an item that cannot be afforded still shows what it wants.
         /// </summary>
-        public bool ExecuteItemAction(ActiveItemData item)
+        public bool PlanItemAction(ActiveItemData item)
         {
-            // Same guard as the plan methods: a dead unit must not act.
+            // Same guard as the other plan methods: a dead unit must not plan.
             if (unit == null || !unit.IsAlive || item == null)
                 return false;
 
@@ -168,6 +176,24 @@ namespace Runtime.Gameplay.Actions
 
             plannedActions.Clear();
             plannedActions.Add(item.CreateAction(context));
+
+            SetActionsPointsBar();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Uses a self-targeted active item, and says whether it was actually used. Runs the same
+        /// plan / test / execute path an attack does, so the cost is tested before anything happens,
+        /// spent afterwards and announced once - which is what makes an item undoable without any
+        /// history code of its own.
+        /// </summary>
+        public bool ExecuteItemAction(ActiveItemData item)
+        {
+            // Nothing planned means nothing to run: what the previous hover left behind must not be
+            // executed in its place.
+            if (!PlanItemAction(item))
+                return false;
 
             if (!TestConditionsForPlannedActions().IsValid)
                 return false;
@@ -219,7 +245,34 @@ namespace Runtime.Gameplay.Actions
         {
             var committed = unit.CurrentState.ActionPoints;
             var previewCost = Mathf.Min(PlannedCost, committed);
-            actionsPointsBar.SetBlobAmount(committed - previewCost, previewCost);
+            actionsPointsBar.SetBlobAmount(committed - previewCost, PreviewIcons(previewCost));
+        }
+
+        /// <summary>
+        /// One icon per action point the plan would spend, in the order it spends them - an action
+        /// costing two points therefore claims two blobs. Cut off at
+        /// <paramref name="affordableCost"/>, so a plan reaching further than the turn does shows
+        /// only the part of it that can be paid for.
+        ///
+        /// Here rather than in the bar because the plan is the executor's: the bar is handed sprites
+        /// and never learns that actions exist.
+        /// </summary>
+        private IReadOnlyList<Sprite> PreviewIcons(int affordableCost)
+        {
+            previewIcons.Clear();
+
+            foreach (var action in plannedActions)
+            {
+                var icon = actionIcons != null ? actionIcons.For(action.Kind) : null;
+
+                for (int i = 0; i < action.Cost && previewIcons.Count < affordableCost; i++)
+                    previewIcons.Add(icon);
+
+                if (previewIcons.Count >= affordableCost)
+                    break;
+            }
+
+            return previewIcons;
         }
 
         public void ClearPreview()

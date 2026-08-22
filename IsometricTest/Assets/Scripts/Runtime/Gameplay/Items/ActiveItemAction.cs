@@ -1,5 +1,6 @@
 using Actions;
 using Runtime.Gameplay.Actions;
+using Runtime.Gameplay.History;
 
 namespace Runtime.Gameplay.Items
 {
@@ -12,6 +13,8 @@ namespace Runtime.Gameplay.Items
     {
         public ActiveItemAction(ActiveItemCondition condition, ActiveItemEffect effect, ActionContext context)
             : base(condition, effect, context) { }
+
+        public override ActionKind Kind => ActionKind.UseItem;
 
         public override bool TestConditions()
         {

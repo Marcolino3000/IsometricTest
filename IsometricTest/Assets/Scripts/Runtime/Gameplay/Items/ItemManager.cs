@@ -12,11 +12,14 @@ namespace Runtime.Gameplay.Items
     {
         /// <summary>
         /// The category every slot of the bar stands for, in bar order: melee 0 (key 1), ranged 1,
-        /// passive 2, and the three active slots 3 to 5 (keys 4 to 6). A category may take more than
-        /// one slot, which is what tells the two kinds of category apart: a weapon or a passive shares
-        /// its one slot with everything of its kind and is picked from a column, while an active item
-        /// gets a slot to itself - so there is nothing to pick, and how many can be carried at once is
-        /// how many slots the category has here.
+        /// passive 2, the three active slots 3 to 5 (keys 4 to 6) and the three artefact slots 6 to 8
+        /// (keys 7 to 9). A category may take more than one slot, which is what tells the two kinds of
+        /// category apart: a weapon or a passive shares its one slot with everything of its kind and is
+        /// picked from a column, while an active item or an artefact gets a slot to itself - so there
+        /// is nothing to pick, and how many can be carried at once is how many slots the category has
+        /// here. Three artefact slots because there are three artefacts to find, and every one found is
+        /// worn: they are the set the match can be won by collecting, so the empty ones are also what
+        /// says how much of it is still out there.
         ///
         /// This table is the layout, not <see cref="SlotKind"/>'s own order: the enum is serialized on
         /// item assets and in the loot settings, so rearranging the bar must not mean rearranging it.
@@ -28,7 +31,10 @@ namespace Runtime.Gameplay.Items
             SlotKind.Passive,
             SlotKind.Active,
             SlotKind.Active,
-            SlotKind.Active
+            SlotKind.Active,
+            SlotKind.Artefact,
+            SlotKind.Artefact,
+            SlotKind.Artefact
         };
 
         /// <summary>Why an item cannot be taken - see <see cref="CanTake"/>. Short: they are shown
@@ -60,6 +66,20 @@ namespace Runtime.Gameplay.Items
         private GameRules gameRules;
         private Unit playerUnit;
 
+        /// <summary>The slot the cursor rests on, or -1. Kept because what a slot holds can change
+        /// under a resting cursor - a potion drunk out of it, a second copy taking its place.</summary>
+        private int hoveredSlot = -1;
+
+        /// <summary>
+        /// Set when the hover changed, and acted on once more in <see cref="LateUpdate"/>. The cursor
+        /// reaching the bar is also the cursor leaving the map, so the world answers with
+        /// <see cref="SelectionStatus.SelectionNoHover"/> and clears the very preview this one sets,
+        /// in the same frame - and which of the two runs last is up to where the panel's pointer
+        /// events land in the player loop. Saying it again at the end of the frame settles that
+        /// either way, and costs nothing while the cursor rests.
+        /// </summary>
+        private bool hoverPreviewPending;
+
         public IReadOnlyList<Item> Items => items;
 
         /// <summary>How many slots the layout above describes - what the bar has to build.</summary>
@@ -72,6 +92,7 @@ namespace Runtime.Gameplay.Items
             gameRules = rules;
             itemBar.SlotActivated += HandleSlotActivated;
             itemBar.OptionChosen += HandleOptionChosen;
+            itemBar.SlotHovered += HandleSlotHovered;
 
             // A bar built too short leaves a category with no slot, and one built too long shows slots
             // that stand for nothing. Neither is visible from the bar's side, which knows no categories.
@@ -108,9 +129,9 @@ namespace Runtime.Gameplay.Items
         ///
         /// <list type="bullet">
         /// <item>An asset already owned, unless its category may <see cref="CanStack"/> it.</item>
-        /// <item>A category carrying one item per slot is full once its slots are - active items.
-        /// Copies count, so three of the same draught fill the three slots as surely as three
-        /// different ones do.</item>
+        /// <item>A category carrying one item per slot is full once its slots are - active items and
+        /// artefacts. Copies count, so three of the same draught fill the three active slots as surely
+        /// as three different ones do; the three artefacts fill theirs by being all there is.</item>
         /// </list>
         /// </summary>
         public bool CanTake(Item item, out string reason)
@@ -140,15 +161,20 @@ namespace Runtime.Gameplay.Items
 
         /// <summary>
         /// Whether a category may hold the same item more than once, which the player switches with
-        /// <see cref="GameRules.StackDuplicateActiveItems"/>. Only a category carrying one item per
-        /// slot can, switch or no switch: everywhere else the whole category shares a single slot, so
-        /// a second copy would have nowhere of its own to be and would do nothing while it sat there -
-        /// a second identical sword is not a sword to swing, and a second amulet grants no more traits.
-        /// A copy is only worth owning where owning it means a use in hand.
+        /// <see cref="GameRules.StackDuplicateActiveItems"/>. Only active items can, switch or no
+        /// switch, and the reason is what a second copy would be *for*: everywhere else the whole
+        /// category shares a single slot, so it would have nowhere of its own to be and would do
+        /// nothing while it sat there - a second identical sword is not a sword to swing, and a second
+        /// amulet grants no more traits. A copy is only worth owning where owning it means a further
+        /// use in hand.
+        ///
+        /// Which is why this names the category rather than asking <see cref="HoldsOneItem"/>: an
+        /// artefact has a slot of its own too, but it is a unique find and there is never a second of
+        /// it to own.
         /// </summary>
         private bool CanStack(SlotKind kind)
         {
-            return HoldsOneItem(kind) && gameRules != null && gameRules.StackDuplicateActiveItems;
+            return kind == SlotKind.Active && gameRules != null && gameRules.StackDuplicateActiveItems;
         }
 
         /// <summary>
@@ -275,6 +301,45 @@ namespace Runtime.Gameplay.Items
             itemBar.OpenPicker(slot, options, slotItems.IndexOf(EquippedIn(slot)));
         }
 
+        /// <summary>
+        /// Remembers what the cursor is on and shows what it would cost. Its own step from
+        /// <see cref="ShowHoverPreview"/> because the slots change under a cursor that has not moved.
+        /// </summary>
+        private void HandleSlotHovered(int slot)
+        {
+            hoveredSlot = slot;
+            hoverPreviewPending = true;
+
+            ShowHoverPreview();
+        }
+
+        private void LateUpdate()
+        {
+            if (!hoverPreviewPending)
+                return;
+
+            hoverPreviewPending = false;
+
+            ShowHoverPreview();
+        }
+
+        /// <summary>
+        /// Puts what the hovered slot would cost into the character's action point bar, the way
+        /// hovering a tile puts the walk there into it. Only an active item has anything to show - a
+        /// weapon is drawn and a passive worn for nothing - so every other slot, and no slot at all,
+        /// clears the preview instead.
+        /// </summary>
+        private void ShowHoverPreview()
+        {
+            if (playerUnit == null || !playerUnit.IsAlive)
+                return;
+
+            if (hoveredSlot >= 0 && EquippedIn(hoveredSlot) is ActiveItemData item)
+                playerUnit.ActionExecutor.PlanItemAction(item);
+            else
+                playerUnit.ActionExecutor.ClearPreview();
+        }
+
         private void HandleOptionChosen(int slot, int option)
         {
             var slotItems = ItemsForSlot(slot);
@@ -301,6 +366,10 @@ namespace Runtime.Gameplay.Items
                 itemBar.SetSlotTooltip(i, item != null ? item.Tooltip : string.Empty);
                 itemBar.SetSlotActive(i, IsInUse(i, item));
             }
+
+            // The cursor may still be resting on a slot that has just changed hands - a potion drunk
+            // out of it, a looted one dropped into it - and it will not enter it a second time.
+            ShowHoverPreview();
         }
 
         /// <summary>
@@ -375,13 +444,13 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
-        /// Puts <paramref name="item"/> in <paramref name="slot"/>. The passive slot is filled through
-        /// the wearer rather than written straight into the array: what it holds is in effect merely
-        /// by being shown there.
+        /// Puts <paramref name="item"/> in <paramref name="slot"/>. A worn slot is filled through the
+        /// wearer rather than written straight into the array: what it holds is in effect merely by
+        /// being shown there, so its traits have to follow it in and out.
         /// </summary>
         private void Fill(int slot, Item item)
         {
-            if (SlotKinds[slot] == SlotKind.Passive)
+            if (IsWorn(SlotKinds[slot]))
                 Wear(slot, item);
             else
                 equippedBySlot[slot] = item;
@@ -477,7 +546,18 @@ namespace Runtime.Gameplay.Items
         /// </summary>
         private static bool HoldsOneItem(SlotKind kind)
         {
-            return kind == SlotKind.Active;
+            return kind == SlotKind.Active || kind == SlotKind.Artefact;
+        }
+
+        /// <summary>
+        /// Whether a category is in effect merely by sitting in its slot, rather than waiting to be
+        /// used or drawn. Both such categories are bundles of traits (<see cref="PassiveItem"/>), and
+        /// this is what puts those traits on the character and takes them off again - which is also
+        /// what makes an undone pickup undo the bonus with it.
+        /// </summary>
+        private static bool IsWorn(SlotKind kind)
+        {
+            return kind == SlotKind.Passive || kind == SlotKind.Artefact;
         }
 
         /// <summary>
@@ -519,7 +599,7 @@ namespace Runtime.Gameplay.Items
             return kind switch
             {
                 SlotKind.Melee or SlotKind.Ranged => playerUnit != null && item == playerUnit.CurrentState.AttackAction,
-                SlotKind.Passive => true,
+                SlotKind.Passive or SlotKind.Artefact => true,
                 _ => false
             };
         }
@@ -550,13 +630,21 @@ namespace Runtime.Gameplay.Items
                 case SlotKind.Active:
                     Use(item as ActiveItemData);
                     break;
+
+                case SlotKind.Artefact:
+                    // Nothing to choose and nothing to give up: an artefact is already worn by being
+                    // in its slot, and nothing else is ever offered that slot. Pressing its key is
+                    // how one reads what it does, not how one uses it up.
+                    break;
             }
         }
 
         /// <summary>
-        /// Puts a passive item on and takes the previous one off: its traits leave the character's
-        /// trait list and the new one's join it, which is all a passive item is. Only one instance of
-        /// each trait is removed, so one the blueprint grants as well survives taking the item off.
+        /// Puts a worn item on and takes the previous one off: its traits leave the character's trait
+        /// list and the new one's join it, which is all a passive item or an artefact is. Only one
+        /// instance of each trait is removed, so one the blueprint grants as well survives taking the
+        /// item off. An artefact slot only ever goes the one way in play - nothing is offered it after
+        /// the artefact - but it still goes back the other when an undo takes the find away.
         /// </summary>
         private void Wear(int slot, Item item)
         {

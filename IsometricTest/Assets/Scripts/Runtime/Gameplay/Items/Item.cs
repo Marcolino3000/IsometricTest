@@ -22,6 +22,15 @@ namespace Runtime.Gameplay.Items
         Active,
         Passive,
 
+        /// <summary>
+        /// A unique find, worn for good in a slot of its own - see <see cref="Artefact"/>. Its own
+        /// category rather than a kind of <see cref="Passive"/>, because the layout gives it several
+        /// slots where the passive gets one, the loot table places it on its own, and the win for
+        /// collecting the set has to be able to tell one apart. Appended rather than slipped in
+        /// beside the passive, so nothing already serialized changes meaning.
+        /// </summary>
+        Artefact,
+
         /// <summary>Belongs in no slot - e.g. the move action, which is not an item at all.</summary>
         None
     }
@@ -121,6 +130,7 @@ namespace Runtime.Gameplay.Items
                 SlotKind.Ranged => "Ranged Weapon",
                 SlotKind.Active => "Active Item",
                 SlotKind.Passive => "Passive Item",
+                SlotKind.Artefact => "Artefact",
                 _ => string.Empty
             };
         }

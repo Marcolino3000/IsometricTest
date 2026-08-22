@@ -222,6 +222,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Actions.ActionPointCounter
   actionsPointsBar: {fileID: 3415384219615473639}
   tileSpawner: {fileID: 0}
+  actionIcons: {fileID: 11400000, guid: fbd5bfd212bb402fa49fd07b13bc60c5, type: 2}
 --- !u!114 &8405904222454837858
 MonoBehaviour:
   m_ObjectHideFlags: 0

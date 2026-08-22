@@ -37,6 +37,13 @@ namespace UI
         /// <summary>Raised with the slot and the index of the entry that was confirmed.</summary>
         public event Action<int, int> OptionChosen;
 
+        /// <summary>
+        /// Raised with the slot the cursor rests on, and with <see cref="NoSelection"/> when it
+        /// leaves one. Its own event rather than the tooltip's timer: what a slot would cost is shown
+        /// the moment it is pointed at, while its label waits out the hover delay.
+        /// </summary>
+        public event Action<int> SlotHovered;
+
         /// <summary>How many slots the bar actually built. Zero until its Awake has run.</summary>
         public int SlotCount => slots.Count;
 
@@ -309,7 +316,7 @@ namespace UI
                 slot.Q<Label>("hotkey").text = (i + 1).ToString();
                 slot.RegisterCallback<ClickEvent>(_ => HandleSlotClicked(index));
                 slot.RegisterCallback<PointerEnterEvent>(_ => HoverSlot(index, slot));
-                slot.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+                slot.RegisterCallback<PointerLeaveEvent>(_ => LeaveSlot());
 
                 slots.Add(slot);
                 slotIcons.Add(slot.Q<VisualElement>("icon"));
@@ -338,7 +345,16 @@ namespace UI
         {
             hoveredSlot = index;
 
+            SlotHovered?.Invoke(index);
+
             ScheduleTooltip(slot, slotTooltips[index], false);
+        }
+
+        private void LeaveSlot()
+        {
+            SlotHovered?.Invoke(NoSelection);
+
+            HideTooltip();
         }
 
         private void ScheduleTooltip(VisualElement anchor, string text, bool toSide)

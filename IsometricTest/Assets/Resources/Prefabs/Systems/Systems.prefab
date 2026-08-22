@@ -547,7 +547,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9b06e34a5714f28b3cd820f61e9a7c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.ItemBar
-  slotCount: 6
+  slotCount: 9
   tooltipDelay: 0.5
   slotTemplate: {fileID: 9197481963319205126, guid: b7e21d5648fa4c93bb0e6a17d4c85320, type: 3}
 --- !u!1 &5086448277929844389

@@ -1,6 +1,7 @@
 using Runtime.Core.Spawning;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Fog;
+using Runtime.Gameplay.Items;
 
 namespace Runtime.Gameplay.Global
 {
@@ -71,6 +72,13 @@ namespace Runtime.Gameplay.Global
             if (rules.WinByExploringMap && IsMapUncovered(tileSpawner, fogOfWar))
                 return MatchResult.Won("The whole map has been uncovered.");
 
+            // Before the loot below, and not instead of it: an artefact lies on the map like anything
+            // else, so it counts towards that condition too - but collecting the set is the more
+            // particular achievement and deserves to be the sentence the screen shows.
+            if (rules.WinByCollectingAllArtefacts &&
+                IsAllLootCollected(lootSpawner, unitSpawner, SlotKind.Artefact))
+                return MatchResult.Won("Every artefact has been recovered.");
+
             if (rules.WinByCollectingAllLoot && IsAllLootCollected(lootSpawner, unitSpawner))
                 return MatchResult.Won("Every lootbox has been found.");
 
@@ -135,8 +143,14 @@ namespace Runtime.Gameplay.Global
         /// A box waiting to be dropped counts as uncollected too, though it is on no tile yet - but
         /// only while somebody is left standing to leave it behind. Once nobody is, it never will
         /// be, and a box that can no longer reach the board must not hold up the win forever.
+        ///
+        /// <paramref name="onlyKind"/> narrows it to one category of find - the artefacts - which is
+        /// the same question asked of fewer boxes rather than a condition of its own. Null asks it of
+        /// every box, and a board with none of the kind in question is no more a win than an unbuilt
+        /// grid is.
         /// </summary>
-        private static bool IsAllLootCollected(LootSpawner lootSpawner, UnitSpawner unitSpawner)
+        private static bool IsAllLootCollected(LootSpawner lootSpawner, UnitSpawner unitSpawner,
+            SlotKind? onlyKind = null)
         {
             if (lootSpawner == null)
                 return false;
@@ -149,6 +163,9 @@ namespace Runtime.Gameplay.Global
             foreach (var lootbox in lootSpawner.AllSpawnedLootboxes)
             {
                 if (lootbox == null)
+                    continue;
+
+                if (onlyKind.HasValue && (lootbox.Content == null || lootbox.Content.Slot != onlyKind.Value))
                     continue;
 
                 // Taken, rather than merely off the board: a drop nobody has died for yet is neither.

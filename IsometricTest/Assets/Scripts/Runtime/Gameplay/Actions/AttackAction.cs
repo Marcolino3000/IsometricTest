@@ -1,11 +1,14 @@
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Global;
+using Runtime.Gameplay.History;
 
 namespace Actions
 {
     public class AttackAction : UnitAction<AttackCondition, AttackEffect>
     {
         public AttackAction(AttackCondition condition, AttackEffect effect, ActionContext context) : base(condition, effect, context) { }
+
+        public override ActionKind Kind => ActionKind.Attack;
 
         public override bool TestConditions()
         {

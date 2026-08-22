@@ -73,6 +73,13 @@ namespace Runtime.Gameplay.Global
                  "of anywhere the character can stand.")]
         public bool WinByExploringMap = true;
 
+        [Tooltip("When on, the match is won once all three artefacts have been found. They lie open " +
+                 "on the map rather than inside a box, each is worn for good in a slot of its own, " +
+                 "and each grants one bonus - to attacks, to movement, to defence. Asked before the " +
+                 "condition below, since collecting the set is the more particular achievement and " +
+                 "an artefact counts as loot for that one too.")]
+        public bool WinByCollectingAllArtefacts = true;
+
         [Tooltip("When on, the match is won once every lootbox on the map has been taken. A box " +
                  "holding something that cannot be carried is left where it lies, so it has to be " +
                  "come back for with a slot free - the win waits for it either way.")]

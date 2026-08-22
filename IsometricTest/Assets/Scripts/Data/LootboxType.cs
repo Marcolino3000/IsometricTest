@@ -26,6 +26,13 @@ namespace Data
                  "the tier of a box is legible on the board before it is opened.")]
         public Sprite Sprite;
 
+        [Tooltip("When on, what lies on the tile is drawn with the symbol of the item inside it " +
+                 "rather than with the sprite above - the find is not hidden in a box and can be " +
+                 "seen for what it is from across the map. What artefacts are found this way. An " +
+                 "item carrying no symbol yet falls back to the sprite, so nothing goes invisible " +
+                 "while the art is still being drawn.")]
+        public bool ShowsContent;
+
         [Tooltip("Action points taking a box of this kind costs. Belongs to the box rather than to " +
                  "the unit taking it, so a richer tier can simply ask for more.")]
         [Min(0)] public int PickupCost = 1;
@@ -44,6 +51,11 @@ namespace Data
         [Tooltip("How many boxes of this kind hold a passive item - gear worn for its traits.")]
         [Min(0)] public int PassiveItemCount;
 
+        [Tooltip("How many of this kind hold an artefact - a unique find worn for good in a slot of " +
+                 "its own. Each artefact is dealt once, so asking for as many as there are artefacts " +
+                 "puts every one of them on the map.")]
+        [Min(0)] public int ArtefactCount;
+
         [Header("Where They Come From")]
         [Tooltip("How many of this kind's boxes a fallen enemy leaves behind instead of lying about " +
                  "the map from the start. Drawn at random from this kind's own boxes, so a drop is " +
@@ -60,7 +72,8 @@ namespace Data
         /// exists because something was asked to be in it. Scattered boxes are still capped by how
         /// many free tiles there are, and dropped ones by how many units there are to fall.
         /// </summary>
-        public int LootboxCount => MeleeWeaponCount + RangedWeaponCount + ActiveItemCount + PassiveItemCount;
+        public int LootboxCount =>
+            MeleeWeaponCount + RangedWeaponCount + ActiveItemCount + PassiveItemCount + ArtefactCount;
 
         /// <summary>How many boxes of this kind hold <paramref name="kind"/>. Zero for a non-category.</summary>
         public int CountFor(SlotKind kind)
@@ -71,6 +84,7 @@ namespace Data
                 SlotKind.Ranged => RangedWeaponCount,
                 SlotKind.Active => ActiveItemCount,
                 SlotKind.Passive => PassiveItemCount,
+                SlotKind.Artefact => ArtefactCount,
                 _ => 0
             };
         }

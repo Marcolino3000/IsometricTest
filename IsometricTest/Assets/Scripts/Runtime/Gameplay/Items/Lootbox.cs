@@ -87,8 +87,28 @@ namespace Runtime.Gameplay.Items
             spriteRenderer.sortingOrder = orderInLayer;
             spriteRenderer.enabled = false;
 
-            if (type != null && type.Sprite != null)
-                spriteRenderer.sprite = type.Sprite;
+            var sprite = SpriteFor(type, content);
+
+            if (sprite != null)
+                spriteRenderer.sprite = sprite;
+        }
+
+        /// <summary>
+        /// What lies on the tile. Usually the kind's own sprite - the box, telling its tier and
+        /// nothing about what is inside. A kind that <see cref="LootboxType.ShowsContent"/> is not a
+        /// box at all: the find lies open, so it is drawn with the item's own symbol and can be read
+        /// from across the map. An item with no symbol yet falls back to the sprite rather than
+        /// leaving nothing on the tile.
+        /// </summary>
+        private static Sprite SpriteFor(LootboxType type, Item content)
+        {
+            if (type == null)
+                return null;
+
+            if (type.ShowsContent && content != null && content.Symbol != null)
+                return content.Symbol;
+
+            return type.Sprite;
         }
 
         /// <summary>
