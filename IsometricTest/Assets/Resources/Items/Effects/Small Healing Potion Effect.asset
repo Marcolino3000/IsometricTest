@@ -10,6 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 87d45e05b74c749cd8c1ffbc0c24ee76, type: 3}
-  m_Name: Healing Draught Effect
+  m_Name: Small Healing Potion Effect
   m_EditorClassIdentifier: 
-  Amount: 6
+  Amount: 3

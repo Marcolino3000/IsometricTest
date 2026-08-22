@@ -10,6 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd1c0303cd2b644dd846a0ec239febad, type: 3}
-  m_Name: Item Cost 5
+  m_Name: Item Cost 3
   m_EditorClassIdentifier: 
-  Cost: 5
+  Cost: 3

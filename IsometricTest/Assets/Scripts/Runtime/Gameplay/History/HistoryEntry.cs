@@ -49,6 +49,9 @@ namespace Runtime.Gameplay.History
                 case ActionKind.UseItem:
                     return $"{DisplayName(report.Actor)} uses an item";
 
+                case ActionKind.Merge:
+                    return $"{DisplayName(report.Actor)} merges two items";
+
                 default:
                     return $"Turn {turnNumber}: {report.Team}";
             }
@@ -75,6 +78,14 @@ namespace Runtime.Gameplay.History
                 else if (healthDelta != 0)
                     parts.Add($"{DisplayName(afterUnit.Unit)} {healthDelta:+#;-#;0} HP");
             }
+
+            // How a merge went, read out of the inventory rather than off the report: a successful
+            // one leaves behind a weapon that was not owned before, a failed one only spends what it
+            // was fed. Diffed like everything else here, so the report itself stays "I acted".
+            if (report.Kind == ActionKind.Merge)
+                parts.Add(after.Items.Exists(item => !before.Items.Contains(item))
+                    ? "merge succeeded"
+                    : "merge failed");
 
             // Action point refreshes on a turn change would drown out everything else, so only an
             // acting unit's own spending is reported.

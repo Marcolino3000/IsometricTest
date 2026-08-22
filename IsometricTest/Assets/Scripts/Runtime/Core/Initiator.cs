@@ -44,6 +44,10 @@ namespace Runtime.Core
                  "centered, or the wide one with the symbol beside it.")]
         [SerializeField] private bool verticalItemPopup;
 
+        [Tooltip("Where the symbol on the merge screen's corner button is cut from. The same table " +
+                 "the action point preview reads, since merging is a kind of action too.")]
+        [SerializeField] private ActionIconSet actionIcons;
+
 
         [Tooltip("Screen-space UI documents. A click that lands on one of them must not raycast into the world.")]
         [SerializeField] private UIDocument[] hudDocuments;
@@ -105,7 +109,7 @@ namespace Runtime.Core
             itemBar.Setup(inputHandler);
             // The rules go in live, like they do into CombatRules: whether the same draught may be
             // carried twice is switchable during play.
-            itemManager.Setup(itemBar, CreateItemPopup(), gameRules);
+            itemManager.Setup(itemBar, CreateItemPopup(), CreateMergeScreen(), gameRules);
             CreateUnitCard();
             CreateGameOverScreen();
         }
@@ -158,6 +162,25 @@ namespace Runtime.Core
             inputHandler.AddBlocker(popup);
 
             return popup;
+        }
+
+        /// <summary>
+        /// The merge workbench is built at runtime like the find popup and borrows the same panel
+        /// settings, which is also what keeps a click on its corner button out of the world: the
+        /// Raycaster picks every document on the HUD's panel together. It sorts above the other
+        /// cards - it is a modal the player opened on purpose, and nothing else can arrive while it
+        /// swallows input. Registered with the input handler for that swallowing.
+        /// </summary>
+        private MergeScreen CreateMergeScreen()
+        {
+            var hud = itemBar.GetComponent<UIDocument>();
+
+            var screen = MergeScreen.Create(hud.panelSettings, hud.sortingOrder + 4,
+                actionIcons != null ? actionIcons.For(ActionKind.Merge) : null);
+
+            inputHandler.AddBlocker(screen);
+
+            return screen;
         }
 
         private void SetupReferences()

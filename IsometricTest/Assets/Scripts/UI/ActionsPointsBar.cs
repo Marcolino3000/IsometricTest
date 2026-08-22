@@ -85,11 +85,12 @@ namespace UI
         /// preview blob per entry in <paramref name="previewIcons"/>; every remaining blob is shown as
         /// inactive. Used points are therefore replaced starting from the right side.
         ///
-        /// A previewed point is drawn as the icon standing for the action about to spend it, in the
-        /// order the plan spends them, so a walk up to a target reads as steps followed by the strike.
-        /// The bar is told sprites rather than actions on purpose - like the item bar, it draws what
-        /// it is handed and knows nothing about what the picture means. An entry left null keeps the
-        /// plain faded blob, which is what an action nobody drew an icon for falls back to.
+        /// A previewed point is drawn as the icon standing for the action about to spend it. The list
+        /// is drawn left to right like everything else here; which end of it is spent first is the
+        /// caller's business, since the bar is told sprites rather than actions on purpose - like the
+        /// item bar, it draws what it is handed and knows nothing about what the picture means. An
+        /// entry left null keeps the plain faded blob, which is what an action nobody drew an icon
+        /// for falls back to.
         /// </summary>
         public void SetBlobAmount(int activeAmount, IReadOnlyList<Sprite> previewIcons = null)
         {

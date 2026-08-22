@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DisplayName: Artefact of Swiftness
   Description: One of the three. Rough ground costs 1 action point less to cross.
-  Symbol: {fileID: 0}
+  Symbol: {fileID: 1119931974, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 64d5d4cbf96b4d1583c631089ba07e2a, type: 2}
   Traits:
   - {fileID: 11400000, guid: 2957bb0121ef48e882ba92e066aa719a, type: 2}

@@ -249,10 +249,15 @@ namespace Runtime.Gameplay.Actions
         }
 
         /// <summary>
-        /// One icon per action point the plan would spend, in the order it spends them - an action
-        /// costing two points therefore claims two blobs. Cut off at
-        /// <paramref name="affordableCost"/>, so a plan reaching further than the turn does shows
-        /// only the part of it that can be paid for.
+        /// One icon per action point the plan would spend - an action costing two points therefore
+        /// claims two blobs. Cut off at <paramref name="affordableCost"/>, so a plan reaching further
+        /// than the turn does shows only the part of it that can be paid for.
+        ///
+        /// Handed over **in reverse**, because the bar is spent from the right: the rightmost blob is
+        /// the next point to go, so the plan's first step belongs there and the strike it walks up to
+        /// ends up on the left, beside the points that survive it. Reading the row right to left is
+        /// therefore reading the plan in order, and a blob vanishing is the step it stood for being
+        /// taken.
         ///
         /// Here rather than in the bar because the plan is the executor's: the bar is handed sprites
         /// and never learns that actions exist.
@@ -271,6 +276,11 @@ namespace Runtime.Gameplay.Actions
                 if (previewIcons.Count >= affordableCost)
                     break;
             }
+
+            // Collected in the order the points are spent, drawn in the order they are shown - and the
+            // two run opposite ways. Reversed here rather than read backwards by the bar, which is
+            // handed a plain left-to-right list and has no idea which end of it is spent first.
+            previewIcons.Reverse();
 
             return previewIcons;
         }

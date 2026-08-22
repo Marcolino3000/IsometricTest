@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Actions;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
+using Runtime.Gameplay.History;
 using UI;
 using UnityEngine;
 
@@ -42,6 +43,11 @@ namespace Runtime.Gameplay.Items
         private const string NoRoomNotice = "No free item slot";
         private const string AlreadyCarriedNotice = "Already carried";
 
+        /// <summary>How a merge went - shown under the two merge slots, where the odds were.</summary>
+        private const string MergeSucceededNotice = "The traits carried over.";
+        private const string MergeFailedNotice = "The merge failed. The right item was lost.";
+        private const string NothingToMergeNotice = "Nothing owned fits that slot";
+
         [Header("Look")]
         [Tooltip("What each category of item looks like in the bar: the symbol an empty slot of it " +
                  "shows in place of what it does not hold, and the colour every slot of it wears. " +
@@ -69,6 +75,7 @@ namespace Runtime.Gameplay.Items
 
         private ItemBar itemBar;
         private ItemPopup itemPopup;
+        private MergeScreen mergeScreen;
         private GameRules gameRules;
         private Unit playerUnit;
 
@@ -86,19 +93,43 @@ namespace Runtime.Gameplay.Items
         /// </summary>
         private bool hoverPreviewPending;
 
+        /// <summary>
+        /// What the two merge slots hold. Kept here rather than on the screen for the same reason the
+        /// bar's slots are: the screen is a pure view that knows indices and icons, and this is the
+        /// only place that knows they are items. Deliberately outside <see cref="GameSnapshot"/> -
+        /// choosing what to feed a merge costs nothing and changes nothing, exactly like drawing a
+        /// weapon; it is only ever re-checked against what is still owned (<see cref="ShowMerge"/>).
+        /// </summary>
+        private Item mergeLeft;
+        private Item mergeRight;
+
+        /// <summary>How the last merge went, until either slot is filled afresh.</summary>
+        private string mergeNotice = string.Empty;
+
         public IReadOnlyList<Item> Items => items;
 
         /// <summary>How many slots the layout above describes - what the bar has to build.</summary>
         public static int SlotCount => SlotKinds.Length;
 
-        public void Setup(ItemBar bar, ItemPopup popup, GameRules rules)
+        public void Setup(ItemBar bar, ItemPopup popup, MergeScreen merge, GameRules rules)
         {
             itemBar = bar;
             itemPopup = popup;
+            mergeScreen = merge;
             gameRules = rules;
             itemBar.SlotActivated += HandleSlotActivated;
             itemBar.OptionChosen += HandleOptionChosen;
             itemBar.SlotHovered += HandleSlotHovered;
+
+            // The same dialogue the bar has, over two slots instead of nine: the screen says which
+            // one was activated, this answers with what fits, and the screen says which was picked.
+            if (mergeScreen != null)
+            {
+                mergeScreen.Opened += ShowMerge;
+                mergeScreen.SlotActivated += HandleMergeSlotActivated;
+                mergeScreen.OptionChosen += HandleMergeOptionChosen;
+                mergeScreen.MergeRequested += PerformMerge;
+            }
 
             // A bar built too short leaves a category with no slot, and one built too long shows slots
             // that stand for nothing. Neither is visible from the bar's side, which knows no categories.
@@ -117,6 +148,14 @@ namespace Runtime.Gameplay.Items
 
             if (itemPopup != null)
                 itemPopup.Hide();
+
+            // A restart hands over a fresh character owning none of what was on the bench.
+            mergeLeft = null;
+            mergeRight = null;
+            mergeNotice = string.Empty;
+
+            if (mergeScreen != null)
+                mergeScreen.Close();
 
             var startingWeapon = playerUnit.CurrentState.AttackAction;
 
@@ -259,11 +298,27 @@ namespace Runtime.Gameplay.Items
             if (itemPopup != null)
                 itemPopup.Hide();
 
-            if (playerUnit != null && !items.Contains(playerUnit.CurrentState.AttackAction))
-                playerUnit.CurrentState.AttackAction = FirstOwned(SlotKind.Melee) as AttackActionData
-                                                      ?? FirstOwned(SlotKind.Ranged) as AttackActionData;
+            DropUnownedWeapon();
 
             ShowSlots();
+
+            // An undo can take away an item the merge slots were holding - including one this very
+            // merge produced - so what they show is asked of the inventory again.
+            ShowMerge();
+        }
+
+        /// <summary>
+        /// Puts down a weapon the character no longer owns and draws whatever it does own instead.
+        /// The one rule for it, because two things now take a weapon out of the inventory: an undo
+        /// rewinding a pickup, and a merge spending one as material.
+        /// </summary>
+        private void DropUnownedWeapon()
+        {
+            if (playerUnit == null || items.Contains(playerUnit.CurrentState.AttackAction))
+                return;
+
+            playerUnit.CurrentState.AttackAction = FirstOwned(SlotKind.Melee) as AttackActionData
+                                                  ?? FirstOwned(SlotKind.Ranged) as AttackActionData;
         }
 
         /// <summary>
@@ -712,6 +767,181 @@ namespace Runtime.Gameplay.Items
             }
 
             equippedBySlot[slot] = item;
+        }
+
+        // Everything below is the merge, and it is the same shape as the bar above it: the screen
+        // is a pure view that knows two slot indices and a list of icons, this is the only thing
+        // that knows they stand for items, and MergeRules is the only thing that knows what merging
+        // costs in odds. Nothing here decides a rule and nothing there touches an inventory.
+
+        /// <summary>
+        /// Answers the screen with everything owned that fits the activated merge slot, starting the
+        /// choice on what is already in it. The two sides ask different questions of an item - the
+        /// left one is improved and has to be a weapon, the right one is taken apart and has to have
+        /// traits to give - and both are <see cref="MergeRules"/>'.
+        /// </summary>
+        private void HandleMergeSlotActivated(int side)
+        {
+            var candidates = MergeCandidates(side);
+
+            if (candidates.Count == 0)
+            {
+                mergeScreen.SetNotice(NothingToMergeNotice);
+
+                return;
+            }
+
+            var options = new List<ItemOption>(candidates.Count);
+
+            foreach (var item in candidates)
+                options.Add(new ItemOption(item.Symbol, item.Tooltip, item.Title));
+
+            mergeScreen.OpenPicker(side, options, candidates.IndexOf(ChosenFor(side)));
+        }
+
+        private void HandleMergeOptionChosen(int side, int option)
+        {
+            var candidates = MergeCandidates(side);
+
+            if (option < 0 || option >= candidates.Count)
+                return;
+
+            if (side == MergeScreen.LeftSide)
+                mergeLeft = candidates[option];
+            else
+                mergeRight = candidates[option];
+
+            // How the last merge went stops being the news the moment the next one is being set up.
+            mergeNotice = string.Empty;
+
+            ShowMerge();
+        }
+
+        /// <summary>
+        /// Everything owned that may stand on <paramref name="side"/>, minus whatever the other side
+        /// is holding - an item cannot be merged into itself, and offering it on both sides only
+        /// invites that. No entry is ever a duplicate of another: neither category stacks.
+        /// </summary>
+        private List<Item> MergeCandidates(int side)
+        {
+            var candidates = new List<Item>();
+            var other = side == MergeScreen.LeftSide ? mergeRight : mergeLeft;
+
+            foreach (var item in items)
+            {
+                if (item == null || item == other)
+                    continue;
+
+                bool fits = side == MergeScreen.LeftSide
+                    ? MergeRules.CanBeImproved(item)
+                    : MergeRules.CanBeConsumed(item);
+
+                if (fits)
+                    candidates.Add(item);
+            }
+
+            return candidates;
+        }
+
+        /// <summary>An item as one of the two merge slots draws it, or an empty slot for none.</summary>
+        private void ShowMergeSlot(int side, Item item)
+        {
+            mergeScreen.SetSlot(side,
+                item != null ? item.Symbol : null,
+                item != null ? item.Title : string.Empty,
+                item != null ? item.Tooltip : string.Empty);
+        }
+
+        private Item ChosenFor(int side)
+        {
+            return side == MergeScreen.LeftSide ? mergeLeft : mergeRight;
+        }
+
+        /// <summary>
+        /// Pushes the two slots, the odds and whatever there is to say onto the screen - the merge's
+        /// answer to <see cref="ShowSlots"/>. Called whenever either could have changed, including
+        /// from behind: an undo, a merge or a drunk potion can take away an item that was sitting in
+        /// a merge slot, so what is shown is re-checked against what is still owned every time.
+        /// </summary>
+        private void ShowMerge()
+        {
+            if (mergeScreen == null)
+                return;
+
+            if (!items.Contains(mergeLeft))
+                mergeLeft = null;
+
+            if (!items.Contains(mergeRight))
+                mergeRight = null;
+
+            ShowMergeSlot(MergeScreen.LeftSide, mergeLeft);
+            ShowMergeSlot(MergeScreen.RightSide, mergeRight);
+
+            bool possible = MergeRules.CanMerge(mergeLeft, mergeRight, out var reason);
+
+            mergeScreen.SetChance(possible
+                ? $"{MergeRules.SuccessPercent(mergeLeft, mergeRight)}% chance to succeed"
+                : string.Empty);
+            mergeScreen.SetMergeEnabled(possible);
+
+            // While a pair cannot be merged, why not is the only thing worth saying; once it can,
+            // the line is free for how the last one went.
+            mergeScreen.SetNotice(possible ? mergeNotice : reason);
+        }
+
+        /// <summary>
+        /// Spends the item on the right and rolls for it. The right item is gone either way - that
+        /// is what the odds are a risk on - and on a success the weapon on the left is replaced by
+        /// the copy <see cref="MergeRules.Combine"/> makes of it, carrying both sets of traits.
+        ///
+        /// Costs no action points and does not wait for the player's turn: like drawing a weapon,
+        /// it is loadout. It is still <b>reported</b>, because unlike drawing a weapon it destroys
+        /// something - the snapshot taken around it is what puts both originals back on an undo, and
+        /// the merged copy is an ordinary item reference in that list, so a redo hands back the very
+        /// same weapon rather than rolling for it again.
+        /// </summary>
+        private void PerformMerge()
+        {
+            if (playerUnit == null || !MergeRules.CanMerge(mergeLeft, mergeRight, out _))
+                return;
+
+            if (!items.Contains(mergeLeft) || !items.Contains(mergeRight))
+                return;
+
+            var left = mergeLeft;
+            var right = mergeRight;
+
+            // Read before anything is spent: the odds are one over what the weapon would end up
+            // carrying, so they have to be asked of the pair as it still stands.
+            bool succeeded = UnityEngine.Random.value < MergeRules.SuccessChance(left, right);
+            bool wasDrawn = playerUnit.CurrentState.AttackAction == left;
+
+            items.Remove(right);
+            mergeRight = null;
+
+            if (succeeded)
+            {
+                var merged = MergeRules.Combine(left, right);
+
+                // In place, so the improved weapon keeps the position the original had in the
+                // inventory and turns up in the same slot rather than at the end of its category.
+                items[items.IndexOf(left)] = merged;
+                mergeLeft = merged;
+
+                // The weapon in hand is a reference, not a slot: a merge while it is drawn has to
+                // put the copy in hand, or the character would go on swinging the one it replaced.
+                if (wasDrawn)
+                    playerUnit.CurrentState.AttackAction = merged;
+            }
+
+            mergeNotice = succeeded ? MergeSucceededNotice : MergeFailedNotice;
+
+            DropUnownedWeapon();
+            ShowSlots();
+            ShowMerge();
+
+            // Last, once the board and the bar are whole: the after-snapshot is taken on this.
+            ActionReporter.Report(ActionReport.Merge(playerUnit));
         }
 
         /// <summary>

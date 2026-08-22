@@ -25,8 +25,16 @@ namespace Data
         public List<LootboxType> Types = new();
 
         [Header("Visual Settings")]
-        [Tooltip("Sorting order of the box sprite. Below the units so nobody is hidden behind a box.")]
-        public int OrderInLayer = 1;
+        [Tooltip("Sorting order of the box sprite. Above the tiles' markers, so a box is not buried " +
+                 "under the movement highlights it lies among, and below the units, so nobody is " +
+                 "hidden behind a box. Ground 0, tile marker 1, box 2, unit 3.")]
+        public int OrderInLayer = 2;
+
+        [Tooltip("How large a box is drawn, in world units of the shared prefab's scale. Replaces " +
+                 "whatever the prefab carries, exactly as the kind's sprite does, so the size is " +
+                 "authored here rather than in a prefab nobody opens - and every kind stays the " +
+                 "same size, so the tier is still read off the silhouette the artist drew.")]
+        [Min(0.01f)] public float Scale = 1.25f;
 
         /// <summary>How many boxes all kinds together ask for, before either cap is applied.</summary>
         public int LootboxCount

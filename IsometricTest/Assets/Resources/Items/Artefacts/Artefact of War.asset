@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DisplayName: Artefact of War
   Description: One of the three. Every attack strikes for 4 more.
-  Symbol: {fileID: 0}
+  Symbol: {fileID: 2081327370, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 64d5d4cbf96b4d1583c631089ba07e2a, type: 2}
   Traits:
   - {fileID: 11400000, guid: 347815a977e7438baeaa52d4757ef7a7, type: 2}

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Data;
 using Runtime.Core.State;
 using Runtime.Gameplay.Entities;
@@ -327,7 +328,7 @@ namespace Runtime.Core.Spawning
         {
             var lootbox = Instantiate(settings.LootboxPrefab, transform);
             lootbox.name = $"{type.Title} {lootboxes.Count}";
-            lootbox.Setup(type, content, settings.OrderInLayer);
+            lootbox.Setup(type, content, settings.OrderInLayer, settings.Scale);
 
             lootboxes.Add(lootbox);
 
@@ -349,6 +350,9 @@ namespace Runtime.Core.Spawning
         /// The tiles a box may lie on, in randomized order: walkable ground with nobody standing on
         /// it. Impassable terrain is ruled out by <see cref="CanLieOn"/>, and an occupied tile because
         /// the unit spawned there would be standing on free loot.
+        ///
+        /// Shuffled here rather than where they are handed out, so that each kind's ring
+        /// (<see cref="OrderByRing"/>) is scattered along its own length by one shuffle they all share.
         /// </summary>
         private List<Tile> GetShuffledLootTiles()
         {
@@ -363,6 +367,23 @@ namespace Runtime.Core.Spawning
             Shuffle(candidates);
 
             return candidates;
+        }
+
+        /// <summary>
+        /// The tiles left, ordered by how far each misses <paramref name="type"/>'s ring: its own
+        /// ground first, then the nearest outside it. Ordered rather than filtered, exactly as a
+        /// spawn zone is, so a ring walled off by mountains or already taken up by the tiers before
+        /// it spills over its border instead of losing its boxes.
+        ///
+        /// The list handed in was shuffled once, and the sort is stable, so that shuffle survives as
+        /// the random tiebreak within a ring - the tier lands somewhere else along its ring each
+        /// match while staying at its distance.
+        /// </summary>
+        private List<Tile> OrderByRing(List<Tile> tiles, LootboxType type)
+        {
+            return tiles
+                .OrderBy(tile => type.DistanceOutsideRing(tileSpawner.DistanceFromCenter(tile)))
+                .ToList();
         }
 
         /// <summary>
@@ -508,12 +529,12 @@ namespace Runtime.Core.Spawning
             CollectItems();
 
             var tiles = GetShuffledLootTiles();
-            var placed = 0;
             var dropsLeft = CountDroppableUnits();
 
             // One kind at a time, and within a kind one category at a time, so each gets the number
-            // of boxes it was asked for. The tiles were shuffled beforehand, so handing them out in
-            // order still scatters the kinds over the whole map.
+            // of boxes it was asked for. A kind is also placed as a whole because its ring is its
+            // own: the tiles it takes are the ones nearest its distance from the middle of the map,
+            // and what it takes is gone for the kinds after it.
             foreach (var type in settings.Types)
             {
                 if (type == null)
@@ -533,6 +554,11 @@ namespace Runtime.Core.Spawning
                 var dropping = Math.Min(Math.Min(type.DroppedCount, contents.Count), dropsLeft);
                 dropsLeft -= dropping;
 
+                // Where this kind lies. Only the scattered ones are placed from it - a drop lands
+                // wherever its unit happened to fall, which is no tier's business.
+                var candidates = OrderByRing(tiles, type);
+                var placed = 0;
+
                 for (var i = 0; i < contents.Count; i++)
                 {
                     if (i < dropping)
@@ -543,10 +569,13 @@ namespace Runtime.Core.Spawning
 
                     // Nothing left to scatter onto. The box is not made at all rather than left
                     // pending: a pending box no fall will ever place could never be collected.
-                    if (placed >= tiles.Count)
+                    if (placed >= candidates.Count)
                         break;
 
-                    Place(CreateLootbox(type, contents[i]), LootboxState.InPlay, tiles[placed++]);
+                    var tile = candidates[placed++];
+
+                    Place(CreateLootbox(type, contents[i]), LootboxState.InPlay, tile);
+                    tiles.Remove(tile);
                 }
             }
 

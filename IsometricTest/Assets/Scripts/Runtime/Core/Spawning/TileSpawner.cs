@@ -263,6 +263,23 @@ namespace Runtime.Core.Spawning
             return settings.GetSpawnZonePositions(team);
         }
 
+        /// <summary>
+        /// How far out <paramref name="tile"/> lies: 0 at the middle of the map and 1 at the tile
+        /// furthest from it. A fraction rather than a tile count, so what is authored against it -
+        /// which ring a kind of lootbox lies in, say - means the same thing whatever size the grid
+        /// is. Measured from <see cref="TileSpawnerSettings.GridCenter"/>, the very middle the player
+        /// spawns around, and Euclidean like that spawn circle.
+        /// </summary>
+        public float DistanceFromCenter(Tile tile)
+        {
+            var radius = settings.GridRadius;
+
+            if (tile == null || radius <= 0f)
+                return 0f;
+
+            return Mathf.Clamp01(Vector2.Distance(tile.Position, settings.GridCenter) / radius);
+        }
+
         public Vector3 GridIndexToWorldPosition(Vector2Int gridPosition)
         {
             return new Vector3(

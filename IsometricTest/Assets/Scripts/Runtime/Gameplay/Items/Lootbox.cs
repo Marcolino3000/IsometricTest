@@ -75,11 +75,16 @@ namespace Runtime.Gameplay.Items
         /// Makes the box what its kind says it is and fills it. It is not on the board yet - that is
         /// <see cref="SetState"/> - so it starts hidden: a drop is made with the rest of them and
         /// must not be seen standing at the origin until a unit falls.
+        ///
+        /// The size is applied here beside the sprite and the sorting order, so what the shared
+        /// prefab carries is replaced in one place rather than authored per prefab.
         /// </summary>
-        public void Setup(LootboxType type, Item content, int orderInLayer)
+        public void Setup(LootboxType type, Item content, int orderInLayer, float scale)
         {
             Type = type;
             Content = content;
+
+            transform.localScale = Vector3.one * scale;
 
             if (spriteRenderer == null)
                 return;

@@ -15,10 +15,19 @@ namespace UI
         public readonly Sprite Icon;
         public readonly string Tooltip;
 
-        public ItemOption(Sprite icon, string tooltip)
+        /// <summary>
+        /// What to write under the icon where a view has room for it - the item's name. The bar has
+        /// none and ignores it, drawing a tight row of symbols; the merge screen offers its columns
+        /// with more space around them and prints it, so a choice there can be read without waiting
+        /// out a hover.
+        /// </summary>
+        public readonly string Label;
+
+        public ItemOption(Sprite icon, string tooltip, string label = null)
         {
             Icon = icon;
             Tooltip = tooltip;
+            Label = label;
         }
     }
 

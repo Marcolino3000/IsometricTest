@@ -18,4 +18,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
   - {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
   - {fileID: 11400000, guid: 64d5d4cbf96b4d1583c631089ba07e2a, type: 2}
-  OrderInLayer: 1
+  OrderInLayer: 2
+  Scale: 1.25

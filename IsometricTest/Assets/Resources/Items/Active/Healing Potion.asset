@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c03cb04b53be54c25b559b8cc1ece521, type: 3}
-  m_Name: Berserker's Draught
+  m_Name: Healing Potion
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ActiveItemData
-  DisplayName: Berserker's Draught
-  Description: 'Pay 4 health for 4 action points. 5Never kills. '
-  Symbol: {fileID: -193375528, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
+  DisplayName: Healing Draught
+  Description: 'Restores health. '
+  Symbol: {fileID: -2088117019, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
   Condition: {fileID: 11400000, guid: 7d4faea9233642fab63c69341fe7c7cb, type: 2}
-  Effect: {fileID: 11400000, guid: 4381b36840d640a1a9ee4d89655c90fc, type: 2}
+  Effect: {fileID: 11400000, guid: 51207f413c584bcab1feef81c3a54537, type: 2}

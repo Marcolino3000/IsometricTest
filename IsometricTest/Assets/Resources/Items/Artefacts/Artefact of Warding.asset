@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DisplayName: Artefact of Warding
   Description: One of the three. Every hit taken is 3 lighter.
-  Symbol: {fileID: 0}
+  Symbol: {fileID: 424517400, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 64d5d4cbf96b4d1583c631089ba07e2a, type: 2}
   Traits:
   - {fileID: 11400000, guid: 263f82de0e9d4d87a1a451db677fa46e, type: 2}

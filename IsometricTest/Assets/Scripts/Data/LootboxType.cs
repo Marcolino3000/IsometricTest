@@ -56,6 +56,18 @@ namespace Data
                  "puts every one of them on the map.")]
         [Min(0)] public int ArtefactCount;
 
+        [Header("Where On The Map They Lie")]
+        [Tooltip("The innermost this kind's scattered boxes lie, as a fraction of the way from the " +
+                 "middle of the map to its furthest tile: 0 is the centre, 1 the rim. A fraction " +
+                 "rather than a number of tiles, so it means the same on any map size.")]
+        [Range(0f, 1f)] public float MinDistanceFromCenter;
+
+        [Tooltip("The outermost they lie, on the same scale. Together with the field above this is " +
+                 "the ring a tier is found in - a richer tier set further out is a longer walk for " +
+                 "a better find. A ring with no tile left to spare spills over its border rather " +
+                 "than losing its boxes, exactly as a spawn zone does.")]
+        [Range(0f, 1f)] public float MaxDistanceFromCenter = 1f;
+
         [Header("Where They Come From")]
         [Tooltip("How many of this kind's boxes a fallen enemy leaves behind instead of lying about " +
                  "the map from the start. Drawn at random from this kind's own boxes, so a drop is " +
@@ -74,6 +86,26 @@ namespace Data
         /// </summary>
         public int LootboxCount =>
             MeleeWeaponCount + RangedWeaponCount + ActiveItemCount + PassiveItemCount + ArtefactCount;
+
+        /// <summary>
+        /// How far a tile lying at <paramref name="distanceFromCenter"/> (0 in the middle of the map,
+        /// 1 at its furthest tile) falls outside this kind's ring; 0 inside it, which is what makes
+        /// the ring itself sort as one block for the shuffle behind it to scatter.
+        ///
+        /// The same shape as a spawn zone's miss distance, and for the same reason: the ring is
+        /// preferred rather than required, so a kind whose ring is walled off by mountains or already
+        /// taken up by the tiers before it takes the nearest ground outside it instead of not being
+        /// placed at all.
+        /// </summary>
+        public float DistanceOutsideRing(float distanceFromCenter)
+        {
+            // Authored the wrong way round is read as the ring between the two rather than as an
+            // empty one, which would push every box of the kind out to the rim.
+            var inner = Mathf.Min(MinDistanceFromCenter, MaxDistanceFromCenter);
+            var outer = Mathf.Max(MinDistanceFromCenter, MaxDistanceFromCenter);
+
+            return Mathf.Max(0f, Mathf.Max(inner - distanceFromCenter, distanceFromCenter - outer));
+        }
 
         /// <summary>How many boxes of this kind hold <paramref name="kind"/>. Zero for a non-category.</summary>
         public int CountFor(SlotKind kind)

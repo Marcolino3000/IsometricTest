@@ -21,4 +21,6 @@ MonoBehaviour:
   ActiveItemCount: 0
   PassiveItemCount: 0
   ArtefactCount: 3
+  MinDistanceFromCenter: 0.0
+  MaxDistanceFromCenter: 1.0
   DroppedCount: 0

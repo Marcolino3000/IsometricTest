@@ -9,7 +9,13 @@ namespace Runtime.Gameplay.History
         Attack,
         TurnChange,
         Pickup,
-        UseItem
+        UseItem,
+
+        /// <summary>
+        /// Two items merged into one - see <see cref="Global.MergeRules"/>. Appended rather than
+        /// slipped in beside the other item kinds, since the order is serialized in the icon table.
+        /// </summary>
+        Merge
     }
 
     /// <summary>
@@ -44,6 +50,14 @@ namespace Runtime.Gameplay.History
 
         public static ActionReport UseItem(Unit actor) =>
             new(ActionKind.UseItem, actor, null, actor.CurrentState.Team);
+
+        /// <summary>
+        /// A merge, successful or not. Both outcomes are reported, because both spend the item on
+        /// the right: what actually happened is the difference between the snapshots taken around
+        /// this, exactly as with every other action.
+        /// </summary>
+        public static ActionReport Merge(Unit actor) =>
+            new(ActionKind.Merge, actor, null, actor.CurrentState.Team);
 
         public static ActionReport TurnChange(Team team) =>
             new(ActionKind.TurnChange, null, null, team);

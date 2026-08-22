@@ -30,6 +30,24 @@ namespace Data
         /// <summary>The middle tile of the grid, which the player spawns around.</summary>
         public Vector2Int GridCenter => new((GridSizeX - 1) / 2, (GridSizeY - 1) / 2);
 
+        /// <summary>
+        /// How far it is from <see cref="GridCenter"/> to the furthest tile of the grid - what a
+        /// distance from the middle is measured against, so anything authored as a fraction of it
+        /// means the same thing whatever size the map is. Euclidean, like the player's spawn circle
+        /// and fog sight, so a fraction describes a ring rather than the diamond Manhattan would give.
+        /// </summary>
+        public float GridRadius
+        {
+            get
+            {
+                // The centre is rounded down on both axes, so the far side is the longer one.
+                var x = Mathf.Max(GridCenter.x, GridSizeX - 1 - GridCenter.x);
+                var y = Mathf.Max(GridCenter.y, GridSizeY - 1 - GridCenter.y);
+
+                return Mathf.Sqrt(x * x + y * y);
+            }
+        }
+
         [Header("Terrain Settings")]
         public TerrainProfile FlatTerrain = new() { Type = TerrainType.Flat };
         public TerrainProfile HillTerrain = new() { Type = TerrainType.Hills, ExtraMoveCost = 1, HeightOffset = 0.1f, Elevation = 1 };

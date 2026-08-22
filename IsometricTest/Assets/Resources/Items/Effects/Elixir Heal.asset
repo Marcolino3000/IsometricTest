@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87d45e05b74c749cd8c1ffbc0c24ee76, type: 3}
   m_Name: Elixir Heal
   m_EditorClassIdentifier: 
-  Amount: 12
+  Amount: 15

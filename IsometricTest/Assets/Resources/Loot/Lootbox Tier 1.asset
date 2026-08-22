@@ -19,4 +19,6 @@ MonoBehaviour:
   RangedWeaponCount: 1
   ActiveItemCount: 3
   PassiveItemCount: 1
+  MinDistanceFromCenter: 0.0
+  MaxDistanceFromCenter: 0.3
   DroppedCount: 2

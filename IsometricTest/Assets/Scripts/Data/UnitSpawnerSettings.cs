@@ -13,6 +13,9 @@ namespace Data
         public List<UnitAmount> OpponentUnits;
 
         [Header("Visual Settings")]
+        [Tooltip("Sorting order of the unit sprite. Top of the board's ladder - ground 0, tile " +
+                 "marker 1, lootbox 2, unit 3 - so nothing lying on a tile hides whoever stands " +
+                 "on it. Keep it above LootSpawnerSettings.OrderInLayer.")]
         public int OrderInLayer;
         public Color OpponentColor;
     }
