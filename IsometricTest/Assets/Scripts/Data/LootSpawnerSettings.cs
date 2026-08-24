@@ -36,7 +36,11 @@ namespace Data
                  "same size, so the tier is still read off the silhouette the artist drew.")]
         [Min(0.01f)] public float Scale = 1.25f;
 
-        /// <summary>How many boxes all kinds together ask for, before either cap is applied.</summary>
+        /// <summary>
+        /// How many boxes the scattered kinds together ask for, before the free tiles run out. Says
+        /// nothing about the dropped ones: there is one of those per unit, whatever their kinds ask
+        /// for.
+        /// </summary>
         public int LootboxCount
         {
             get
@@ -44,7 +48,7 @@ namespace Data
                 var count = 0;
 
                 foreach (var type in Types)
-                    if (type != null)
+                    if (type != null && type.Source == LootboxSource.ScatteredOnMap)
                         count += type.LootboxCount;
 
                 return count;

@@ -21,11 +21,12 @@ namespace Runtime.Core.Spawning
     /// <see cref="Item"/> names the kind it turns up in - so the loot goes and asks the items rather
     /// than being handed a list; see <see cref="CollectItems"/>.
     ///
-    /// Each kind's boxes are split between the two ways one can turn up. Scattered ones are put down
-    /// over the map when it is generated. Dropped ones are made at the same moment and simply wait:
-    /// they are handed to the tile of an opposing unit as it falls. Making them up front is what
-    /// keeps a drop undoable and repeatable - its contents are rolled once, so redo hands back the
-    /// very item undo took away.
+    /// A kind comes from one of the two ways a box can turn up (<see cref="LootboxSource"/>), never
+    /// from some of each. A scattered kind is put down over the map when it is generated; a dropped
+    /// one is made at the same moment and simply waits, to be handed to the tile of an opposing unit
+    /// as it falls - one box per unit, so there are always as many drops as there are units to fall.
+    /// Making them up front is what keeps a drop undoable and repeatable - its contents are rolled
+    /// once, so redo hands back the very item undo took away.
     /// </summary>
     public class LootSpawner : MonoBehaviour
     {
@@ -387,9 +388,11 @@ namespace Runtime.Core.Spawning
         }
 
         /// <summary>
-        /// How many boxes can be dropped at most: a fallen unit leaves one, so there is no point in
-        /// making more than there are units to fall. Without the cap a box nobody could ever reach
-        /// would sit pending forever - and hold up the win for collecting all the loot.
+        /// How many boxes the fallen leave behind: one per unit, so exactly as many as there are
+        /// units to fall. That is the whole of how many drops a match holds - a dropped kind is
+        /// never asked what it wants. More than this and a box nobody could ever reach would sit
+        /// pending forever, holding up the win for collecting all the loot; fewer and a unit would
+        /// fall leaving nothing.
         /// </summary>
         private int CountDroppableUnits()
         {
@@ -400,6 +403,48 @@ namespace Runtime.Core.Spawning
                     count++;
 
             return count;
+        }
+
+        /// <summary>
+        /// How many boxes each kind in the settings makes. A scattered kind makes what it asks for;
+        /// a dropped one makes no number of its own but one box per unit there is to fall, since
+        /// every unit leaves one behind. Two dropped kinds split those units evenly - the only sense
+        /// in which how many drops there are is authored at all.
+        /// </summary>
+        private int[] CountPerType()
+        {
+            var counts = new int[settings.Types.Count];
+            var dropping = new List<int>();
+
+            for (var index = 0; index < settings.Types.Count; index++)
+            {
+                var type = settings.Types[index];
+
+                if (type == null)
+                    continue;
+
+                if (type.Source == LootboxSource.DroppedByUnits)
+                    dropping.Add(index);
+                else
+                    counts[index] = type.LootboxCount;
+            }
+
+            if (dropping.Count == 0)
+                return counts;
+
+            // Equal shares, handed out by the same rule the categories are shared out with, so the
+            // parts add back up to the units exactly however they round.
+            var shares = new int[dropping.Count];
+
+            for (var i = 0; i < shares.Length; i++)
+                shares[i] = 1;
+
+            var split = LootboxType.Distribute(CountDroppableUnits(), shares);
+
+            for (var i = 0; i < dropping.Count; i++)
+                counts[dropping[i]] = split[i];
+
+            return counts;
         }
 
         private static void Shuffle<T>(List<T> list)
@@ -446,15 +491,18 @@ namespace Runtime.Core.Spawning
         }
 
         /// <summary>
-        /// What every box of this kind holds, one item at a time: the categories in turn, as many of
-        /// each as the kind asks for. Lazy on purpose - a caller that runs out of tiles or of units
-        /// to fall stops asking, and nothing is drawn from the bag that no box will hold.
+        /// What <paramref name="total"/> boxes of this kind hold, one item at a time: the categories
+        /// in turn, each getting the share of the total its percentage asks for. Lazy on purpose -
+        /// a caller that runs out of tiles stops asking, and nothing is drawn from the bag that no
+        /// box will hold.
         /// </summary>
-        private IEnumerable<Item> RollContents(LootboxType type)
+        private IEnumerable<Item> RollContents(LootboxType type, int total)
         {
-            for (var kind = 0; kind < (int)SlotKind.None; kind++)
+            var counts = type.CategoryCounts(total);
+
+            for (var kind = 0; kind < counts.Length; kind++)
             {
-                var wanted = type.CountFor((SlotKind)kind);
+                var wanted = counts[kind];
 
                 for (var i = 0; i < wanted; i++)
                 {
@@ -529,44 +577,55 @@ namespace Runtime.Core.Spawning
             CollectItems();
 
             var tiles = GetShuffledLootTiles();
-            var dropsLeft = CountDroppableUnits();
+            var counts = CountPerType();
 
             // One kind at a time, and within a kind one category at a time, so each gets the number
             // of boxes it was asked for. A kind is also placed as a whole because its ring is its
             // own: the tiles it takes are the ones nearest its distance from the middle of the map,
             // and what it takes is gone for the kinds after it.
-            foreach (var type in settings.Types)
+            for (var index = 0; index < settings.Types.Count; index++)
             {
-                if (type == null)
+                var type = settings.Types[index];
+                var total = counts[index];
+
+                if (type == null || total <= 0)
                     continue;
+
+                // Boxes were asked for with nothing to put in them. The percentages are what shares
+                // them out, so a kind that authored none can fill none of them.
+                if (type.TotalPercent <= 0)
+                {
+                    Debug.LogWarning($"{type.name} asks for {total} box(es) but sets no category " +
+                                     "percentage, so none of them can be filled.", type);
+                    continue;
+                }
 
                 var contents = new List<Item>();
 
-                foreach (var content in RollContents(type))
+                foreach (var content in RollContents(type, total))
                     contents.Add(content);
 
-                // Which of a kind's boxes wait for a unit to fall is drawn from its own boxes at
-                // random, so a drop is that kind's authored mix rather than whichever category was
-                // listed first. Capped by how many enemies there are: a box nobody could ever leave
-                // behind would sit pending forever and hold up the win for collecting all the loot.
+                // The categories are rolled in turn, and a ring's tiles are handed out in order, so
+                // an unshuffled list would lay every melee box along the ring's inner edge. Shuffled
+                // for the drops too: the first kill leaves the kind's authored mix rather than
+                // whichever category was listed first.
                 Shuffle(contents);
 
-                var dropping = Math.Min(Math.Min(type.DroppedCount, contents.Count), dropsLeft);
-                dropsLeft -= dropping;
+                // A dropped kind is not put anywhere - it waits for a unit to fall, and lands
+                // wherever that unit happened to be standing, which is no tier's business.
+                if (type.Source == LootboxSource.DroppedByUnits)
+                {
+                    foreach (var content in contents)
+                        dropOrder.Add(CreateLootbox(type, content));
 
-                // Where this kind lies. Only the scattered ones are placed from it - a drop lands
-                // wherever its unit happened to fall, which is no tier's business.
+                    continue;
+                }
+
                 var candidates = OrderByRing(tiles, type);
                 var placed = 0;
 
-                for (var i = 0; i < contents.Count; i++)
+                foreach (var content in contents)
                 {
-                    if (i < dropping)
-                    {
-                        dropOrder.Add(CreateLootbox(type, contents[i]));
-                        continue;
-                    }
-
                     // Nothing left to scatter onto. The box is not made at all rather than left
                     // pending: a pending box no fall will ever place could never be collected.
                     if (placed >= candidates.Count)
@@ -574,14 +633,14 @@ namespace Runtime.Core.Spawning
 
                     var tile = candidates[placed++];
 
-                    Place(CreateLootbox(type, contents[i]), LootboxState.InPlay, tile);
+                    Place(CreateLootbox(type, content), LootboxState.InPlay, tile);
                     tiles.Remove(tile);
                 }
             }
 
-            // Shuffled so the authored mix arrives in no particular order: the first kill leaves a
-            // random one of the drops rather than always the first category listed. Fixed from here
-            // on, which is what lets undo and redo agree about which box a fall leaves behind.
+            // Shuffled once more, so that two dropped kinds arrive mixed rather than one kind's
+            // boxes and then the other's. Fixed from here on, which is what lets undo and redo agree
+            // about which box a fall leaves behind.
             Shuffle(dropOrder);
         }
 

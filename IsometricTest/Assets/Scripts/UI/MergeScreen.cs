@@ -41,6 +41,12 @@ namespace UI
         private const float SlotSize = 84f;
         private const float PickerGap = 10f;
 
+        /// <summary>Distance between an element and the label describing it, in panel pixels.</summary>
+        private const float TooltipGap = 10f;
+
+        /// <summary>Seconds the cursor has to rest on something before its label opens.</summary>
+        private const float TooltipDelay = 0.5f;
+
         /// <summary>
         /// What an item slot of the bar looks like - <c>.slot</c> in <c>itemBar.uss</c>. The corner
         /// button wears it rather than the card's own frame: it stands on the HUD beside that row
@@ -62,6 +68,19 @@ namespace UI
         /// hovering anything.
         /// </summary>
         private static readonly string[] SideCaptions = { "Improved", "Consumed" };
+
+        /// <summary>
+        /// Where a hover label sits relative to what it describes. Three, because this panel is in
+        /// the middle of the screen rather than along an edge: the corner button is labelled from
+        /// above like an item slot, but the two merge slots and the columns over them are labelled
+        /// outwards, away from the card, so reading one never covers the thing being compared.
+        /// </summary>
+        private enum TooltipSide
+        {
+            Above,
+            Left,
+            Right
+        }
 
         /// <summary>Raised with the side the player wants to see the fitting items of.</summary>
         public event Action<int> SlotActivated;
@@ -86,7 +105,17 @@ namespace UI
         private readonly VisualElement[] slotIcons = new VisualElement[SideCount];
         private readonly Label[] slotCaptions = new Label[SideCount];
 
+        /// <summary>What each slot says on hover. Kept because it changes under a resting cursor -
+        /// an item put in the slot, or one an undo took back out of it.</summary>
+        private readonly string[] slotTooltips = { string.Empty, string.Empty };
+
         private readonly List<VisualElement> options = new();
+
+        private Label tooltip;
+        private IVisualElementScheduledItem tooltipTimer;
+
+        /// <summary>The slot the cursor rests on, or <see cref="NoSelection"/>.</summary>
+        private int hoveredSide = NoSelection;
 
         private int openSide = NoSelection;
         private int highlightedOption = NoSelection;
@@ -136,7 +165,11 @@ namespace UI
 
             slotCaptions[side].text = named ? label : SideCaptions[side];
             slotCaptions[side].style.color = named ? CardStyle.Text : CardStyle.MutedText;
-            slots[side].tooltip = tooltip ?? string.Empty;
+            slotTooltips[side] = tooltip ?? string.Empty;
+
+            // An open label would otherwise go on describing what the slot held a moment ago.
+            if (hoveredSide == side)
+                HideTooltip();
         }
 
         /// <summary>The odds, already phrased. Empty takes the line out of the layout.</summary>
@@ -192,6 +225,7 @@ namespace UI
             highlightedOption = NoSelection;
 
             options.Clear();
+            HideTooltip();
 
             if (picker == null)
                 return;
@@ -217,6 +251,7 @@ namespace UI
             ClosePicker();
 
             IsOpen = false;
+            hoveredSide = NoSelection;
 
             if (overlay == null)
                 return;
@@ -296,7 +331,6 @@ namespace UI
             option.style.backgroundColor = CardStyle.Background;
             CardStyle.SetBorder(option, 2f, 6f);
             option.pickingMode = PickingMode.Position;
-            option.tooltip = item.Tooltip ?? string.Empty;
 
             var frame = Frame(option, 52f);
             frame.pickingMode = PickingMode.Ignore;
@@ -320,6 +354,13 @@ namespace UI
                 evt.StopPropagation();
                 Choose(index);
             });
+
+            // Labelled outwards from the card, on the side of the slot the column belongs to: the
+            // space above an entry is taken by the rest of the column, as it is on the item bar.
+            string text = item.Tooltip;
+            option.RegisterCallback<PointerEnterEvent>(_ =>
+                ScheduleTooltip(option, text, SideOf(openSide)));
+            option.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
 
             options.Add(option);
             picker.Add(option);
@@ -347,6 +388,8 @@ namespace UI
 
             BuildCornerButton(buttonIcon);
             BuildOverlay();
+            // Last, so it is drawn over the panel and over any column standing open on it.
+            BuildTooltip();
         }
 
         /// <summary>
@@ -362,7 +405,12 @@ namespace UI
             button.style.backgroundColor = BarSlotBackground;
             CardStyle.SetBorder(button, BarSlotBorder, BarSlotRadius);
             button.pickingMode = PickingMode.Position;
-            button.tooltip = Heading;
+
+            // From above, like an item slot of the bar it stands beside - there is nothing over it
+            // but the map, and the screen edges leave no room to either side.
+            button.RegisterCallback<PointerEnterEvent>(_ =>
+                ScheduleTooltip(button, Heading, TooltipSide.Above));
+            button.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
 
             var symbol = Icon(button);
             symbol.style.backgroundImage = icon != null
@@ -387,11 +435,12 @@ namespace UI
             overlay.style.backgroundColor = new Color(0f, 0f, 0f, 0.55f);
             overlay.style.display = DisplayStyle.None;
 
-            // A click that lands beside the card puts things away, an open column first and then the
-            // panel - the same order escape does it in, and the same thing clicking off a tooltip
-            // does. The click is spent on that and reaches nothing else: the press it began with
-            // landed while this was still blocking, and the InputHandler announces a left click on
-            // the press while UI Toolkit reports one on the release, so the world never hears it.
+            // A click on the dimmed ground *around* the card puts things away, an open column first
+            // and then the panel - the same order escape does it in. Only around it: the card is
+            // pickable and stops its own clicks here, so the empty space inside the panel is not
+            // empty space. The click is spent on this and reaches nothing else - the press it began
+            // with landed while this was still blocking, and the InputHandler announces a left click
+            // on the press where UI Toolkit reports one on the release, so the world never hears it.
             overlay.RegisterCallback<ClickEvent>(_ => DismissOutside());
 
             root.Add(overlay);
@@ -402,7 +451,12 @@ namespace UI
 
         private void BuildCard()
         {
-            var card = new VisualElement { pickingMode = PickingMode.Ignore };
+            // Pickable, which is what makes the bare parts of the card part of the card: an element
+            // that ignores the pointer is not the target of a click on it, so one landing between
+            // the heading and a slot would reach the overlay behind and be read as a click beside
+            // the panel. Its contents stay as they are - a label ignores the pointer and bubbles up
+            // to here, a slot or a button is the target and answers for itself.
+            var card = new VisualElement { pickingMode = PickingMode.Position };
             card.style.alignItems = Align.Center;
             card.style.maxWidth = 460f;
             CardStyle.SetPadding(card, 22f, 26f);
@@ -467,6 +521,8 @@ namespace UI
                 evt.StopPropagation();
                 ActivateSlot(side);
             });
+            slot.RegisterCallback<PointerEnterEvent>(_ => HoverSlot(side, slot));
+            slot.RegisterCallback<PointerLeaveEvent>(_ => LeaveSlot());
 
             slots[side] = slot;
             slotIcons[side] = Icon(slot);
@@ -523,6 +579,106 @@ namespace UI
             picker.style.display = DisplayStyle.None;
 
             overlay.Add(picker);
+        }
+
+        /// <summary>
+        /// The hover label, built here rather than taken from UI Toolkit's own <c>tooltip</c>
+        /// property for the same reason <see cref="ItemBar"/> builds its own: the built-in one does
+        /// not draw on these runtime panels. Styled to match the bar's <c>.slot-tooltip</c>, so the
+        /// two windows label things the same way and the delay before either opens is the same.
+        ///
+        /// One label reused by everything on this screen, and it hangs in the document root rather
+        /// than in the panel: the corner button is labelled while the panel is not even up.
+        /// </summary>
+        private void BuildTooltip()
+        {
+            tooltip = new Label { pickingMode = PickingMode.Ignore };
+            tooltip.style.position = Position.Absolute;
+            tooltip.style.display = DisplayStyle.None;
+            tooltip.style.maxWidth = 320f;
+            tooltip.style.fontSize = 16f;
+            tooltip.style.color = CardStyle.Text;
+            tooltip.style.whiteSpace = WhiteSpace.Normal;
+            tooltip.style.unityTextAlign = TextAnchor.MiddleCenter;
+            // Darker than a card: it lies over one, and has to be told apart from what it covers.
+            tooltip.style.backgroundColor = new Color(0.047f, 0.047f, 0.063f, 0.95f);
+            CardStyle.SetPadding(tooltip, 6f, 10f);
+            CardStyle.SetBorder(tooltip, 2f, 6f);
+
+            root.Add(tooltip);
+        }
+
+        private void HoverSlot(int side, VisualElement slot)
+        {
+            hoveredSide = side;
+
+            ScheduleTooltip(slot, slotTooltips[side], SideOf(side));
+        }
+
+        private void LeaveSlot()
+        {
+            hoveredSide = NoSelection;
+
+            HideTooltip();
+        }
+
+        /// <summary>
+        /// Which way a thing belonging to one of the two slots is labelled - outwards, away from the
+        /// middle of the card, so the label never covers the other slot it is being weighed against.
+        /// </summary>
+        private static TooltipSide SideOf(int side)
+        {
+            return side == LeftSide ? TooltipSide.Left : TooltipSide.Right;
+        }
+
+        private void ScheduleTooltip(VisualElement anchor, string text, TooltipSide side)
+        {
+            HideTooltip();
+
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            // Scheduled on the root rather than on the label: the timer has to keep running while
+            // the label itself is still hidden.
+            tooltipTimer = root.schedule
+                .Execute(() => ShowTooltip(anchor, text, side))
+                .StartingIn((long)(TooltipDelay * 1000f));
+        }
+
+        private void ShowTooltip(VisualElement anchor, string text, TooltipSide side)
+        {
+            tooltip.text = text;
+            tooltip.style.display = DisplayStyle.Flex;
+            // The shift does the centring, so how big the label turned out is never measured.
+            tooltip.style.translate = side switch
+            {
+                TooltipSide.Left => new Translate(Length.Percent(-100f), Length.Percent(-50f)),
+                TooltipSide.Right => new Translate(Length.Percent(0f), Length.Percent(-50f)),
+                _ => new Translate(Length.Percent(-50f), Length.Percent(-100f))
+            };
+
+            Rect bounds = anchor.worldBound;
+
+            Vector2 point = side switch
+            {
+                TooltipSide.Left => new Vector2(bounds.xMin - TooltipGap, bounds.center.y),
+                TooltipSide.Right => new Vector2(bounds.xMax + TooltipGap, bounds.center.y),
+                _ => new Vector2(bounds.center.x, bounds.yMin - TooltipGap)
+            };
+
+            Vector2 local = root.WorldToLocal(point);
+
+            tooltip.style.left = local.x;
+            tooltip.style.top = local.y;
+        }
+
+        private void HideTooltip()
+        {
+            tooltipTimer?.Pause();
+            tooltipTimer = null;
+
+            if (tooltip != null)
+                tooltip.style.display = DisplayStyle.None;
         }
 
         /// <summary>A bordered square - a slot, a picker entry or the corner button.</summary>

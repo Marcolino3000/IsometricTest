@@ -14,11 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DisplayName: Gilded Reliquary
   Sprite: {fileID: 21300000, guid: 9acc27af8a9a48e1a9c0459ef591a2e6, type: 3}
+  ShowsContent: 0
   PickupCost: 2
-  MeleeWeaponCount: 1
-  RangedWeaponCount: 1
-  ActiveItemCount: 1
-  PassiveItemCount: 2
+  Source: 0
+  LootboxCount: 5
+  MeleeWeaponPercent: 20
+  RangedWeaponPercent: 20
+  ActiveItemPercent: 20
+  PassiveItemPercent: 40
+  ArtefactPercent: 0
   MinDistanceFromCenter: 0.65
   MaxDistanceFromCenter: 1.0
-  DroppedCount: 1

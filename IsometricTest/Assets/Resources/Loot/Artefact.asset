@@ -16,11 +16,12 @@ MonoBehaviour:
   Sprite: {fileID: 21300000, guid: 9acc27af8a9a48e1a9c0459ef591a2e6, type: 3}
   ShowsContent: 1
   PickupCost: 1
-  MeleeWeaponCount: 0
-  RangedWeaponCount: 0
-  ActiveItemCount: 0
-  PassiveItemCount: 0
-  ArtefactCount: 3
-  MinDistanceFromCenter: 0.0
-  MaxDistanceFromCenter: 1.0
-  DroppedCount: 0
+  Source: 0
+  LootboxCount: 3
+  MeleeWeaponPercent: 0
+  RangedWeaponPercent: 0
+  ActiveItemPercent: 0
+  PassiveItemPercent: 0
+  ArtefactPercent: 100
+  MinDistanceFromCenter: 0.552
+  MaxDistanceFromCenter: 1

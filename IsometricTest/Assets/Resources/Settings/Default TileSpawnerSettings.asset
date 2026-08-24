@@ -17,11 +17,11 @@ MonoBehaviour:
   HalfTileOffsetX: 0.5
   HalfTileOffsetY: 0.25
   StartPosition: {x: -8.19, y: -0.88, z: 0}
-  GridSizeX: 22
-  GridSizeY: 22
+  GridSizeX: 24
+  GridSizeY: 24
   AllowMovementInAllDirections: 0
   PlayerSpawnRadius: 0
-  OpponentSpawnZoneSize: 2
+  OpponentSpawnZoneSize: 3
   FlatTerrain:
     Type: 0
     Passable: 1
