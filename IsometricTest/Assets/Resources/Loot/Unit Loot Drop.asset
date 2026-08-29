@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DisplayName: Worn Crate
   Sprite: {fileID: 21300000, guid: 1d512b4399ec476a9ae327107eb37e9c, type: 3}
-  ShowsContent: 0
+  ShowsContent: 1
   PickupCost: 1
-  Source: 0
+  Source: 1
   LootboxCount: 19
   MeleeWeaponPercent: 16
   RangedWeaponPercent: 16

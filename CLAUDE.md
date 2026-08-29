@@ -50,6 +50,29 @@ Only the ImToolkit package has tests (`Packages/com.duxaeternus.imtoolkit/Tests/
 
 `Core/State/Direction.cs` is **static mutable state** rebound on every `TurnReset` — `Forward` means the active team's forward. Reading it outside the active turn is meaningless.
 
+### State propagation
+
+**There is no single channel.** Six mechanisms are in use, and new code should not add a seventh:
+
+| mechanism | where | verdict |
+| --- | --- | --- |
+| `ChangeEvent<T>`, cloned previous + new | `GameStateManager` (3 events), `Selector.OnSelectionChanged` | the convention |
+| `Action<T>` handing out a live entity reference | `UnitSpawner.UnitEnteredTile`/`UnitRemoved`, `Clickable.OnClick`/`OnMouseEnter`/`OnMouseExit` | tolerated — an entity cannot be usefully cloned |
+| injected single-subscriber delegates | `UnitState.SetValueChangedCallbacks`, called once from `Unit.Init` | outlier, replace with events |
+| bare payload-free `Action` | `UnitState.OnNoActionsLeft`, all 7 `InputHandler` events | fine where the subscriber goes and asks |
+| static announcement channel | `ActionReporter.ActionExecuted` | the *something happened* channel — see below |
+| polling for drift in `Update`/`LateUpdate` | `FogOfWar`, `ItemManager`, `MatchOutcomeWatcher`, `UnitBadges`, `TileSpawner` | symptom, not design |
+
+**The polling is mostly one missing feature: a settings SO changed in the inspector announces nothing.** `FogOfWar.Update` recomputes when `ViewingTeam` or `HideUnexploredTerrain` drifts from what was last drawn, because `GameRules` is a live reference with no change event. Every consumer of a settings SO either polls or misses the change.
+
+**Two channels by nature, and they must not be merged.** *State changed* (values) and *something happened* (`ActionReporter`, which also carries undo). A value channel cannot express an event that moved no value: a fully absorbed hit leaves health unchanged, `UnitState.Health` raises nothing, and `CombatRunner` has to announce it separately.
+
+**A change carries no reason, and that costs a flag per subscriber.** `Unit.restoringSnapshot` exists only so an undo does not pop damage numbers. Every further presentational subscriber (sound, hit flash, camera shake) will need the same guard. A reason on the payload (`Gameplay` / `Restore` / `Setup`) solves it once.
+
+**Aggregates are the half that is misplaced.** `UnitSpawner` subscribes every unit's `OnNoActionsLeft`, computes, and pushes `GameStateManager.SetActionsLeft` — so the spawner is the de-facto unit-state aggregator, for exactly one bool, published into turn state. That bool then lives in `State` and in `GameSnapshot`, written twice during one restore (`RestoreTurn`, then `SetActionsLeft`) — a cached copy of something derivable from the units, and a cached copy can drift. An aggregator should be a **query over live units plus an invalidation signal, never a mirror holding copies**: derived state stays out of the snapshot and comes back for free, the way `VictoryRules` asks the board and the weapon in hand is re-derived.
+
+Subscribing to a `UnitState` is safe: `currentState` is assigned once in `Unit.Init` and `RestoreSnapshot` writes into it rather than replacing it, so subscriptions survive undo. Only respawn invalidates them.
+
 ### Selection → action pipeline
 
 This is the main input path, and it is data-driven rather than imperative:
@@ -290,6 +313,27 @@ UI Toolkit throughout (`.uss` at `Assets/`, world-space panels for health bars /
 
 `NextTurnButton` owns ending the turn for the player: it subscribes both its click and `InputHandler.EndTurnPressed` (**Q**) to `ToggleCurrentTeam`, so the shortcut ends the turn on exactly the same terms as the button. A keyboard shortcut lives on the element that owns the action, the way `ItemBar` owns the number keys.
 
+### Open decisions
+
+Design notes live in Notion (*Dux Aeternus ▸ Survivor-Variante ▸ Architektur*). These are the points where the notes and the code disagree, or where neither has an answer. Don't settle one silently in passing — they cut across systems.
+
+**Decided against the current code, not yet done:**
+
+- **One blueprint per kind, no blueprint + prefab.** A unit type is authored twice today: `Unit` holds a `UnitBlueprint`, and `UnitSpawnerSettings.OpponentUnits` lists `Unit` *prefabs*. The lootbox side is already the target shape — one shared prefab, `LootboxType` overriding sprite and scale.
+- **Effects authored inline, not as one SO per effect.** Conflicts with `ActionData<UCondition, TEffect>`, `ActiveItemEffect` and `Condition` being separate assets. The fix is `[SerializeReference]` lists of `[Serializable]` classes, which keeps "a new mechanic is a new effect class, never a switch case" and loses the asset sprawl; the costs are rename fragility (`[MovedFrom]`) and no sharing of one effect by two items. **Split by reuse:** things referenced from several places stay SOs (`Trait`, and `AttackActionData` because it is an `Item`); one-off authored values (heal 12) go inline.
+- **Blueprint hierarchy** — global or per-type trait injection, with no mechanism today. Overlaps with run-scaling ("more enemies, more actions per turn"); decide whether those are one system or two before building either.
+
+**Undefined in the notes:**
+
+- **Hover.** Two roads — physics `Clickable`/`Raycaster`/`Selector` for the world, UI Toolkit plus `ItemBar.SlotHovered` for the bar, arbitrated by `IInputBlocker`. That nobody owns it is already visible in `ItemManager.LateUpdate`, which re-asserts its preview because the world's `SelectionNoHover` clears it in the same frame. One `HoverTarget` with a single owner, not an event bus.
+- **World-space UI has no hover/click/tooltip path.** `HealthBar`, `UnitCard` and `UnitBadges` have none, and world objects are picked by physics raycast rather than panel picking.
+- **UI layers.** How many `UIDocument`s and `PanelSettings`, and which panel a new screen goes on. It has consequences: `Raycaster` picks every document on one panel together, and `ItemPopup` blocks input through `PickingMode` plus `IInputBlocker`. Every new UI should answer "which panel, and does it block".
+- **Camera.** Pan, drag and `CenterCameraOn` sit inside `InputHandler`; no zoom, bounds, easing or state of its own. A growing map makes bounds and zoom load-bearing.
+
+**Missing entirely, and the survivor variant needs them:** run lifecycle and scene flow (`Initiator.Awake` wires one match; `Restart()` deliberately skips parts); save/load (`GameSnapshot` is the natural seam but holds live references, so it would need stable ids); a seeded RNG owner (`UnityEngine.Random` is called from five places); map generation (camps, relics, an exit, a playfield that grows); non-unit world objects (`Tile.Lootbox` is a named field — camps, buildings and relics would each add another); a presentation channel for sound and VFX (`ActionReporter` is the obvious subscriber point) and the animation timing that "juicy" implies, which collides with instant `PlaceOnTile` and snapshot restore; whether undo survives into a roguelike run at all, since it taxes every new mechanic.
+
+**Leftovers to delete when touched:** `Core/State/IStateChangeHandler.cs` holds `State` and `ChangeEvent<T>` and defines no such interface; `Core/State/Context.cs` is unreferenced.
+
 ## Editor tooling
 
 `Assets/Scripts/Editor/History/ActionHistoryWindow.cs` — the action list (Tools ▸ Action History). Owns no state: it finds the running `ActionHistory` with `FindFirstObjectByType` (like `InGameSelectionMirror`) and polls its `Version`, which survives domain reloads and play-mode changes without re-subscribing.
@@ -315,3 +359,4 @@ Two behaviours to know: **clicks report one frame after the press**, and widgets
 - Prefer `[Tooltip]` on designer-facing serialized fields — the existing traits and AI settings are documented that way.
 - `gitattributes` (no leading dot, at repo root) configures LFS and `unityyamlmerge` for Unity YAML.
 - answer in english unless the question is in german
+- keep phrasing short and concise — in answers and in this file. No metaphors, analogies or embellishment; state each point once.
