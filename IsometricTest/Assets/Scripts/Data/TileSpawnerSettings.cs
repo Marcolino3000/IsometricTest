@@ -55,10 +55,15 @@ namespace Data
 
         [Tooltip("When enabled, hills and mountains are scattered on random tiles (outside spawn zones) instead of using the fixed position lists below.")]
         public bool RandomTerrainPlacement;
-        [Tooltip("Number of hills to place when random terrain placement is enabled.")]
-        public int RandomHillCount;
-        [Tooltip("Number of mountains to place when random terrain placement is enabled.")]
-        public int RandomMountainCount;
+
+        [Tooltip("Percent of the map's tiles that are hills when random terrain placement is enabled. " +
+                 "A share of the whole grid rather than a number of tiles, so it means the same on any map size.")]
+        [Range(0, 100)] public int RandomHillPercent;
+
+        [Tooltip("Percent of the map's tiles that are mountains, on the same scale. Whatever the two " +
+                 "leave over is flat, so they only have to be authored up to 100 - past it they are " +
+                 "scaled down between them rather than the second losing out to the first.")]
+        [Range(0, 100)] public int RandomMountainPercent;
 
         [Tooltip("Grid positions that should spawn as hills (used when random placement is disabled).")]
         public List<Vector2Int> HillPositions = new();
@@ -68,7 +73,8 @@ namespace Data
         /// <summary>
         /// Builds the terrain layout for a fresh grid, keyed by grid position (only non-flat tiles are included).
         /// When <see cref="RandomTerrainPlacement"/> is enabled, mountains and hills are scattered on random
-        /// tiles; otherwise the fixed <see cref="HillPositions"/>/<see cref="MountainPositions"/> lists are used.
+        /// tiles, as many of each as their percentage of the whole grid asks for; otherwise the fixed
+        /// <see cref="HillPositions"/>/<see cref="MountainPositions"/> lists are used.
         /// </summary>
         public Dictionary<Vector2Int, TerrainProfile> BuildTerrainMap()
         {
@@ -95,15 +101,32 @@ namespace Data
         {
             var map = new Dictionary<Vector2Int, TerrainProfile>();
             var candidates = GetShuffledRandomTerrainCandidates();
+            var (hills, mountains) = RandomTerrainCounts(candidates.Count);
             var index = 0;
 
-            for (int i = 0; i < RandomMountainCount && index < candidates.Count; i++, index++)
+            for (int i = 0; i < mountains; i++, index++)
                 map[candidates[index]] = MountainTerrain;
 
-            for (int i = 0; i < RandomHillCount && index < candidates.Count; i++, index++)
+            for (int i = 0; i < hills; i++, index++)
                 map[candidates[index]] = HillTerrain;
 
             return map;
+        }
+
+        /// <summary>
+        /// How many of <paramref name="total"/> tiles are hills and how many are mountains, derived from
+        /// the authored percentages rather than authored as counts, so a resized map keeps the same mix
+        /// instead of having every number rewritten.
+        /// </summary>
+        public (int Hills, int Mountains) RandomTerrainCounts(int total)
+        {
+            // Flat is the share nothing else asked for, which is what keeps the three adding back up to
+            // the map: read as shares of whatever they come to, so hills and mountains authored past 100
+            // between them are scaled down rather than the second one being starved by the first.
+            var flat = Mathf.Max(0, 100 - RandomHillPercent - RandomMountainPercent);
+            var counts = LootboxType.Distribute(total, new[] { flat, RandomHillPercent, RandomMountainPercent });
+
+            return (counts[1], counts[2]);
         }
 
         /// <summary>

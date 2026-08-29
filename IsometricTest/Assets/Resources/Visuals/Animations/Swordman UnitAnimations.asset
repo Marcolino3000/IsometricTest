@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8c1ff0229fb4b8badb6b75e679c860b, type: 3}
+  m_Name: Swordman UnitAnimations
+  m_EditorClassIdentifier: 
+  secondsPerStep: 0.18
+  clips:
+  - Animation: 0
+    Frames:
+    - {fileID: -61923535, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -812170436, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 1683257318, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 1044705499, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    FramesPerSecond: 5
+    Loop: 1
+  - Animation: 1
+    Frames:
+    - {fileID: -488780958, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 1334465722, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -157231134, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -1663889893, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -1325140914, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 1426059664, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    FramesPerSecond: 14
+    Loop: 1
+  - Animation: 2
+    Frames:
+    - {fileID: -1679003614, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -1414704331, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -933507279, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 1604644085, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 1209049392, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 1164562810, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    FramesPerSecond: 12
+    Loop: 0
+  - Animation: 4
+    Frames:
+    - {fileID: -1513863909, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -417824819, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -434731683, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    FramesPerSecond: 14
+    Loop: 0
+  - Animation: 5
+    Frames:
+    - {fileID: -1603650343, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 122141881, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: 1537901867, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    - {fileID: -825999955, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+    FramesPerSecond: 10
+    Loop: 0

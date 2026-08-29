@@ -65,6 +65,10 @@ namespace Runtime.Gameplay.Entities
         [SerializeField] private HealthBar healthBar;
         [SerializeField] private ActionExecutor actionExecutor;
 
+        // Built in Init off the blueprint, and null for a unit whose blueprint authors no frames -
+        // which is what leaves that unit standing still and stepping onto its tiles at once.
+        private UnitAnimator animator;
+
         private int lastHealth;
 
         // What the popup for the next damage taken says beside the number, e.g. "Crit!". Handed over
@@ -102,6 +106,10 @@ namespace Runtime.Gameplay.Entities
             actionExecutor.Setup(this, tileSpawner);
 
             TileHighlighter.Setup(this, tileSpawner, gameRules);
+
+            // Before the badges only because both are built here: what the unit is drawn with is its
+            // blueprint's business, so there is nothing to author on the prefab either way.
+            animator = UnitAnimator.Create(this, blueprint.Animations);
 
             CreateBadges(gameRules);
         }
@@ -289,7 +297,27 @@ namespace Runtime.Gameplay.Entities
         public void SetInPlay(bool inPlay)
         {
             IsAlive = inPlay;
-            SetRevealed(inPlay);
+
+            if (inPlay)
+            {
+                // A fall taken back is a fall that never happened: it must not go on to hide the
+                // unit it has just been taken back from.
+                animator?.Cancel();
+                SetPickable(true);
+                SetRevealed(true);
+
+                return;
+            }
+
+            // The unit is off the board already - its tile is free and nothing can reach it. Only
+            // the sprite lingers, long enough for the fall to be seen, and takes itself away when it
+            // has been. The bars and badges go at once: they say what a unit still in play has left,
+            // and it has nothing left.
+            SetOverlaysRevealed(false);
+            SetPickable(false);
+
+            if (animator == null || !animator.PlayDeath(() => SetSpriteRevealed(false)))
+                SetSpriteRevealed(false);
         }
 
         /// <summary>
@@ -300,6 +328,15 @@ namespace Runtime.Gameplay.Entities
         public void RestoreSnapshot(Tile tile, int health, int actionPoints, int[] statBonuses)
         {
             restoringSnapshot = true;
+
+            // A board is put back rather than played out again, the way the step onto a tile is put
+            // back rather than walked. A unit that should be down is simply down - a redone kill has
+            // queued its fall a moment ago, and this is what finishes it without it being watched.
+            if (!IsAlive)
+            {
+                animator?.Cancel();
+                SetRevealed(false);
+            }
 
             // Before the vitals: both bars have to have room for the recorded values, and both
             // maxima are things an item moves. The wider sight a bonus may bring back needs no help -
@@ -347,9 +384,70 @@ namespace Runtime.Gameplay.Entities
             unitSpawner.NotifyEnteredTile(this);
         }
 
+        /// <summary>
+        /// Where the unit stands on the board - the tile's own place, which is what the transform is
+        /// put at whether the sprite walks there or appears there.
+        /// </summary>
+        private Vector3 WorldPositionOf(Tile tile)
+        {
+            return unitSpawner.GridToWorldPosition(tile.Position) + Vector3.up * tile.HeightOffset;
+        }
+
+        /// <summary>
+        /// Puts the unit on its tile at once, with nothing left to walk. What a spawn does: the unit
+        /// is placed rather than moved, and a fresh one would otherwise walk in from wherever the
+        /// prefab was instantiated.
+        /// </summary>
+        public void SnapToCurrentTile()
+        {
+            var tile = currentState.Position;
+
+            if (tile == null)
+                return;
+
+            var position = WorldPositionOf(tile);
+
+            transform.position = position;
+            animator?.SnapTo(position);
+        }
+
+        /// <summary>
+        /// Draws the unit striking - said once per blow by whoever resolves it, so a retaliation
+        /// animates the unit that answers as surely as the first swing animates the one that started
+        /// it. Which swing is drawn follows the weapon in hand, like everything else about a strike.
+        /// </summary>
+        public void PlayAttackAnimation()
+        {
+            if (animator == null || currentState.AttackAction == null)
+                return;
+
+            animator.PlayAttack(currentState.AttackAction.Kind);
+        }
+
+        /// <summary>
+        /// Draws the unit taking a blow - said by whoever resolves the strike, like the swing that
+        /// caused it, and for an absorbed hit too: a hit shrugged off still has to read as a hit.
+        /// </summary>
+        public void PlayHitAnimation()
+        {
+            animator?.PlayHit();
+        }
+
         private void MoveTransformToTile(Tile tile)
         {
-            transform.position = unitSpawner.GridToWorldPosition(tile.Position) + Vector3.up * tile.HeightOffset;
+            var position = WorldPositionOf(tile);
+
+            // The rules have already moved on - the tile is claimed and the fog recomputed in this
+            // same frame. All the animator does is take its time getting there, and a restore is the
+            // one arrival that must not: undo puts a board back, it does not walk into it.
+            if (animator == null || restoringSnapshot)
+            {
+                transform.position = position;
+                animator?.SnapTo(position);
+                return;
+            }
+
+            animator.StepTo(position);
         }
 
         /// <summary>
@@ -359,14 +457,42 @@ namespace Runtime.Gameplay.Entities
         /// </summary>
         public void SetRevealed(bool revealed)
         {
+            SetSpriteRevealed(revealed);
+            SetOverlaysRevealed(revealed);
+        }
+
+        /// <summary>
+        /// The unit itself. Split from the overlays for the one moment the two part company: a unit
+        /// that has fallen keeps its sprite until the fall has been seen, while everything saying
+        /// what it has left goes at once.
+        /// </summary>
+        private void SetSpriteRevealed(bool revealed)
+        {
             // Outline lives on the "Sprite" child alongside the SpriteRenderer, collider and Clickable.
             if (Outline != null)
                 Outline.gameObject.SetActive(revealed);
+        }
 
-            // Health bar and action-point bar are UIDocuments; hide them so an out-of-sight enemy
-            // isn't given away by floating UI. Toggle the root element's display rather than the
-            // GameObject: disabling a UIDocument rebuilds its visual tree from the source asset,
-            // which would wipe the blobs HealthBar/ActionsPointsBar add once at Setup.
+        /// <summary>
+        /// Whether the unit can be picked out of the world by <see cref="Global.Raycaster"/>. Only
+        /// ever off for the moment a fallen unit's sprite outlives it: it is not on the board any
+        /// more and must not be hovered or clicked, and deactivating the object - which is what
+        /// normally takes its collider with it - is the very thing being waited on.
+        /// </summary>
+        private void SetPickable(bool pickable)
+        {
+            foreach (var unitCollider in GetComponentsInChildren<Collider2D>(true))
+                unitCollider.enabled = pickable;
+        }
+
+        /// <summary>
+        /// Health bar, action-point bar and badges - the UIDocuments hung over the unit, hidden so an
+        /// out-of-sight enemy isn't given away by floating UI. Toggles the root element's display
+        /// rather than the GameObject: disabling a UIDocument rebuilds its visual tree from the
+        /// source asset, which would wipe the blobs HealthBar/ActionsPointsBar add once at Setup.
+        /// </summary>
+        private void SetOverlaysRevealed(bool revealed)
+        {
             foreach (var document in GetComponentsInChildren<UIDocument>(true))
             {
                 if (document.rootVisualElement != null)

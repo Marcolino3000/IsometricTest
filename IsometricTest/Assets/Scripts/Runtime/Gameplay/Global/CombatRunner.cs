@@ -41,6 +41,13 @@ namespace Runtime.Gameplay.Global
             // terrain damage bonuses) are all folded in consistently.
             var damage = CombatRules.CalculateDamage(attacker, target, isRetaliation);
 
+            // Here rather than at the action, because this is the one place a blow is struck: a
+            // retaliation is a strike of its own with the roles swapped, so it draws itself for free.
+            // The flinch is said with the swing rather than off the health, which moves for a heal
+            // and for an undo as well - and does not move at all for a hit that was fully absorbed.
+            attacker.PlayAttackAnimation();
+            target.PlayHitAnimation();
+
             // Whatever a trait had to say about this strike goes to the unit before the health does:
             // the popup is raised by the health change below, which knows only how much was lost.
             target.NoteNextDamage(StrikeNotes.Collect());

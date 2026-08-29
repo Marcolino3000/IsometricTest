@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Player UnitBlueprint
   m_EditorClassIdentifier: 
   Sprite: {fileID: 1034767739, guid: 4f97a675afc3540b894c43bcbf68df44, type: 3}
+  Animations: {fileID: 11400000, guid: 609ab8a47e87494d8d4defa2cb8a9756, type: 2}
   defaultState:
     Position: {fileID: 0}
     Team: 0

@@ -184,8 +184,9 @@ namespace Runtime.Core.Spawning
                 if (!unit.TryPlaceAtTile(tile))
                     continue;
 
-                unit.transform.position = tileSpawner.GridIndexToWorldPosition(gridPosition)
-                                          + Vector3.up * tile.HeightOffset;
+                // Placed, not moved: a fresh unit would otherwise be seen walking to its spawn tile
+                // from wherever the prefab was instantiated.
+                unit.SnapToCurrentTile();
                 return;
             }
 

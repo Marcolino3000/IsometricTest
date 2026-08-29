@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Scout UnitBlueprint
   m_EditorClassIdentifier: 
   Sprite: {fileID: -331967165, guid: 9695c82f379a74793a23c4c0505d74b2, type: 3}
+  Animations: {fileID: 11400000, guid: f51cd54dee674a98bcdc5e67794a9acd, type: 2}
   defaultState:
     Position: {fileID: 0}
     Team: 0

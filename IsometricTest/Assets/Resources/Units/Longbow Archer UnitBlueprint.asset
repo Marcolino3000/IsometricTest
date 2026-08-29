@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Longbow Archer UnitBlueprint
   m_EditorClassIdentifier: 
   Sprite: {fileID: -61923535, guid: 05f3e08d50958486892604e3c71b7ca7, type: 3}
+  Animations: {fileID: 11400000, guid: fe037f6cc755488eb7816760ca269f86, type: 2}
   defaultState:
     Position: {fileID: 0}
     Team: 0

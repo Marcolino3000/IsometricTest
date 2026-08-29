@@ -131,9 +131,9 @@ namespace Data
         /// leftovers go to the largest remainders first. A share of nothing - or shares that are all
         /// nothing - gets nothing.
         ///
-        /// The one place a proportion becomes a count, shared by the categories within a kind and by
-        /// the dropped kinds splitting the units between them, so neither can round its way to a
-        /// different total than it was given.
+        /// The one place a proportion becomes a count, shared by the categories within a kind, by the
+        /// dropped kinds splitting the units between them and by the terrain shares filling the grid,
+        /// so none of them can round its way to a different total than it was given.
         /// </summary>
         public static int[] Distribute(int total, IReadOnlyList<int> shares)
         {
