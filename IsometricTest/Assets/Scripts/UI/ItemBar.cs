@@ -13,7 +13,9 @@ namespace UI
     public readonly struct ItemOption
     {
         public readonly Sprite Icon;
-        public readonly string Tooltip;
+
+        /// <summary>What the card labelling this entry says - see <see cref="TooltipContent"/>.</summary>
+        public readonly TooltipContent Tooltip;
 
         /// <summary>
         /// What to write under the icon where a view has room for it - the item's name. The bar has
@@ -23,7 +25,7 @@ namespace UI
         /// </summary>
         public readonly string Label;
 
-        public ItemOption(Sprite icon, string tooltip, string label = null)
+        public ItemOption(Sprite icon, TooltipContent tooltip, string label = null)
         {
             Icon = icon;
             Tooltip = tooltip;
@@ -84,9 +86,6 @@ namespace UI
         /// <summary>Stands for "no slot" and "no entry" alike — both are indices into a list.</summary>
         private const int NoSelection = -1;
 
-        /// <summary>Distance between an element and the tooltip labelling it, in panel pixels.</summary>
-        private const float TooltipGap = 8f;
-
         /// <summary>Distance between the top edge of a slot and its picker, in panel pixels.</summary>
         private const float PickerGap = 8f;
 
@@ -94,16 +93,13 @@ namespace UI
                  "lays out - it warns when it does not. Only the first nine are reachable by number key.")]
         [SerializeField] private int slotCount = 6;
 
-        [Tooltip("Seconds the cursor has to rest on a slot before its tooltip opens.")]
-        [SerializeField] private float tooltipDelay = 0.5f;
-
         [Tooltip("Template instantiated once per slot and once per picker entry.")]
         [SerializeField] private VisualTreeAsset slotTemplate;
 
         private readonly List<VisualElement> slots = new();
         private readonly List<VisualElement> slotIcons = new();
         private readonly List<VisualElement> slotAccents = new();
-        private readonly List<string> slotTooltips = new();
+        private readonly List<TooltipContent> slotTooltips = new();
 
         /// <summary>
         /// What each slot holds, and what its category shows in place of what it does not hold. Kept
@@ -113,22 +109,27 @@ namespace UI
         private readonly List<Sprite> slotGhosts = new();
 
         private readonly List<VisualElement> options = new();
-        private readonly List<string> optionTooltips = new();
+        private readonly List<TooltipContent> optionTooltips = new();
 
         private InputHandler inputHandler;
+
+        // The one owner of what the cursor is over. The bar reports the label of whatever it is on -
+        // a slot, an entry - and the tooltip view draws it; nothing here knows what a tooltip is
+        // besides a value pushed at it, exactly as an icon is.
+        private HoverTarget hoverTarget;
+
         private VisualElement container;
         private VisualElement hudRoot;
         private VisualElement picker;
-        private Label tooltipLabel;
-        private IVisualElementScheduledItem tooltipTimer;
         private int hoveredSlot = NoSelection;
 
         private int openSlot = NoSelection;
         private int highlightedOption = NoSelection;
 
-        public void Setup(InputHandler handler)
+        public void Setup(InputHandler handler, HoverTarget hover)
         {
             inputHandler = handler;
+            hoverTarget = hover;
             inputHandler.NumberKeyPressed += HandleNumberKey;
             inputHandler.ConfirmPressed += ConfirmHighlighted;
             inputHandler.CancelPressed += ClosePicker;
@@ -178,22 +179,26 @@ namespace UI
             picker.Clear();
             picker.style.display = DisplayStyle.None;
 
-            HideTooltip();
+            // The label goes back to the slot the cursor is on rather than away: closing a column is
+            // routine - every refresh of the bar does it - and the slot under the cursor is still
+            // being pointed at, so taking its label away would restart the delay for nothing.
+            ReturnTooltipToSlot();
         }
 
         /// <summary>
-        /// Sets the text a slot shows on hover. Empty text turns the slot's tooltip off.
+        /// Sets what a slot says on hover. <see cref="TooltipContent.Empty"/> turns its label off.
         /// </summary>
-        public void SetSlotTooltip(int index, string text)
+        public void SetSlotTooltip(int index, TooltipContent content)
         {
             if (index < 0 || index >= slotTooltips.Count)
                 return;
 
-            slotTooltips[index] = text;
+            slotTooltips[index] = content;
 
-            // The open tooltip would otherwise keep showing the previous text.
+            // The cursor may be resting on the slot that has just changed hands, and it will not
+            // enter it a second time - the open label would go on describing what was in it.
             if (hoveredSlot == index)
-                HideTooltip();
+                ReportTooltip(slots[index], content, TooltipSide.Above);
         }
 
         /// <summary>
@@ -332,8 +337,10 @@ namespace UI
             SetIcon(option.Q<VisualElement>("icon"), item.Icon);
 
             option.RegisterCallback<ClickEvent>(_ => Choose(index));
-            option.RegisterCallback<PointerEnterEvent>(_ => ScheduleTooltip(option, optionTooltips[index], true));
-            option.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+            // Labelled from the side: the space above an entry is taken by the rest of the column.
+            option.RegisterCallback<PointerEnterEvent>(_ =>
+                ReportTooltip(option, optionTooltips[index], TooltipSide.Right));
+            option.RegisterCallback<PointerLeaveEvent>(_ => ClearTooltip());
 
             options.Add(option);
             optionTooltips.Add(item.Tooltip);
@@ -373,7 +380,6 @@ namespace UI
 
             hudRoot = root.Q<VisualElement>("hudRoot");
             container = root.Q<VisualElement>("container");
-            tooltipLabel = root.Q<Label>("tooltip");
 
             slots.Clear();
             slotIcons.Clear();
@@ -402,7 +408,7 @@ namespace UI
                 // category shows in place of it, and the label. Empty means none of them.
                 slotSymbols.Add(null);
                 slotGhosts.Add(null);
-                slotTooltips.Add(string.Empty);
+                slotTooltips.Add(TooltipContent.Empty);
                 container.Add(slot);
             }
 
@@ -426,58 +432,44 @@ namespace UI
         {
             hoveredSlot = index;
 
+            // Said first, so the owner of the items has set which slot the cursor is on before the
+            // report below wakes everything that reads the hover.
             SlotHovered?.Invoke(index);
 
-            ScheduleTooltip(slot, slotTooltips[index], false);
+            ReportTooltip(slot, slotTooltips[index], TooltipSide.Above);
         }
 
         private void LeaveSlot()
         {
-            SlotHovered?.Invoke(NoSelection);
-
-            HideTooltip();
-        }
-
-        private void ScheduleTooltip(VisualElement anchor, string text, bool toSide)
-        {
-            HideTooltip();
-
-            if (string.IsNullOrEmpty(text))
-                return;
-
-            // Scheduled on the bar rather than on the tooltip: the timer has to keep running
-            // while the tooltip itself is still hidden.
-            tooltipTimer = container.schedule
-                .Execute(() => ShowTooltip(anchor, text, toSide))
-                .StartingIn((long)(tooltipDelay * 1000f));
-        }
-
-        private void ShowTooltip(VisualElement anchor, string text, bool toSide)
-        {
-            tooltipLabel.text = text;
-            tooltipLabel.EnableInClassList("slot-tooltip--side", toSide);
-            tooltipLabel.style.display = DisplayStyle.Flex;
-
-            // Slots are labelled from above; picker entries from the right, because the space above
-            // an entry is taken by the rest of the column.
-            Rect bounds = anchor.worldBound;
-            Vector2 point = toSide
-                ? new Vector2(bounds.xMax + TooltipGap, bounds.center.y)
-                : new Vector2(bounds.center.x, bounds.yMin - TooltipGap);
-
-            Vector2 local = hudRoot.WorldToLocal(point);
-
-            tooltipLabel.style.left = local.x;
-            tooltipLabel.style.top = local.y;
-        }
-
-        private void HideTooltip()
-        {
-            tooltipTimer?.Pause();
-            tooltipTimer = null;
             hoveredSlot = NoSelection;
 
-            tooltipLabel.style.display = DisplayStyle.None;
+            SlotHovered?.Invoke(NoSelection);
+
+            ClearTooltip();
+        }
+
+        /// <summary>
+        /// Hands the label of whatever the cursor is on to the one owner of the cursor. The delay
+        /// before it opens, how it is placed and what it looks like are the tooltip view's - the bar
+        /// says only what to say and where the thing being described is.
+        /// </summary>
+        private void ReportTooltip(VisualElement anchor, TooltipContent content, TooltipSide side)
+        {
+            hoverTarget?.SetUiTooltip(content, TooltipAnchor.Element(anchor, side));
+        }
+
+        private void ClearTooltip()
+        {
+            hoverTarget?.SetUiTooltip(TooltipContent.Empty, default);
+        }
+
+        /// <summary>Labels the slot the cursor rests on, or nothing while it rests on none.</summary>
+        private void ReturnTooltipToSlot()
+        {
+            if (hoveredSlot < 0 || hoveredSlot >= slots.Count)
+                ClearTooltip();
+            else
+                ReportTooltip(slots[hoveredSlot], slotTooltips[hoveredSlot], TooltipSide.Above);
         }
 
         private void OnDestroy()

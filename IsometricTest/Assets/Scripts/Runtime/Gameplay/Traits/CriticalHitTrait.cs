@@ -15,7 +15,7 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Shown beside the damage number when the crit lands. Leave empty to show nothing.")]
         public string Note = "Crit!";
 
-        public override string Summary => $"{CritChance:P0} chance of x{CritMultiplier:0.##} damage";
+        public override string Summary => $"Crit {CritChance * 100f:0}% x{CritMultiplier:0.##}";
 
         public override int ModifyOutgoingDamage(int damage, CombatContext context)
         {

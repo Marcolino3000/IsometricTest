@@ -238,12 +238,32 @@ namespace Runtime.Gameplay.Global
             selection.ClickedUnit = null;
         }
 
+        /// <summary>
+        /// The thing under the cursor, or null. Written out rather than folded into one expression:
+        /// a Unity object compares to null through an overload of its own, which an interface
+        /// reference would not go through.
+        /// </summary>
+        private ITooltipSource HoveredSource
+        {
+            get
+            {
+                if (selection.HoveredUnit != null)
+                    return selection.HoveredUnit;
+
+                return selection.HoveredTile != null ? selection.HoveredTile : null;
+            }
+        }
+
         private void CreateSelectionChangedEvent()
         {
             // The head of the world's hover road says what it is on, so the one owner of the cursor
             // knows about both roads. Said before the event, so a subscriber asking it gets today's
             // answer rather than the last frame's.
-            hoverTarget?.SetWorldHover(selection.HoveredUnit != null || selection.HoveredTile != null);
+            //
+            // What, not merely whether: the thing itself goes over, so whoever labels it asks it
+            // rather than being handed a copy that would be stale by the time it is drawn. The unit
+            // wins over the tile it stands on, exactly as the raycast picks it first.
+            hoverTarget?.SetWorld(HoveredSource);
 
             var changeEvent = new ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
 

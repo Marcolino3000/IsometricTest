@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Data;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Items
@@ -67,44 +68,15 @@ namespace Runtime.Gameplay.Items
         public virtual SlotKind Slot => SlotKind.None;
 
         /// <summary>
-        /// What the item bar shows on hover — the same three things the find popup puts on its card,
-        /// as lines of one string, since the bar labels with a plain text element. Built from
-        /// <see cref="Stats"/> like the card is, so a kind of item that carries different numbers says
-        /// so in both places at once.
-        ///
-        /// The name is bold through a rich text tag rather than a style: the whole tooltip is one label,
-        /// so the lines cannot be styled apart from each other any other way.
+        /// What a view labelling this item says - the same three things the find popup puts on its
+        /// card, in the one shape everything labelled hands over. Built from <see cref="Stats"/> like
+        /// the card is, so a kind of item that carries different numbers says so everywhere at once,
+        /// and the view does the formatting: it is a card of its own now rather than one string with
+        /// a bold tag baked into it.
         /// </summary>
-        public string Tooltip
+        public TooltipContent Describe()
         {
-            get
-            {
-                var lines = new List<string> { $"<b>{Title}</b>" };
-
-                if (!string.IsNullOrWhiteSpace(Description))
-                    lines.Add(Description);
-
-                bool separated = false;
-
-                foreach (var stat in Stats)
-                {
-                    if (string.IsNullOrWhiteSpace(stat))
-                        continue;
-
-                    // The numbers are set off by a blank line so they read as a block rather than as
-                    // further sentences. Written before the first line that survives the filter, so an
-                    // item whose numbers all come out empty ends on its description rather than a gap.
-                    if (!separated)
-                    {
-                        lines.Add(string.Empty);
-                        separated = true;
-                    }
-
-                    lines.Add(stat);
-                }
-
-                return string.Join("\n", lines);
-            }
+            return new TooltipContent(Title, NameOf(Slot), Description, Stats, icon: Symbol);
         }
 
         /// <summary>What to call this item, falling back to the asset name while none is authored.</summary>
@@ -131,6 +103,24 @@ namespace Runtime.Gameplay.Items
                 SlotKind.Active => "Active Item",
                 SlotKind.Passive => "Passive Item",
                 SlotKind.Artefact => "Artefact",
+                _ => string.Empty
+            };
+        }
+
+        /// <summary>
+        /// What a category is for, in one sentence - what an empty slot says when it is pointed at,
+        /// since there is no item there to describe itself. Kept beside the name it reads for the
+        /// same reason: a further category has to be given both the moment it is given a slot.
+        /// </summary>
+        public static string DescriptionOf(SlotKind kind)
+        {
+            return kind switch
+            {
+                SlotKind.Melee => "A weapon swung at what stands beside you. Choosing one draws it.",
+                SlotKind.Ranged => "A weapon fired across the board. Choosing one draws it.",
+                SlotKind.Active => "Something used up on the spot - it costs action points and is gone.",
+                SlotKind.Passive => "Gear worn for its traits. It works by being carried here.",
+                SlotKind.Artefact => "A unique find, worn for good. Collect all three to win.",
                 _ => string.Empty
             };
         }

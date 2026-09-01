@@ -128,26 +128,26 @@ namespace Runtime.Core
         private void SetupUI()
         {
             nextTurnButton.Setup(gameStateManager, inputHandler, matchOutcomeWatcher, unitStateManager);
-            itemBar.Setup(inputHandler);
+            itemBar.Setup(inputHandler, hoverTarget);
             // The rules go in live, like they do into CombatRules: whether the same draught may be
             // carried twice is switchable during play.
             itemManager.Setup(itemBar, CreateItemPopup(), CreateMergeScreen(), gameRules, hoverTarget);
-            CreateUnitCard();
+            CreateTooltipView();
             CreateGameOverScreen();
         }
 
         /// <summary>
-        /// The card shown while a unit is hovered. Built at runtime on the HUD's panel settings like
-        /// the find popup, and lowest of the three cards that sort above the bar: a find and a
-        /// verdict are both news, and the hovered unit is only ever the thing being looked at while
-        /// they arrive. It listens to the selector itself, so nothing has to push a unit at it, and
-        /// it is not rebuilt on a restart - it holds no match state, only what it was last shown.
+        /// The one card that labels things - a slot, an entry, a unit, a tile, the box on it. Built
+        /// at runtime on the HUD's panel settings like the find popup, and sorting above every other
+        /// card: it labels the merge screen, which is itself a modal over the rest. It asks the hover
+        /// target what the cursor is on, so nothing has to push anything at it, and it is not rebuilt
+        /// on a restart - it holds no match state, only what it was last shown.
         /// </summary>
-        private void CreateUnitCard()
+        private void CreateTooltipView()
         {
             var hud = itemBar.GetComponent<UIDocument>();
 
-            UnitCard.Create(hud.panelSettings, hud.sortingOrder + 1).Setup(selector, gameRules);
+            TooltipView.Create(hud.panelSettings, hud.sortingOrder + 5).Setup(hoverTarget);
         }
 
         /// <summary>
@@ -198,7 +198,8 @@ namespace Runtime.Core
             var hud = itemBar.GetComponent<UIDocument>();
 
             var screen = MergeScreen.Create(hud.panelSettings, hud.sortingOrder + 4,
-                actionIcons != null ? actionIcons.For(ActionKind.Merge) : null);
+                actionIcons != null ? actionIcons.For(ActionKind.Merge) : null)
+                .Setup(hoverTarget);
 
             inputHandler.AddBlocker(screen);
 

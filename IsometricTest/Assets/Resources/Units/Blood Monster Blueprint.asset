@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbcaca3db3794b188c3bb2227ae55a0d, type: 3}
+  m_Name: Blood Monster Blueprint
+  m_EditorClassIdentifier: Assembly-CSharp::Data.UnitBlueprint
+  Sprite: {fileID: 0}
+  Animations: {fileID: 0}
+  defaultState:
+    Team: 0
+    SightRange: 3
+    MoveAction: {fileID: 0}
+    Traits:
+    - {fileID: 11400000, guid: e39ef3961e384f18a5424164e0b6b823, type: 2}
+    - {fileID: 11400000, guid: 55535b6937f04d4f8a260b2cb21876e6, type: 2}
+    health: 15
+    actionPoints: 3
+    hasActionsLeft: 0
+    position: {fileID: 0}
+    attackAction: {fileID: 0}
+    statBonuses: 

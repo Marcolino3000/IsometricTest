@@ -152,42 +152,6 @@
     opacity: 0.22;
 }
 
-/* Anchored to the top center of the hovered slot; the translate lifts it above that point
-   and centers it, so the code never has to measure the tooltip. */
-.slot-tooltip {
-    position: absolute;
-    display: none;
-    translate: -50% -100%;
-    max-width: 320px;
-    padding-top: 6px;
-    padding-right: 10px;
-    padding-bottom: 6px;
-    padding-left: 10px;
-    background-color: rgba(12, 12, 16, 0.95);
-    border-top-width: 2px;
-    border-right-width: 2px;
-    border-bottom-width: 2px;
-    border-left-width: 2px;
-    border-top-color: rgba(255, 255, 255, 0.35);
-    border-right-color: rgba(255, 255, 255, 0.35);
-    border-bottom-color: rgba(255, 255, 255, 0.35);
-    border-left-color: rgba(255, 255, 255, 0.35);
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
-    color: rgb(235, 235, 235);
-    font-size: 16px;
-    white-space: normal;
-    -unity-text-align: middle-center;
-}
-
-/* Picker entries are labelled to their right instead: the space above an entry is taken by the
-   rest of the column. Anchored to the entry's right edge, so only the vertical half-shift is left. */
-.slot-tooltip--side {
-    translate: 0 -50%;
-}
-
 .slot__hotkey {
     position: absolute;
     bottom: 7px;

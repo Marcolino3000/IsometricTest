@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using Data;
 using Runtime.Gameplay.Entities;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Items
@@ -35,7 +37,7 @@ namespace Runtime.Gameplay.Items
     /// <see cref="Runtime.Core.Spawning.LootSpawner.TryPickup"/>), so it needs no collider and must
     /// not block the way to itself.
     /// </summary>
-    public class Lootbox : MonoBehaviour
+    public class Lootbox : MonoBehaviour, ITooltipSource
     {
         /// <summary>What kind of box this is - the asset everything about it but its content is on.</summary>
         public LootboxType Type { get; private set; }
@@ -64,7 +66,65 @@ namespace Runtime.Gameplay.Items
         /// <summary>What taking this box costs, which is its kind's business rather than its own.</summary>
         public int PickupCost => Type != null ? Type.PickupCost : 0;
 
+        /// <summary>
+        /// What taking it costs right now. Nothing at all while
+        /// <see cref="GameRules.AutoCollectLootboxes"/> is on: a box is then had by stepping onto its
+        /// tile, so pressing for the one already underfoot must not be the expensive way of doing
+        /// what a step does for free. That is not a corner case - a box holding something there was
+        /// no room for is left lying where it is, and no further arrival will pick it up, so pressing
+        /// is the only way back to it once a slot has been freed.
+        ///
+        /// One query rather than a number read twice: what the pickup charges and what the card
+        /// labelling the box says it costs are the same call, so they cannot disagree.
+        /// </summary>
+        public int Cost => rules != null && rules.AutoCollectLootboxes ? 0 : PickupCost;
+
+        /// <summary>
+        /// What the card labelling this box says. A box says its tier and what taking it costs, and
+        /// nothing about what is inside - that is the whole point of a box. A kind that
+        /// <see cref="LootboxType.ShowsContent"/> is not a box: the find lies open, so it names the
+        /// item and its category instead, exactly as it is drawn with the item's symbol.
+        /// </summary>
+        public TooltipContent Describe()
+        {
+            if (Type == null || !IsInPlay)
+                return TooltipContent.Empty;
+
+            bool open = Type.ShowsContent && Content != null;
+
+            var stats = new List<string>();
+
+            // Only when it costs something: with auto-collect on there is no number worth printing,
+            // and a box is then had by walking over it.
+            if (Cost > 0)
+                stats.Add($"Cost {Cost} AP");
+
+            return new TooltipContent(
+                open ? Content.Title : Type.Title,
+                open ? Item.NameOf(Content.Slot) : "Lootbox",
+                stats: stats,
+                icon: spriteRenderer != null ? spriteRenderer.sprite : null);
+        }
+
+        /// <summary>The top of the box, so a card labelling it hangs over the tile it lies on.</summary>
+        public Vector3 TooltipPoint
+        {
+            get
+            {
+                if (spriteRenderer == null)
+                    return transform.position;
+
+                Bounds bounds = spriteRenderer.bounds;
+
+                return new Vector3(bounds.center.x, bounds.max.y, transform.position.z);
+            }
+        }
+
         private SpriteRenderer spriteRenderer;
+
+        // Held live rather than read once, like everywhere else the rules are: auto-collect can be
+        // switched during play, and what a box costs follows it.
+        private GameRules rules;
 
         private void Awake()
         {
@@ -79,10 +139,11 @@ namespace Runtime.Gameplay.Items
         /// The size is applied here beside the sprite and the sorting order, so what the shared
         /// prefab carries is replaced in one place rather than authored per prefab.
         /// </summary>
-        public void Setup(LootboxType type, Item content, int orderInLayer, float scale)
+        public void Setup(LootboxType type, Item content, int orderInLayer, float scale, GameRules gameRules)
         {
             Type = type;
             Content = content;
+            rules = gameRules;
 
             transform.localScale = Vector3.one * scale;
 

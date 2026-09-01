@@ -18,7 +18,7 @@ namespace Runtime.Gameplay.Traits
                  "cost at one point - so this is felt on rough ground rather than on flat.")]
         [Min(0)] public int CostReduction = 1;
 
-        public override string Summary => $"-{CostReduction} AP to cross rough ground";
+        public override string Summary => $"Move cost {Signed(-CostReduction)}";
 
         public override int ModifyMoveCost(int cost, MoveContext context)
         {

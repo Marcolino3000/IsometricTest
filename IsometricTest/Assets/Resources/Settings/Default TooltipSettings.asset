@@ -9,12 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ceeaf83b68c74566b93e46996ded0353, type: 3}
-  m_Name: Chainmail Weave
+  m_Script: {fileID: 11500000, guid: 4bab13c3ae5c43f8a3cfcf2d9eb42f47, type: 3}
+  m_Name: Default TooltipSettings
   m_EditorClassIdentifier: 
-  Description: Increase Def by 2
-  Icon: {fileID: 0}
-  DamageBonus: 0
-  DefenseBonus: 2
-  RangeBonus: 0
-  RequiresWeapon: 0
+  uiDelay: 0.5
+  worldDelay: 0.25
+  gap: 10
+  maxWidth: 340
+  refreshInterval: 0.2

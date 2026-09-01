@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Fog;
+using Runtime.Gameplay.Global;
 using Runtime.Gameplay.Items;
 using Runtime.Gameplay.Traits;
 using TMPro;
@@ -10,7 +11,7 @@ using UnityEngine;
 
 namespace Runtime.Gameplay.Entities
 {
-    public class Tile : MonoBehaviour, IClickable
+    public class Tile : MonoBehaviour, IClickable, ITooltipSource
     {
         public Vector2Int Position;
         public bool IsOccupied {get; private set;}
@@ -95,6 +96,72 @@ namespace Runtime.Gameplay.Entities
         /// flipped mid-play; the text is rewritten each time rather than at spawn, since a tile that
         /// spawned with the label off has never had one written.
         /// </summary>
+        /// <summary>
+        /// What the card labelling this tile says: what the ground is, what it costs to cross, what
+        /// it grants whoever stands on it, and what lies on it.
+        ///
+        /// It says what the player is allowed to know, not what the tile is. Unscouted ground is
+        /// drawn as flat and describes itself as unexplored, so the card cannot give away the
+        /// mountain the fog is hiding - the real values are kept here either way, since pathfinding
+        /// and sight read them regardless of what is drawn.
+        /// </summary>
+        public TooltipContent Describe()
+        {
+            if (Visibility == TileVisibility.Hidden)
+                return new TooltipContent("Unexplored");
+
+            var stats = new List<string>();
+
+            if (!IsPassable)
+                stats.Add("Impassable");
+
+            if (ExtraMoveCost > 0)
+                stats.Add($"Move cost +{ExtraMoveCost}");
+            //
+            // if (Elevation > 0)
+            //     stats.Add($"Elevation {Elevation} - blocks the sight of anyone standing lower");
+
+            var entries = new List<Capability>();
+
+            foreach (var trait in Traits)
+            {
+                if (trait != null)
+                    entries.Add(new Capability(trait.Icon, trait.name,""));
+            }
+
+            // The box is folded in rather than picked out of the world of its own: it does not occupy
+            // its tile and has no collider, so the ground it lies on is what the cursor reaches.
+            if (Lootbox != null && Lootbox.IsInPlay)
+            {
+                var box = Lootbox.Describe();
+
+                if (!box.IsEmpty)
+                    entries.Add(box.AsEntry());
+            }
+
+            return new TooltipContent(
+                TerrainNames.Of(Terrain),
+                // Remembered ground is still true - terrain does not move - but what stands on it is
+                // whatever was last seen, so the card says which of the two it is.
+                Visibility == TileVisibility.Explored ? "Remembered" : null,
+                stats: stats,
+                entries: entries);
+        }
+
+        /// <summary>The top of the tile sprite, so a card labelling it hangs over the ground.</summary>
+        public Vector3 TooltipPoint
+        {
+            get
+            {
+                if (spriteRenderer == null)
+                    return transform.position;
+
+                Bounds bounds = spriteRenderer.bounds;
+
+                return new Vector3(bounds.center.x, bounds.max.y, transform.position.z);
+            }
+        }
+
         public void ShowCoordinates(bool show)
         {
             if (coordinateLabel == null)

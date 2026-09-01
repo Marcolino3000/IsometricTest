@@ -13,10 +13,19 @@ namespace Runtime.Gameplay.Traits
 
         /// <summary>
         /// One short line saying what this trait does, in numbers - what a passive item carrying it
-        /// reports when it is found. A trait with numbers of its own builds it from them; the default
-        /// falls back to the authored note, so a trait that has none still reads as something.
+        /// reports when it is found and what the card labelling a unit or a tile prints under the
+        /// trait's name. A trait with numbers of its own builds it from them; the default falls back
+        /// to the authored note, so a trait that has none still reads as something.
+        ///
+        /// <b>The stat, then the number</b> - "Defense +3", "Move cost -1" - the shape a tile's own
+        /// numbers are printed in, and never a sentence: the name above it already says what the
+        /// trait is, so this line is only what it is worth. Anything that has to be said in words
+        /// belongs in <see cref="Description"/>, which is the fallback rather than the line.
         /// </summary>
         public virtual string Summary => string.IsNullOrWhiteSpace(Description) ? name : Description;
+
+        /// <summary>A number as a summary prints it, with its sign - shared so every line matches.</summary>
+        protected static string Signed(int value) => value > 0 ? $"+{value}" : value.ToString();
 
         public virtual int ModifyOutgoingDamage(int damage, CombatContext context) => damage;
 

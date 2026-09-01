@@ -13,6 +13,8 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Flat amount subtracted from each incoming attack while a unit occupies this terrain.")]
         public int DefenseBonus = 2;
 
+        public override string Summary => $"Defense {Signed(DefenseBonus)}";
+
         public override int ModifyIncomingDamage(int damage, CombatContext context)
         {
             return damage - DefenseBonus;

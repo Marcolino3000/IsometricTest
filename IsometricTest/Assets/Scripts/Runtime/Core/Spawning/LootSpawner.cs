@@ -72,7 +72,7 @@ namespace Runtime.Core.Spawning
         /// <summary>
         /// Takes the box the player's character is standing on - the pressed way of taking one, see
         /// <see cref="HandleUnitEnteredTile"/> for walking over it. A turn action like any other: it
-        /// costs what <see cref="PickupCostOf"/> asks, so it only works on the character's own turn
+        /// costs what <see cref="Lootbox.Cost"/> asks, so it only works on the character's own turn
         /// and only while it can still afford it, and it announces itself so the history can undo it.
         /// </summary>
         public void TryPickup()
@@ -90,7 +90,7 @@ namespace Runtime.Core.Spawning
 
             // The other condition of the action: the points it asks for, which is none at all while
             // walking over a box is enough to have it.
-            var cost = PickupCostOf(lootbox);
+            var cost = lootbox.Cost;
 
             if (unit.CurrentState.ActionPoints < cost)
                 return;
@@ -101,25 +101,6 @@ namespace Runtime.Core.Spawning
             unit.CurrentState.ActionPoints -= cost;
 
             ActionReporter.Report(ActionReport.Pickup(unit));
-        }
-
-        /// <summary>
-        /// What taking <paramref name="lootbox"/> costs. Nothing at all while
-        /// <see cref="GameRules.AutoCollectLootboxes"/> is on: a box is then had by stepping onto its
-        /// tile, so pressing for the one already underfoot must not be the expensive way of doing
-        /// what a step does for free. That is not a corner case - a box holding something there was
-        /// no room for is left lying where it is, and no further arrival will pick it up, so pressing
-        /// is the only way back to it once a slot has been freed.
-        ///
-        /// One query rather than a number read twice, so what the action tests and what it charges
-        /// can never disagree.
-        /// </summary>
-        private int PickupCostOf(Lootbox lootbox)
-        {
-            if (lootbox == null || (rules != null && rules.AutoCollectLootboxes))
-                return 0;
-
-            return lootbox.PickupCost;
         }
 
         /// <summary>
@@ -329,7 +310,7 @@ namespace Runtime.Core.Spawning
         {
             var lootbox = Instantiate(settings.LootboxPrefab, transform);
             lootbox.name = $"{type.Title} {lootboxes.Count}";
-            lootbox.Setup(type, content, settings.OrderInLayer, settings.Scale);
+            lootbox.Setup(type, content, settings.OrderInLayer, settings.Scale, rules);
 
             lootboxes.Add(lootbox);
 

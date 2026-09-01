@@ -16,7 +16,7 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Extra damage added to each attack made from the chosen terrain.")]
         public int DamageBonus = 3;
 
-        public override string Summary => $"+{DamageBonus} Damage while standing on {Terrain}";
+        public override string Summary => $"Damage {Signed(DamageBonus)} on {Terrain}";
 
         public override int ModifyOutgoingDamage(int damage, CombatContext context)
         {

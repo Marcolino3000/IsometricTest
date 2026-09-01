@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ceeaf83b68c74566b93e46996ded0353, type: 3}
   m_Name: Extended Reach
   m_EditorClassIdentifier: 
-  Description: Strikes one tile further than the weapon alone would.
+  Description: Strikes one tile further.
+  Icon: {fileID: 0}
   DamageBonus: 0
   DefenseBonus: 0
   RangeBonus: 1
+  RequiresWeapon: 0

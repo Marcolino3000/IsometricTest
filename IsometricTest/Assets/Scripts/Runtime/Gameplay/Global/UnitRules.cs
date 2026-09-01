@@ -37,8 +37,9 @@ namespace Runtime.Gameplay.Global
     /// behind everything that shows a unit's capabilities: the badges over its head, the card shown
     /// while it is hovered, and anything added later.
     ///
-    /// Three sources go in and no view has to know there are three: the weapon it has drawn, the
-    /// action points it starts a turn with, and the traits it carries. Derived on every call and
+    /// Two sources go in and no view has to know there are two: the weapon it has drawn and the
+    /// traits it carries. How far it walks is deliberately not one of them - the action point bar and
+    /// the tiles it can reach say that already, and on a card it was a number beside the point. Derived on every call and
     /// never stored, so it needs no place in <c>GameSnapshot</c> and follows an undo for free - the
     /// same reason the match outcome is a question rather than a field. A new trait shows up in
     /// every view the moment it is worn, without any of them being touched.
@@ -46,10 +47,9 @@ namespace Runtime.Gameplay.Global
     public static class UnitRules
     {
         /// <summary>
-        /// Everything <paramref name="unit"/> can do, weapon first, then how far it gets, then one
-        /// entry per trait it carries. Terrain traits are deliberately left out: they belong to the
-        /// tile it happens to stand on rather than to the unit, and what they are worth right now is
-        /// already in the weapon's effective reach.
+        /// Everything <paramref name="unit"/> can do, the weapon first, then one entry per trait it
+        /// carries. Terrain traits are deliberately left out: they belong to the tile it happens to
+        /// stand on rather than to the unit, and the card labelling that tile prints them.
         /// </summary>
         public static IReadOnlyList<Capability> GetCapabilities(Unit unit)
         {
@@ -59,17 +59,15 @@ namespace Runtime.Gameplay.Global
                 return capabilities;
 
             AddWeapon(capabilities, unit);
-            AddMobility(capabilities, unit);
             AddTraits(capabilities, unit.CurrentState);
 
             return capabilities;
         }
 
         /// <summary>
-        /// The weapon in hand, which is the attack action itself - so the numbers are the ones the
-        /// asset already reports to the find popup, and there is nothing to keep in step. What it
-        /// actually reaches from where the unit stands is added only when the ground or the gear has
-        /// moved it, since that is the part the authored range does not tell you.
+        /// The weapon in hand, which is the attack action itself. Its name and nothing else: the
+        /// numbers belong to the item and are read where the item is - on its slot, its find card,
+        /// its entry in a picker - and repeating them here only made the longest line on the card.
         /// </summary>
         private static void AddWeapon(List<Capability> capabilities, Unit unit)
         {
@@ -78,39 +76,7 @@ namespace Runtime.Gameplay.Global
             if (weapon == null)
                 return;
 
-            var detail = $"{weapon.Title}: {string.Join(", ", weapon.Stats)}";
-
-            var tile = unit.CurrentState.Position;
-
-            if (tile != null && weapon.Condition != null)
-            {
-                var effective = CombatRules.GetEffectiveAttackRange(unit, tile);
-
-                if (effective != weapon.Condition.Range)
-                    detail += $" - reaches {effective} from here";
-            }
-
-            capabilities.Add(new Capability(weapon.Symbol, weapon.Kind.ToString(), detail));
-        }
-
-        /// <summary>
-        /// How far it gets in one turn, measured from the points it *starts* a turn with rather than
-        /// the ones it has left: a unit that spent its turn is not a slow unit, and what the player
-        /// is judging is what it will do next. Level ground, since a step onto rough terrain costs
-        /// more - <see cref="MovementRules"/> is what actually charges for a route.
-        /// </summary>
-        private static void AddMobility(List<Capability> capabilities, Unit unit)
-        {
-            var move = unit.CurrentState.MoveAction;
-
-            if (move == null || move.Condition == null || move.Condition.Cost <= 0)
-                return;
-
-            var points = unit.MaxActionPoints;
-            var tiles = points / move.Condition.Cost;
-
-            capabilities.Add(new Capability(move.Symbol, $"{tiles} tiles",
-                $"Moves {tiles} tiles over level ground ({points} AP, {move.Condition.Cost} per step)"));
+            capabilities.Add(new Capability(weapon.Symbol, weapon.Title, null));
         }
 
         /// <summary>

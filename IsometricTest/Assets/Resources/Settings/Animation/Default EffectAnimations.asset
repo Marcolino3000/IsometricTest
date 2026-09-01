@@ -40,6 +40,6 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 9c22f32b66453476b85c7f10647654a5, type: 3}
     - {fileID: 21300000, guid: 2ea62835a7047437a800530f5a023436, type: 3}
     FramesPerSecond: 24
-    Scale: 1
+    Scale: 0.5
     Offset: {x: 0, y: 0, z: 0}
     SortingOffset: 1

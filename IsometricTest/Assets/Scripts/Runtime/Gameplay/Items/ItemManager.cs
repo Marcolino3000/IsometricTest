@@ -43,9 +43,16 @@ namespace Runtime.Gameplay.Items
         private const string NoRoomNotice = "No free item slot";
         private const string AlreadyCarriedNotice = "Already carried";
 
-        /// <summary>How a merge went - shown under the two merge slots, where the odds were.</summary>
-        private const string MergeSucceededNotice = "The traits carried over.";
-        private const string MergeFailedNotice = "The merge failed. The right item was lost.";
+        /// <summary>
+        /// How a merge went, announced over the card rather than on a line inside it: the word the
+        /// banner carries, and the sentence under it saying what actually changed hands. The
+        /// sentences name their items, since the merge empties the right slot and neither is still
+        /// on screen to be meant by "it"; neither repeats the word standing above it.
+        /// </summary>
+        private const string MergeSucceededHeadline = "Success";
+        private const string MergeFailedHeadline = "Failed";
+        private const string MergeSucceededNotice = "{0} gained {1}.";
+        private const string MergeFailedNotice = "{0} was lost.";
         private const string NothingToMergeNotice = "Nothing owned fits that slot";
 
         [Header("Look")]
@@ -97,8 +104,10 @@ namespace Runtime.Gameplay.Items
         private Item mergeLeft;
         private Item mergeRight;
 
-        /// <summary>How the last merge went, until either slot is filled afresh.</summary>
+        /// <summary>How the last merge went, until either slot is filled afresh - the sentence the
+        /// banner prints, and which of its two words stands over it. Empty for no merge yet.</summary>
         private string mergeNotice = string.Empty;
+        private bool mergeSucceeded;
 
         public IReadOnlyList<Item> Items => items;
 
@@ -124,7 +133,7 @@ namespace Runtime.Gameplay.Items
             // one was activated, this answers with what fits, and the screen says which was picked.
             if (mergeScreen != null)
             {
-                mergeScreen.Opened += ShowMerge;
+                mergeScreen.Opened += HandleMergeOpened;
                 mergeScreen.SlotActivated += HandleMergeSlotActivated;
                 mergeScreen.OptionChosen += HandleMergeOptionChosen;
                 mergeScreen.MergeRequested += PerformMerge;
@@ -356,7 +365,7 @@ namespace Runtime.Gameplay.Items
             var options = new List<ItemOption>(slotItems.Count);
 
             foreach (var item in slotItems)
-                options.Add(new ItemOption(item.Symbol, item.Tooltip));
+                options.Add(new ItemOption(item.Symbol, item.Describe()));
 
             itemBar.OpenPicker(slot, options, slotItems.IndexOf(EquippedIn(slot)));
         }
@@ -419,13 +428,33 @@ namespace Runtime.Gameplay.Items
 
                 itemBar.SetSlotLook(i, LookOf(i));
                 itemBar.SetSlotIcon(i, item != null ? item.Symbol : null);
-                itemBar.SetSlotTooltip(i, item != null ? item.Tooltip : string.Empty);
+                itemBar.SetSlotTooltip(i, DescribeSlot(i));
                 itemBar.SetSlotActive(i, IsInUse(i, item));
             }
 
             // The cursor may still be resting on a slot that has just changed hands - a potion drunk
             // out of it, a looted one dropped into it - and it will not enter it a second time.
             ShowHoverPreview();
+        }
+
+        /// <summary>
+        /// What the card labelling a slot says. An item describes itself; an empty slot has no item
+        /// to do it, so it says what its category is for instead - which is the only thing a slot
+        /// standing empty can usefully answer, and the only reason this is here rather than on the
+        /// item. The bar is told neither, it is handed the result.
+        /// </summary>
+        private TooltipContent DescribeSlot(int slot)
+        {
+            var item = EquippedIn(slot);
+
+            if (item != null)
+                return item.Describe();
+
+            if (!KindForSlot(slot, out var kind))
+                return TooltipContent.Empty;
+
+            return new TooltipContent(Item.NameOf(kind), "Empty slot", Item.DescriptionOf(kind),
+                icon: slotIcons != null ? slotIcons.IconFor(kind) : null);
         }
 
         /// <summary>
@@ -768,6 +797,19 @@ namespace Runtime.Gameplay.Items
         // costs in odds. Nothing here decides a rule and nothing there touches an inventory.
 
         /// <summary>
+        /// Fills the panel when it goes up. How the last merge went is dropped first: the screen
+        /// stays open over its own outcome, so it has already been read by the time it is closed,
+        /// and a bench opened afresh should say what this pair is worth rather than what an earlier
+        /// one turned out to be.
+        /// </summary>
+        private void HandleMergeOpened()
+        {
+            mergeNotice = string.Empty;
+
+            ShowMerge();
+        }
+
+        /// <summary>
         /// Answers the screen with everything owned that fits the activated merge slot, starting the
         /// choice on what is already in it. The two sides ask different questions of an item - the
         /// left one is improved and has to be a weapon, the right one is taken apart and has to have
@@ -787,7 +829,7 @@ namespace Runtime.Gameplay.Items
             var options = new List<ItemOption>(candidates.Count);
 
             foreach (var item in candidates)
-                options.Add(new ItemOption(item.Symbol, item.Tooltip, item.Title));
+                options.Add(new ItemOption(item.Symbol, item.Describe(), item.Title));
 
             mergeScreen.OpenPicker(side, options, candidates.IndexOf(ChosenFor(side)));
         }
@@ -836,13 +878,29 @@ namespace Runtime.Gameplay.Items
             return candidates;
         }
 
+        /// <summary>
+        /// What an item passes on, as the success notice lists it - the traits by name, the way the
+        /// badge over a unit's head and a tile's own card name them. What carried over is the news
+        /// of a merge: the weapon keeps its name, so nothing else about it says it changed.
+        /// </summary>
+        private static string TraitsGivenBy(Item item)
+        {
+            var names = new List<string>();
+
+            foreach (var trait in MergeRules.TraitsOf(item))
+                if (trait != null)
+                    names.Add(trait.name);
+
+            return names.Count > 0 ? string.Join(", ", names) : item.Title;
+        }
+
         /// <summary>An item as one of the two merge slots draws it, or an empty slot for none.</summary>
         private void ShowMergeSlot(int side, Item item)
         {
             mergeScreen.SetSlot(side,
                 item != null ? item.Symbol : null,
                 item != null ? item.Title : string.Empty,
-                item != null ? item.Tooltip : string.Empty);
+                item != null ? item.Describe() : TooltipContent.Empty);
         }
 
         private Item ChosenFor(int side)
@@ -877,9 +935,18 @@ namespace Runtime.Gameplay.Items
                 : string.Empty);
             mergeScreen.SetMergeEnabled(possible);
 
-            // While a pair cannot be merged, why not is the only thing worth saying; once it can,
-            // the line is free for how the last one went.
-            mergeScreen.SetNotice(possible ? mergeNotice : reason);
+            // The two say different things and are both worth having: the banner is how the last
+            // merge went, the line inside the card why this pair cannot be merged. A merge always
+            // empties the right slot, so that line is a prompt for the next pair at exactly the
+            // moment the banner is announcing the last one.
+            bool merged = mergeNotice.Length > 0;
+
+            mergeScreen.SetOutcome(
+                merged ? (mergeSucceeded ? MergeSucceededHeadline : MergeFailedHeadline) : string.Empty,
+                merged ? mergeNotice : string.Empty,
+                mergeSucceeded);
+
+            mergeScreen.SetNotice(possible ? string.Empty : reason);
         }
 
         /// <summary>
@@ -927,7 +994,10 @@ namespace Runtime.Gameplay.Items
                     playerUnit.CurrentState.AttackAction = merged;
             }
 
-            mergeNotice = succeeded ? MergeSucceededNotice : MergeFailedNotice;
+            mergeSucceeded = succeeded;
+            mergeNotice = succeeded
+                ? string.Format(MergeSucceededNotice, left.Title, TraitsGivenBy(right))
+                : string.Format(MergeFailedNotice, right.Title);
 
             DropUnownedWeapon();
             ShowSlots();

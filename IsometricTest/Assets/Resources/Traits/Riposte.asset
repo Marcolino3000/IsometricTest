@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bc4513110994ee0a26df79e2150cc34, type: 3}
   m_Name: Riposte
   m_EditorClassIdentifier: 
-  Description: Answers every attack that comes within reach, whatever the match rules
-    allow.
+  Description: Answers every attack that comes within reach.
+  Icon: {fileID: 0}
   Retaliates: 1
   RequiresWeapon: 1

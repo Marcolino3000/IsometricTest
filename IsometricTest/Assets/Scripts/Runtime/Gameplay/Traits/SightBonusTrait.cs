@@ -15,7 +15,7 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("Extra tiles of sight granted while a unit occupies this terrain.")]
         public int SightBonus = 1;
 
-        public override string Summary => $"+{SightBonus} sight while standing on this terrain";
+        public override string Summary => $"Sight {Signed(SightBonus)}";
 
         public override int ModifySightRange(int range, SightContext context)
         {

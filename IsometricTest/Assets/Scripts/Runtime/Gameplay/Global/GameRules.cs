@@ -52,14 +52,14 @@ namespace Runtime.Gameplay.Global
         public bool ShowMovementRange = true;
 
         [Header("Reading the enemy")]
-        [Tooltip("When on, every unit wears a row of badges: the weapon it has drawn, how far it " +
-                 "moves in a turn, and one per trait it carries. A trait with no symbol authored is " +
-                 "badged with its name.")]
+        [Tooltip("When on, every unit wears a row of badges: the weapon it has drawn, and one per " +
+                 "trait it carries. A trait with no symbol authored is badged with its name.")]
         public bool ShowUnitBadges = true;
 
-        [Tooltip("When on, hovering a unit puts a card in the corner with its health, its points and " +
+        [Tooltip("When on, hovering a unit puts a card beside it with its health, its points and " +
                  "what each of its badges means. The badges say what it can do; this says what the " +
-                 "numbers are.")]
+                 "numbers are. The same card everything else is labelled with - see TooltipSettings " +
+                 "for how long it waits and how it is drawn.")]
         public bool ShowUnitCard = true;
 
         [Tooltip("When on, hovering an enemy tints every tile it could strike next turn - measured " +

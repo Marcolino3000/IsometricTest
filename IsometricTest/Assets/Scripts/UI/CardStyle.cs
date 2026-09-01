@@ -5,8 +5,8 @@ namespace UI
 {
     /// <summary>
     /// What a panel built in code looks like - the colours and the border every one of them uses.
-    /// Here rather than on any one of them because there are now three: the find popup, the card
-    /// shown while a unit is hovered, and the badges over a unit's head. They are drawn on different
+    /// Here rather than on any one of them because there are now three: the find popup, the tooltip
+    /// card everything hovered is labelled with, and the badges over a unit's head. They are drawn on different
     /// panels and appear for different reasons, but a player reading two of them at once should not
     /// see two different interfaces.
     /// </summary>

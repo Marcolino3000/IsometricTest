@@ -50,7 +50,7 @@ namespace Runtime.Gameplay.Traits
         {
             return requirement == WeaponRequirement.Any
                 ? ""
-                : $" (with a {requirement.ToString().ToLowerInvariant()} weapon)";
+                : $" ({requirement.ToString().ToLowerInvariant()} only)";
         }
     }
 
@@ -98,13 +98,13 @@ namespace Runtime.Gameplay.Traits
                 var parts = new List<string>();
 
                 if (DamageBonus != 0)
-                    parts.Add($"{Signed(DamageBonus)} Damage");
+                    parts.Add($"Damage {Signed(DamageBonus)}");
 
                 if (DefenseBonus != 0)
-                    parts.Add($"{Signed(DefenseBonus)} Defense");
+                    parts.Add($"Defense {Signed(DefenseBonus)}");
 
                 if (RangeBonus != 0)
-                    parts.Add($"{Signed(RangeBonus)} Range");
+                    parts.Add($"Range {Signed(RangeBonus)}");
 
                 if (parts.Count == 0)
                     return base.Summary;
@@ -112,8 +112,6 @@ namespace Runtime.Gameplay.Traits
                 return string.Join(", ", parts) + RequiresWeapon.Describe();
             }
         }
-
-        private static string Signed(int value) => value > 0 ? $"+{value}" : value.ToString();
 
         public override int ModifyOutgoingDamage(int damage, CombatContext context)
         {

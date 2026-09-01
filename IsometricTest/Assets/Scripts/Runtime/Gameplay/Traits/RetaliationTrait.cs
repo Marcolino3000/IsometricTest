@@ -29,7 +29,7 @@ namespace Runtime.Gameplay.Traits
         public WeaponRequirement RequiresWeapon = WeaponRequirement.Any;
 
         public override string Summary =>
-            (Retaliates ? "Strikes back when attacked" : "Never strikes back") + RequiresWeapon.Describe();
+            (Retaliates ? "Strikes back" : "No retaliation") + RequiresWeapon.Describe();
 
         public override bool ModifyRetaliation(bool canRetaliate, CombatContext context)
         {

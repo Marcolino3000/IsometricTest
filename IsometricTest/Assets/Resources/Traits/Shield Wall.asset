@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ceeaf83b68c74566b93e46996ded0353, type: 3}
   m_Name: Shield Wall
   m_EditorClassIdentifier: 
-  Description: Heavy cover that can only be held up alongside a melee weapon, and slows the swing.
+  Description: Higd Def bonus but malus on Dmg
+  Icon: {fileID: 0}
   DamageBonus: -2
   DefenseBonus: 4
   RangeBonus: 0

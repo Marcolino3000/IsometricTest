@@ -11,7 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 78e8a4168d6a4e4aae498c8013c22aa9, type: 3}
   m_Name: Critical Strike
-  m_EditorClassIdentifier:
-  Description: A chance on each attack to land a critical hit for extra damage.
+  m_EditorClassIdentifier: 
+  Description: Crit Chance!
+  Icon: {fileID: 0}
   CritChance: 0.25
   CritMultiplier: 2
+  Note: Crit!

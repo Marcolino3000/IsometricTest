@@ -17,9 +17,10 @@ namespace Runtime.Gameplay.AI
     /// a unit attacks the closest enemy it can reach this turn - or, when its weapon does something
     /// beyond hitting what it is aimed at, whichever reachable enemy the swing is worth the most
     /// against - otherwise advances toward the closest visible enemy, otherwise hunts the tile an
-    /// enemy was last seen on, otherwise moves to uncover as much unexplored map as possible. When
-    /// every unit is spent it hands the turn back via
-    /// <see cref="GameStateManager.ToggleCurrentTeam"/>.
+    /// enemy was last seen on, otherwise moves to uncover as much unexplored map as possible. A unit
+    /// that outranges its target takes the shot from as far out as it can (see
+    /// <see cref="StandoffTile"/>) rather than walking up to it. When every unit is spent it hands
+    /// the turn back via <see cref="GameStateManager.ToggleCurrentTeam"/>.
     /// </summary>
     public class AiController : MonoBehaviour
     {
@@ -36,6 +37,12 @@ namespace Runtime.Gameplay.AI
 
         [Tooltip("Safety cap on actions per unit per turn, guarding against any pathological loop.")]
         [SerializeField] private int maxActionsPerUnit = 20;
+
+        [Tooltip("Units that shoot further than one tile attack from as far away as they can: they " +
+                 "fall back to the furthest tile that still has the shot instead of closing in, and " +
+                 "back off again when something walks up to them. Off, every unit simply advances " +
+                 "until its target is in range.")]
+        [SerializeField] private bool keepDistance = true;
 
         [Tooltip("Last resort when every enemy is out of sight, none was seen recently and the whole map " +
                  "is explored: units advance on the closest enemy's real position instead of standing " +
@@ -381,6 +388,21 @@ namespace Runtime.Gameplay.AI
 
         private bool EngageEnemy(Unit unit, Unit enemy)
         {
+            // Shoot from as far out as the shot carries, rather than from wherever the approach path
+            // happens to end. Null for a weapon that reaches one tile, so melee closes the distance
+            // below exactly as before.
+            var standoff = StandoffTile(unit, enemy);
+
+            if (standoff != null && standoff != unit.CurrentState.Position)
+            {
+                // Taking up the position is this activation's action and the shot is the next one -
+                // the tile was chosen with the shot's cost already held back, so it is still
+                // affordable when the unit is asked again. Two actions rather than one also means
+                // the player sees the unit fall back and fire as two paced steps.
+                unit.ActionExecutor.ExecuteMoveActions(new ExecuteArgs(standoff));
+                return true;
+            }
+
             // Can we reach a shot and take it this turn? PlanAttackAction tests AP and asks
             // CombatRules.CanAttackFrom where to stop, so this is the cheapest approach-and-hit -
             // and a blocked shot simply falls through to closing the distance below.
@@ -398,6 +420,68 @@ namespace Runtime.Gameplay.AI
         {
             var tile = enemy != null ? enemy.CurrentState.Position : null;
             return tile != null && MoveToward(unit, tile);
+        }
+
+        /// <summary>
+        /// Where a unit that outranges its target would rather stand: the tile furthest from
+        /// <paramref name="enemy"/> that it can both reach this turn and still strike from - the
+        /// nearest one when several are equally far out, so it walks no further than the distance is
+        /// worth. Its own tile is a candidate like any other, which is what makes this both taking up
+        /// a position and giving ground to something that has walked up to it.
+        ///
+        /// Null when there is nothing to gain, and the caller then closes the distance as before:
+        /// with the switch off, for a weapon whose effective range is one tile (every tile it could
+        /// strike from is the same distance out), and when no reachable tile has the shot at all.
+        ///
+        /// Asked of <see cref="CombatRules.CanAttackFrom"/> per tile rather than of a radius, so the
+        /// tile it falls back to is one the strike itself will accept: range as the terrain there
+        /// modifies it, and a line of fire, so a unit does not back off behind a mountain it can no
+        /// longer shoot past. Range rather than <c>WeaponKind</c> decides who does this, since the
+        /// kind is authored for the slot the weapon goes in while what it actually reaches from here
+        /// is what says whether backing off keeps the shot.
+        /// </summary>
+        private Tile StandoffTile(Unit unit, Unit enemy)
+        {
+            if (!keepDistance || CombatRules.GetEffectiveAttackRange(unit) <= 1)
+                return null;
+
+            var from = unit.CurrentState.Position;
+            var target = enemy != null ? enemy.CurrentState.Position : null;
+
+            if (from == null || target == null)
+                return null;
+
+            // The shot has to be paid for as well, so the walk is budgeted with its cost held back.
+            // That is also what keeps a unit that is already in range from repositioning itself out
+            // of the turn it could have fired in.
+            var budget = unit.CurrentState.ActionPoints - unit.CurrentState.AttackAction.Condition.Cost;
+
+            if (budget < 0)
+                return null;
+
+            var candidates = tileSpawner.GetMoveableTiles(unit.CurrentState, budget)
+                .Prepend(from)
+                .Where(tile => CombatRules.CanAttackFrom(unit, tile, target))
+                .OrderByDescending(tile => tileSpawner.GetDistanceBetweenTiles(tile, target))
+                .ThenBy(tile => tileSpawner.GetDistanceBetweenTiles(from, tile));
+
+            foreach (var tile in candidates)
+            {
+                if (tile == from)
+                    return tile;
+
+                // What can be reached is asked of the mover's own step costs while the move planner
+                // routes without them, so the path actually walked can cost more than the sweep
+                // budgeted for. Price that path before committing to the tile and take the next best
+                // one when it does not fit - a plan the executor turns down would spend the
+                // activation standing still.
+                var path = tileSpawner.GetPath(from, tile);
+
+                if (path.Count > 0 && MovementRules.GetPathCost(unit.CurrentState, path) <= budget)
+                    return tile;
+            }
+
+            return null;
         }
 
         // --- Memory of lost enemies ---------------------------------------------------------------

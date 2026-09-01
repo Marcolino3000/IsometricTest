@@ -13,6 +13,24 @@ namespace Runtime.Gameplay.Entities
     }
 
     /// <summary>
+    /// What a kind of terrain is called to the player - what the card labelling a tile is headed
+    /// with. Kept beside the enum it reads, the way <c>Item.NameOf</c> sits beside the slot kinds.
+    /// </summary>
+    public static class TerrainNames
+    {
+        public static string Of(TerrainType type)
+        {
+            return type switch
+            {
+                TerrainType.Flat => "Flat Ground",
+                TerrainType.Hills => "Hills",
+                TerrainType.Mountain => "Mountain",
+                _ => type.ToString()
+            };
+        }
+    }
+
+    /// <summary>
     /// Describes how a <see cref="TerrainType"/> looks and how it affects movement.
     /// Flat tiles use the plain prefab; hills raise the tile and cost extra AP to enter;
     /// mountains are raised further, tinted and cannot be entered at all.

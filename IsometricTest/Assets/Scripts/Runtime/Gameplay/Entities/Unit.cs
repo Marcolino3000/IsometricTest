@@ -11,7 +11,7 @@ using UnityEngine.UIElements;
 
 namespace Runtime.Gameplay.Entities
 {
-    public class Unit : MonoBehaviour, IClickable
+    public class Unit : MonoBehaviour, IClickable, ITooltipSource
     {
         public UnitState CurrentState => currentState;
         public UnitBlueprint Blueprint => blueprint;
@@ -65,6 +65,13 @@ namespace Runtime.Gameplay.Entities
         [SerializeField] private HealthBar healthBar;
         [SerializeField] private ActionExecutor actionExecutor;
 
+        // Kept for the tooltip alone, which is the one thing here that asks a match-wide switch.
+        private GameRules rules;
+
+        // The renderer on the "Sprite" child, for the one thing that needs to know how tall the unit
+        // is drawn: where the card labelling it hangs.
+        private SpriteRenderer spriteRenderer;
+
         // Built in Init off the blueprint, and null for a unit whose blueprint authors no frames -
         // which is what leaves that unit standing still and stepping onto its tiles at once.
         private UnitAnimator animator;
@@ -112,6 +119,8 @@ namespace Runtime.Gameplay.Entities
             tileSpawner = tileSpawnerArg;
             unitSpawner = unitSpawnerArg;
             fogOfWar = fogOfWarArg;
+            rules = gameRules;
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
 
             gameStateManager = gameStateManagerArg;
             gameStateManager.TurnReset += HandleTurnReset;
@@ -143,6 +152,48 @@ namespace Runtime.Gameplay.Entities
             // Nothing is held on to: the row keeps itself in step with what the unit carries, so
             // there is nothing here that would have to tell it when that changes.
             UnitBadges.Create(this, healthBar.GetComponent<UIDocument>().panelSettings);
+        }
+
+        /// <summary>
+        /// What the card labelling this unit says: its vitals on one line, and one row per
+        /// <see cref="Capability"/> saying what each of the badges over its head amounts to. The
+        /// numbers are read now rather than remembered, so a unit losing health while it is pointed
+        /// at shows it.
+        ///
+        /// A unit that has fallen says nothing: it is hidden rather than destroyed, so a hover held
+        /// past its death would go on describing it.
+        /// </summary>
+        public TooltipContent Describe()
+        {
+            if (!IsAlive || currentState == null || (rules != null && !rules.ShowUnitCard))
+                return TooltipContent.Empty;
+
+            string vitals = $"Health {currentState.Health}/{MaxHealth}    " +
+                            $"AP {currentState.ActionPoints}/{MaxActionPoints}    " +
+                            // What it sees from where it stands, ground included - the number the fog
+                            // is actually drawn from, not the one on the blueprint.
+                            $"Sight {SightRules.GetSightRange(this)}";
+
+            return new TooltipContent(
+                blueprint != null ? blueprint.name : name,
+                currentState.Team.ToString(),
+                stats: new[] { vitals },
+                entries: UnitRules.GetCapabilities(this),
+                icon: blueprint != null ? blueprint.Sprite : null);
+        }
+
+        /// <summary>The top of the sprite, so the card hangs over the unit rather than across it.</summary>
+        public Vector3 TooltipPoint
+        {
+            get
+            {
+                if (spriteRenderer == null)
+                    return transform.position;
+
+                Bounds bounds = spriteRenderer.bounds;
+
+                return new Vector3(bounds.center.x, bounds.max.y, transform.position.z);
+            }
         }
 
         /// <summary>

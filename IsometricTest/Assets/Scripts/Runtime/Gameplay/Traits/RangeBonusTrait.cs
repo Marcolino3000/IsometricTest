@@ -16,6 +16,9 @@ namespace Runtime.Gameplay.Traits
         [Tooltip("When enabled, only units with a ranged base attack (base range greater than 1) get the bonus.")]
         public bool RangedOnly = true;
 
+        public override string Summary =>
+            $"Range {Signed(RangeBonus)}" + (RangedOnly ? " (ranged only)" : string.Empty);
+
         public override int ModifyAttackRange(int range, RangeContext context)
         {
             if (RangedOnly && !context.IsRanged)

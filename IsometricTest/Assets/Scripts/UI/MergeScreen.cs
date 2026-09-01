@@ -41,12 +41,6 @@ namespace UI
         private const float SlotSize = 84f;
         private const float PickerGap = 10f;
 
-        /// <summary>Distance between an element and the label describing it, in panel pixels.</summary>
-        private const float TooltipGap = 10f;
-
-        /// <summary>Seconds the cursor has to rest on something before its label opens.</summary>
-        private const float TooltipDelay = 0.5f;
-
         /// <summary>
         /// What an item slot of the bar looks like - <c>.slot</c> in <c>itemBar.uss</c>. The corner
         /// button wears it rather than the card's own frame: it stands on the HUD beside that row
@@ -59,6 +53,19 @@ namespace UI
         private const float BarSlotRadius = 6f;
         private static readonly Color BarSlotBackground = new(0.157f, 0.157f, 0.188f, 0.9f);
 
+        /// <summary>
+        /// How an outcome is coloured - the gold and the red the game-over card states a won and a
+        /// lost match in, so a result reads the same wherever the game announces one.
+        /// </summary>
+        private static readonly Color SucceededAccent = new(0.98f, 0.82f, 0.29f);
+        private static readonly Color FailedAccent = new(0.89f, 0.31f, 0.27f);
+
+        /// <summary>
+        /// The banner is as tall as this whether or not it says anything, so the card below it
+        /// stands where it stood and a merge does not shove the panel down the screen.
+        /// </summary>
+        private const float OutcomeHeight = 92f;
+
         private const string Heading = "Merge Two Items";
         private const string Subheading = "The traits of the right item are added to the left item.";
 
@@ -68,19 +75,6 @@ namespace UI
         /// hovering anything.
         /// </summary>
         private static readonly string[] SideCaptions = { "Improved", "Consumed" };
-
-        /// <summary>
-        /// Where a hover label sits relative to what it describes. Three, because this panel is in
-        /// the middle of the screen rather than along an edge: the corner button is labelled from
-        /// above like an item slot, but the two merge slots and the columns over them are labelled
-        /// outwards, away from the card, so reading one never covers the thing being compared.
-        /// </summary>
-        private enum TooltipSide
-        {
-            Above,
-            Left,
-            Right
-        }
 
         /// <summary>Raised with the side the player wants to see the fitting items of.</summary>
         public event Action<int> SlotActivated;
@@ -99,6 +93,8 @@ namespace UI
         private VisualElement picker;
         private Label chance;
         private Label notice;
+        private Label outcomeTitle;
+        private Label outcomeDetail;
         private Button mergeButton;
 
         private readonly VisualElement[] slots = new VisualElement[SideCount];
@@ -107,12 +103,14 @@ namespace UI
 
         /// <summary>What each slot says on hover. Kept because it changes under a resting cursor -
         /// an item put in the slot, or one an undo took back out of it.</summary>
-        private readonly string[] slotTooltips = { string.Empty, string.Empty };
+        private readonly TooltipContent[] slotTooltips = { TooltipContent.Empty, TooltipContent.Empty };
 
         private readonly List<VisualElement> options = new();
 
-        private Label tooltip;
-        private IVisualElementScheduledItem tooltipTimer;
+        // The one owner of what the cursor is over. This screen reports the label of whatever it is
+        // on and the tooltip view draws it - the same dialogue the item bar has, and the reason the
+        // two windows can no longer label things differently.
+        private HoverTarget hoverTarget;
 
         /// <summary>The slot the cursor rests on, or <see cref="NoSelection"/>.</summary>
         private int hoveredSide = NoSelection;
@@ -148,11 +146,18 @@ namespace UI
             return screen;
         }
 
+        public MergeScreen Setup(HoverTarget hover)
+        {
+            hoverTarget = hover;
+
+            return this;
+        }
+
         /// <summary>
         /// Puts one side's slot up: the symbol, the name written under it, and the full description
         /// on hover. An empty slot falls back to saying what it is for.
         /// </summary>
-        public void SetSlot(int side, Sprite icon, string label, string tooltip)
+        public void SetSlot(int side, Sprite icon, string label, TooltipContent tooltip)
         {
             if (side < 0 || side >= SideCount)
                 return;
@@ -165,11 +170,11 @@ namespace UI
 
             slotCaptions[side].text = named ? label : SideCaptions[side];
             slotCaptions[side].style.color = named ? CardStyle.Text : CardStyle.MutedText;
-            slotTooltips[side] = tooltip ?? string.Empty;
+            slotTooltips[side] = tooltip;
 
             // An open label would otherwise go on describing what the slot held a moment ago.
             if (hoveredSide == side)
-                HideTooltip();
+                ReportTooltip(slots[side], tooltip, SideOf(side));
         }
 
         /// <summary>The odds, already phrased. Empty takes the line out of the layout.</summary>
@@ -185,6 +190,20 @@ namespace UI
         public void SetNotice(string text)
         {
             SetText(notice, text);
+        }
+
+        /// <summary>
+        /// What the banner says, or nothing at all for an empty <paramref name="headline"/>. The
+        /// two strings are finished, like every other one pushed here; <paramref name="succeeded"/>
+        /// is only which of the two colours the word wears - the view knows no more about a merge
+        /// than that it went one way or the other.
+        /// </summary>
+        public void SetOutcome(string headline, string detail, bool succeeded)
+        {
+            outcomeTitle.style.color = succeeded ? SucceededAccent : FailedAccent;
+
+            SetText(outcomeTitle, headline);
+            SetText(outcomeDetail, detail);
         }
 
         public void SetMergeEnabled(bool enabled)
@@ -225,7 +244,10 @@ namespace UI
             highlightedOption = NoSelection;
 
             options.Clear();
-            HideTooltip();
+
+            // The label goes back to the slot the cursor is on rather than away: a column is closed
+            // on every refresh of the panel, and the slot under it is still being pointed at.
+            ReturnTooltipToSlot();
 
             if (picker == null)
                 return;
@@ -243,6 +265,10 @@ namespace UI
             overlay.style.display = DisplayStyle.Flex;
             overlay.pickingMode = PickingMode.Position;
 
+            // The panel goes up under a cursor that may be resting on an item slot, and an element
+            // covered without the pointer moving reports no leave - its label would linger over this.
+            ClearTooltip();
+
             Opened?.Invoke();
         }
 
@@ -252,6 +278,9 @@ namespace UI
 
             IsOpen = false;
             hoveredSide = NoSelection;
+
+            // The panel goes out from under the cursor, so no element will report leaving it.
+            ClearTooltip();
 
             if (overlay == null)
                 return;
@@ -357,10 +386,10 @@ namespace UI
 
             // Labelled outwards from the card, on the side of the slot the column belongs to: the
             // space above an entry is taken by the rest of the column, as it is on the item bar.
-            string text = item.Tooltip;
-            option.RegisterCallback<PointerEnterEvent>(_ =>
-                ScheduleTooltip(option, text, SideOf(openSide)));
-            option.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+            TooltipContent content = item.Tooltip;
+            TooltipSide side = SideOf(openSide);
+            option.RegisterCallback<PointerEnterEvent>(_ => ReportTooltip(option, content, side));
+            option.RegisterCallback<PointerLeaveEvent>(_ => ClearTooltip());
 
             options.Add(option);
             picker.Add(option);
@@ -388,8 +417,6 @@ namespace UI
 
             BuildCornerButton(buttonIcon);
             BuildOverlay();
-            // Last, so it is drawn over the panel and over any column standing open on it.
-            BuildTooltip();
         }
 
         /// <summary>
@@ -408,9 +435,9 @@ namespace UI
 
             // From above, like an item slot of the bar it stands beside - there is nothing over it
             // but the map, and the screen edges leave no room to either side.
-            button.RegisterCallback<PointerEnterEvent>(_ =>
-                ScheduleTooltip(button, Heading, TooltipSide.Above));
-            button.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+            var label = new TooltipContent(Heading, description: Subheading);
+            button.RegisterCallback<PointerEnterEvent>(_ => ReportTooltip(button, label, TooltipSide.Above));
+            button.RegisterCallback<PointerLeaveEvent>(_ => ClearTooltip());
 
             var symbol = Icon(button);
             symbol.style.backgroundImage = icon != null
@@ -445,8 +472,39 @@ namespace UI
 
             root.Add(overlay);
 
+            // Before the card, so it stands over the dimmed ground above the panel rather than
+            // inside it; after it in the file only because the card is what it announces about.
+            BuildOutcome();
             BuildCard();
             BuildPicker();
+        }
+
+        /// <summary>
+        /// How the last merge went, said over the dimmed ground above the card rather than on the
+        /// line inside it: a merge is a gamble and its result is the loudest thing on the screen,
+        /// while the card goes on being the bench - it says what this pair is worth and what is
+        /// missing, which is a different question from what the last one turned out to be.
+        ///
+        /// One word and a sentence, like the game-over card: the word carries the outcome and its
+        /// colour, the line under it what actually changed hands.
+        /// </summary>
+        private void BuildOutcome()
+        {
+            var block = new VisualElement { pickingMode = PickingMode.Ignore };
+            block.style.height = OutcomeHeight;
+            block.style.alignItems = Align.Center;
+            // Bottom-aligned: the two lines hang just over the card, so the taller of them grows
+            // away from it rather than pushing at it.
+            block.style.justifyContent = Justify.FlexEnd;
+            block.style.marginBottom = 10f;
+
+            outcomeTitle = Text(block, 46f, SucceededAccent);
+            outcomeTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+            outcomeDetail = Text(block, 17f, CardStyle.Text);
+            outcomeDetail.style.marginTop = 2f;
+
+            overlay.Add(block);
         }
 
         private void BuildCard()
@@ -581,45 +639,18 @@ namespace UI
             overlay.Add(picker);
         }
 
-        /// <summary>
-        /// The hover label, built here rather than taken from UI Toolkit's own <c>tooltip</c>
-        /// property for the same reason <see cref="ItemBar"/> builds its own: the built-in one does
-        /// not draw on these runtime panels. Styled to match the bar's <c>.slot-tooltip</c>, so the
-        /// two windows label things the same way and the delay before either opens is the same.
-        ///
-        /// One label reused by everything on this screen, and it hangs in the document root rather
-        /// than in the panel: the corner button is labelled while the panel is not even up.
-        /// </summary>
-        private void BuildTooltip()
-        {
-            tooltip = new Label { pickingMode = PickingMode.Ignore };
-            tooltip.style.position = Position.Absolute;
-            tooltip.style.display = DisplayStyle.None;
-            tooltip.style.maxWidth = 320f;
-            tooltip.style.fontSize = 16f;
-            tooltip.style.color = CardStyle.Text;
-            tooltip.style.whiteSpace = WhiteSpace.Normal;
-            tooltip.style.unityTextAlign = TextAnchor.MiddleCenter;
-            // Darker than a card: it lies over one, and has to be told apart from what it covers.
-            tooltip.style.backgroundColor = new Color(0.047f, 0.047f, 0.063f, 0.95f);
-            CardStyle.SetPadding(tooltip, 6f, 10f);
-            CardStyle.SetBorder(tooltip, 2f, 6f);
-
-            root.Add(tooltip);
-        }
-
         private void HoverSlot(int side, VisualElement slot)
         {
             hoveredSide = side;
 
-            ScheduleTooltip(slot, slotTooltips[side], SideOf(side));
+            ReportTooltip(slot, slotTooltips[side], SideOf(side));
         }
 
         private void LeaveSlot()
         {
             hoveredSide = NoSelection;
 
-            HideTooltip();
+            ClearTooltip();
         }
 
         /// <summary>
@@ -631,54 +662,28 @@ namespace UI
             return side == LeftSide ? TooltipSide.Left : TooltipSide.Right;
         }
 
-        private void ScheduleTooltip(VisualElement anchor, string text, TooltipSide side)
+        /// <summary>
+        /// Hands the label of whatever the cursor is on to the one owner of the cursor, exactly as
+        /// the item bar does. How long it waits, where it goes and what it looks like are the
+        /// tooltip view's - which is what makes the two windows label things the same way.
+        /// </summary>
+        private void ReportTooltip(VisualElement anchor, TooltipContent content, TooltipSide side)
         {
-            HideTooltip();
-
-            if (string.IsNullOrWhiteSpace(text))
-                return;
-
-            // Scheduled on the root rather than on the label: the timer has to keep running while
-            // the label itself is still hidden.
-            tooltipTimer = root.schedule
-                .Execute(() => ShowTooltip(anchor, text, side))
-                .StartingIn((long)(TooltipDelay * 1000f));
+            hoverTarget?.SetUiTooltip(content, TooltipAnchor.Element(anchor, side));
         }
 
-        private void ShowTooltip(VisualElement anchor, string text, TooltipSide side)
+        private void ClearTooltip()
         {
-            tooltip.text = text;
-            tooltip.style.display = DisplayStyle.Flex;
-            // The shift does the centring, so how big the label turned out is never measured.
-            tooltip.style.translate = side switch
-            {
-                TooltipSide.Left => new Translate(Length.Percent(-100f), Length.Percent(-50f)),
-                TooltipSide.Right => new Translate(Length.Percent(0f), Length.Percent(-50f)),
-                _ => new Translate(Length.Percent(-50f), Length.Percent(-100f))
-            };
-
-            Rect bounds = anchor.worldBound;
-
-            Vector2 point = side switch
-            {
-                TooltipSide.Left => new Vector2(bounds.xMin - TooltipGap, bounds.center.y),
-                TooltipSide.Right => new Vector2(bounds.xMax + TooltipGap, bounds.center.y),
-                _ => new Vector2(bounds.center.x, bounds.yMin - TooltipGap)
-            };
-
-            Vector2 local = root.WorldToLocal(point);
-
-            tooltip.style.left = local.x;
-            tooltip.style.top = local.y;
+            hoverTarget?.SetUiTooltip(TooltipContent.Empty, default);
         }
 
-        private void HideTooltip()
+        /// <summary>Labels the slot the cursor rests on, or nothing while it rests on none.</summary>
+        private void ReturnTooltipToSlot()
         {
-            tooltipTimer?.Pause();
-            tooltipTimer = null;
-
-            if (tooltip != null)
-                tooltip.style.display = DisplayStyle.None;
+            if (hoveredSide == NoSelection || slots[hoveredSide] == null)
+                ClearTooltip();
+            else
+                ReportTooltip(slots[hoveredSide], slotTooltips[hoveredSide], SideOf(hoveredSide));
         }
 
         /// <summary>A bordered square - a slot, a picker entry or the corner button.</summary>
