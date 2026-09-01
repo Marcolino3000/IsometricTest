@@ -16,10 +16,20 @@ namespace Runtime.Gameplay.Traits
         public readonly bool IsRetaliation;
 
         public CombatContext(Unit attacker, Unit defender, bool isRetaliation)
+            : this(attacker, defender, isRetaliation, attacker.CurrentState.Position)
+        {
+        }
+
+        /// <summary>
+        /// The same strike made from a tile the attacker is not standing on yet - what the AI asks
+        /// while weighing an attack it would walk up to first, the way <c>RangeContext</c> carries a
+        /// tile for the same reason.
+        /// </summary>
+        public CombatContext(Unit attacker, Unit defender, bool isRetaliation, Tile attackerTile)
         {
             Attacker = attacker;
             Defender = defender;
-            AttackerTile = attacker.CurrentState.Position;
+            AttackerTile = attackerTile;
             DefenderTile = defender.CurrentState.Position;
             IsRetaliation = isRetaliation;
         }

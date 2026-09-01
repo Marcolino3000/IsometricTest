@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Actions
 {
-    [CreateAssetMenu(menuName = "Actions/AttackCondition")]
+    [System.Serializable]
     public class AttackCondition : ActionCondition
     {
         public int Range;

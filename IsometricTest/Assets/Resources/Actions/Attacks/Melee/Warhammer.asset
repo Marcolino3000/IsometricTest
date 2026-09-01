@@ -16,6 +16,27 @@ MonoBehaviour:
   Description: Hits hard
   Symbol: {fileID: 820335677, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
-  Condition: {fileID: 11400000, guid: f9e642ea935d4994aa6fb9e68e1cdf01, type: 2}
-  Effect: {fileID: 11400000, guid: a42ea4f2d11448f6a296db7442b0e619, type: 2}
+  condition:
+    rid: 5104672086964035111
   Kind: 0
+  Traits: []
+  effects:
+  - rid: 3028438951126864913
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 3028438951126864913
+      type: {class: AttackEffect, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Targets:
+          rid: -2
+        Requires: []
+        Damage: 10
+        Note: 
+    - rid: 5104672086964035111
+      type: {class: AttackCondition, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Cost: 3
+        Range: 1

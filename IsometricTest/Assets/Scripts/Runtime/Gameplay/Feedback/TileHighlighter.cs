@@ -1,3 +1,4 @@
+using System.Linq;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
 using Runtime.Gameplay.Entities;
@@ -44,10 +45,12 @@ namespace Runtime.Gameplay.Feedback
 
                 // The threat goes over the selected unit's own reach rather than under it: the white
                 // here is where *you* can go, so a tile that is both is one you can walk into and be
-                // shot on, and that is the half worth showing. The attack indicator stays last.
+                // shot on, and that is the half worth showing. The attack indicator stays last, so a
+                // swing that would also catch its own target still reads as aimed at it.
                 case SelectionStatus.SelectionEnemyHover:
                     selection.SelectedUnit.TileHighlighter.HighlightMoveableTiles();
                     selection.HoveredUnit.TileHighlighter.HighlightThreatenedTiles();
+                    ShowAreaEffectTiles(selection.SelectedUnit, selection.HoveredUnit);
                     ShowAttackIndicatorTile(selection.HoveredUnit.CurrentState.Position);
                     break;
 
@@ -60,6 +63,35 @@ namespace Runtime.Gameplay.Feedback
         private void ShowAttackIndicatorTile(Tile tile)
         {
             tileSpawner.HighlightTile(tile.Position, MarkerColor.Orange);
+        }
+
+        /// <summary>
+        /// The ground a swing would spill onto besides the unit it is aimed at. Asked of
+        /// <see cref="CombatRules.AreaEffectTiles"/>, which reads the same selectors the strike
+        /// resolves its victims from - so the marked tiles are the shape the effect actually has: it
+        /// stops where a shot would, and it is measured from the tile the unit would swing from
+        /// rather than the one it stands on, since an area centred on the attacker moves with it.
+        ///
+        /// The ground rather than the units on it, so the reach reads before anybody is standing in
+        /// it. Which of them would actually be caught is still the effect's conditions' business -
+        /// a neighbour at full health is inside a marked area and takes nothing while the effect
+        /// asks for one already damaged.
+        ///
+        /// Costs nothing for a weapon that does nothing beyond the blow, which is most of them.
+        /// </summary>
+        private void ShowAreaEffectTiles(Unit attacker, Unit target)
+        {
+            if (attacker == null || !attacker.IsAlive || target == null || !target.IsAlive)
+                return;
+
+            if (!CombatRules.HasAreaEffects(attacker))
+                return;
+
+            var fromTile = tileSpawner.GetAttackApproachPath(attacker, target.CurrentState.Position)
+                .LastOrDefault();
+
+            foreach (var tile in CombatRules.AreaEffectTiles(attacker, fromTile, target))
+                tileSpawner.HighlightTile(tile, MarkerColor.Red);
         }
     }
 }

@@ -12,10 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
   m_Name: Shortbow
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
-  Condition: {fileID: 11400000, guid: ba67976039c64196873bb0f91dac1b88, type: 2}
-  Effect: {fileID: 11400000, guid: 4c30033692d9433b997800602653b374, type: 2}
+  condition:
+    rid: 6205181076027564195
+  effects:
+  - rid: 3082328746015053686
   Kind: 1
   DisplayName: Shortbow
   Description: Little damage per shot, but four shots fit in a turn.
   Symbol: {fileID: -1572880990, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 3082328746015053686
+      type: {class: AttackEffect, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Damage: 3
+    - rid: 6205181076027564195
+      type: {class: AttackCondition, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Cost: 1
+        Range: 2

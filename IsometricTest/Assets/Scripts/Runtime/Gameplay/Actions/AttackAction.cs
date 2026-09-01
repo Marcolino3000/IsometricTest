@@ -4,9 +4,12 @@ using Runtime.Gameplay.History;
 
 namespace Actions
 {
-    public class AttackAction : UnitAction<AttackCondition, AttackEffect>
+    public class AttackAction : UnitAction<AttackCondition>
     {
-        public AttackAction(AttackCondition condition, AttackEffect effect, ActionContext context) : base(condition, effect, context) { }
+        // No effect: what a strike does is asked of the weapon the unit currently has drawn, in
+        // CombatRules, rather than carried on the planned action - so a weapon swapped between
+        // planning and striking changes the blow.
+        public AttackAction(AttackCondition condition, ActionContext context) : base(condition, context) { }
 
         public override ActionKind Kind => ActionKind.Attack;
 

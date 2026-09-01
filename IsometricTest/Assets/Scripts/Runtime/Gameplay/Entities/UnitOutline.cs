@@ -8,7 +8,8 @@ namespace Runtime.Gameplay.Entities
         [SerializeField] private Color neutralColor = Color.white;
         [SerializeField] private Color attackColor = Color.red;
         
-        private SpriteRenderer _spriteRenderer; 
+        private SpriteRenderer _spriteRenderer;
+        private bool _hasOutline;
         private static readonly int OutlineColorProp = Shader.PropertyToID("_OutlineColor");
         private static readonly int OutlineThicknessProp = Shader.PropertyToID("_OutlineThickness");
 
@@ -20,6 +21,15 @@ namespace Runtime.Gameplay.Entities
         private void Awake()
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
+
+            // A renderer with no material is drawn by the error shader - the whole sprite quad in
+            // magenta rather than the sprite - so it is said here rather than left to be read off
+            // the screen, and nothing below touches the material that isn't there.
+            if (_spriteRenderer.sharedMaterial == null)
+                Debug.LogError($"{name} has no material on its SpriteRenderer, so it cannot be drawn.", this);
+            else
+                _hasOutline = _spriteRenderer.sharedMaterial.HasProperty(OutlineColorProp);
+
             Setup();
         }
 
@@ -32,6 +42,9 @@ namespace Runtime.Gameplay.Entities
 
         public void Show(OutlineColor color, OutlineThickness thickness)
         {
+            if (!_hasOutline)
+                return;
+
             SetColor(color);
             SetThickness(thickness);
         }
@@ -64,11 +77,10 @@ namespace Runtime.Gameplay.Entities
 
         public void Hide()
         {
-            if (_spriteRenderer.sharedMaterial.HasProperty(OutlineColorProp))
-            {
-                _spriteRenderer.material.SetColor(OutlineColorProp, Color.clear);
-            }
-            
+            if (!_hasOutline)
+                return;
+
+            _spriteRenderer.material.SetColor(OutlineColorProp, Color.clear);
         }
     }
 

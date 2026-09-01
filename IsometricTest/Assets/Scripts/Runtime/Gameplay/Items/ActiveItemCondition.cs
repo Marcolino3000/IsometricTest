@@ -7,7 +7,7 @@ namespace Runtime.Gameplay.Items
     /// What using an active item takes: nothing beyond the action points every action costs. A
     /// self-targeted item has no target and no range, so there is nothing else to test yet.
     /// </summary>
-    [CreateAssetMenu(menuName = "ScriptableObjects/Items/Active Item Condition")]
+    [System.Serializable]
     public class ActiveItemCondition : ActionCondition
     {
     }

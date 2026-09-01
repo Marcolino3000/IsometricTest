@@ -10,7 +10,7 @@ namespace Runtime.Core.State
         /// Phase 1 of a turn change: prepares per-turn world state for the new active team — units
         /// refresh action points, fog and direction recompute, selection clears. Everything the turn's
         /// actor (the AI) depends on subscribes here, so it is ready before <see cref="TurnStarted"/>.
-        /// Fires only on an actual team change, not on mid-turn updates such as SetActionsLeft.
+        /// Fires only on an actual team change.
         /// </summary>
         public event Action<ChangeEvent<State>> TurnReset;
 
@@ -21,8 +21,8 @@ namespace Runtime.Core.State
         public event Action<ChangeEvent<State>> TurnStarted;
 
         /// <summary>
-        /// Any state change, including mid-turn ones such as SetActionsLeft. For observers that mirror
-        /// state regardless of turn boundaries (e.g. the next-turn button).
+        /// Any state change, turn boundaries included. For observers that mirror turn state whatever
+        /// caused it to move - and the one channel that says a snapshot restore has happened.
         /// </summary>
         public event Action<ChangeEvent<State>> GameStateChanged;
 
@@ -31,25 +31,17 @@ namespace Runtime.Core.State
 
         private State previousState;
 
-        public void SetActionsLeft(bool teamHasActionsLeft)
-        {
-            State.UnitsHaveActionsLeft = teamHasActionsLeft;
-            
-            HandleStateChange();
-        }
-        
         /// <summary>
         /// Puts the manager back into a turn state undo/redo recorded earlier. Raises
         /// <see cref="TurnReset"/> when the active team changes, so per-turn world state (fog owner,
         /// facing, selection) is rebuilt, but never <see cref="TurnStarted"/>: the turn's actor has
         /// already played this turn once and must not play it again.
         /// </summary>
-        public void RestoreTurn(Team team, bool unitsHaveActionsLeft)
+        public void RestoreTurn(Team team)
         {
             State.Team = team;
-            State.UnitsHaveActionsLeft = unitsHaveActionsLeft;
 
-            var changeEvent = new ChangeEvent<State>(previousState.Clone(), State.Clone());
+            var changeEvent = new ChangeEvent<State>(previousState.Clone(), State.Clone(), ChangeReason.Restore);
 
             if (changeEvent.PreviousValue.Team != changeEvent.NewValue.Team)
                 TurnReset?.Invoke(changeEvent);
@@ -79,8 +71,7 @@ namespace Runtime.Core.State
         {
             State = new State
             {
-                Team = Team.Opponent,
-                UnitsHaveActionsLeft = true
+                Team = Team.Opponent
             };
 
             previousState = State.Clone();
@@ -93,8 +84,7 @@ namespace Runtime.Core.State
         public void ToggleCurrentTeam()
         {
             State.Team = State.Team == Team.Player ? Team.Opponent : Team.Player;
-            State.UnitsHaveActionsLeft = true;
-            
+
             HandleStateChange();
         }
         #endregion

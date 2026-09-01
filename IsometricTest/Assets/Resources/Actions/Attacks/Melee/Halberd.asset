@@ -16,6 +16,20 @@ MonoBehaviour:
   Description: "A melee weapon that strikes from two tiles. Fancy!\u2728"
   Symbol: {fileID: 500599679, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
-  Condition: {fileID: 11400000, guid: db93c5a89c4e4747867a388d59900134, type: 2}
-  Effect: {fileID: 11400000, guid: 8d19a596770d4d929e1068582fb155e0, type: 2}
+  condition:
+    rid: 8946239250809414370
+  effects:
+  - rid: 402262244368002672
   Kind: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 402262244368002672
+      type: {class: AttackEffect, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Damage: 6
+    - rid: 8946239250809414370
+      type: {class: AttackCondition, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Cost: 2
+        Range: 2

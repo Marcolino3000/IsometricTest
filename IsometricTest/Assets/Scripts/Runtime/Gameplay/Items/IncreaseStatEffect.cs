@@ -15,7 +15,7 @@ namespace Runtime.Gameplay.Items
     /// The bonus lives on the unit's state, so it travels with the history snapshot: undoing the use
     /// takes the stat back down along with the item.
     /// </summary>
-    [CreateAssetMenu(menuName = "ScriptableObjects/Items/Effects/Increase Stat")]
+    [System.Serializable]
     public class IncreaseStatEffect : ActiveItemEffect
     {
         [Tooltip("Which stat a use raises for good.")]
@@ -26,9 +26,9 @@ namespace Runtime.Gameplay.Items
 
         public override string Summary => $"Permanently +{Amount} {UnitState.NameOf(Stat)}";
 
-        public override void Apply(Unit user)
+        public override void Apply(Unit target)
         {
-            user.GrantStatBonus(Stat, Amount);
+            target.GrantStatBonus(Stat, Amount);
         }
     }
 }

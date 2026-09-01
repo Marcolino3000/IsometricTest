@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5ffbbc981d8414e9c74ae8dc736c59e, type: 3}
+  m_Name: Default EffectAnimations
+  m_EditorClassIdentifier: 
+  clips:
+  - Animation: 0
+    Frames:
+    - {fileID: 21300000, guid: 42a8839e4887f4792ab9dbe8ce6d9935, type: 3}
+    - {fileID: 21300000, guid: 7b38346613314431da86428583937ccb, type: 3}
+    - {fileID: 21300000, guid: 4ce563f1c3af440e9956f0b8df863045, type: 3}
+    - {fileID: 21300000, guid: b077e60d49a9b4e84a20cb9575d8f4d3, type: 3}
+    - {fileID: 21300000, guid: d9cd294156e0345dd8a599010afe1ea8, type: 3}
+    - {fileID: 21300000, guid: ec6ef837c008742a397ec2ffdc57f991, type: 3}
+    - {fileID: 21300000, guid: e849594c37555459b8e74a9b427da528, type: 3}
+    - {fileID: 21300000, guid: 96a02f1fe999c4f058e40d58e409743f, type: 3}
+    - {fileID: 21300000, guid: 3ac72d3168ee34ac8bc0256d0bade819, type: 3}
+    - {fileID: 21300000, guid: dd00ddaf7578347248d6209427a6a72f, type: 3}
+    - {fileID: 21300000, guid: 526d91ed25a1d45f3a0026e5d8197f2f, type: 3}
+    - {fileID: 21300000, guid: 18ac64923233c46888211b20dc1f48d6, type: 3}
+    - {fileID: 21300000, guid: b9b171e77aefd4091a935d1ad5365031, type: 3}
+    - {fileID: 21300000, guid: ada6e51631f244ababbd3f741a2dbdee, type: 3}
+    - {fileID: 21300000, guid: e2db945d41dab4605a73b6303e600834, type: 3}
+    - {fileID: 21300000, guid: 116f4a7e2cc554eba92c5f5b1af48f7c, type: 3}
+    - {fileID: 21300000, guid: 7549f07acb09a4cba87b0b086127b616, type: 3}
+    - {fileID: 21300000, guid: ffd0859cfb13143a88989a96ba0fff9b, type: 3}
+    - {fileID: 21300000, guid: 11f709153981b4f7290d6af5496882e6, type: 3}
+    - {fileID: 21300000, guid: dff90e593ce244274859a343ce9a644f, type: 3}
+    - {fileID: 21300000, guid: e81901cc91e9e46c2a4565912cfc7025, type: 3}
+    - {fileID: 21300000, guid: 212ec1e1cb9e444578b3c3adf455306b, type: 3}
+    - {fileID: 21300000, guid: 9c22f32b66453476b85c7f10647654a5, type: 3}
+    - {fileID: 21300000, guid: 2ea62835a7047437a800530f5a023436, type: 3}
+    FramesPerSecond: 24
+    Scale: 1
+    Offset: {x: 0, y: 0, z: 0}
+    SortingOffset: 1

@@ -16,6 +16,34 @@ MonoBehaviour:
   Description: BAMM BUMM DIDELDUM!!1!1!
   Symbol: {fileID: -1922021771, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
-  Condition: {fileID: 11400000, guid: 8948422c180ae45468ebfe48bb8b75db, type: 2}
-  Effect: {fileID: 11400000, guid: dcc7296221a0945f7a5c6c6510afc42f, type: 2}
+  condition:
+    rid: 7809302127812142159
   Kind: 0
+  Traits: []
+  effects:
+  - rid: 8463253268699038320
+  references:
+    version: 2
+    RefIds:
+    - rid: 7325566178907914308
+      type: {class: AreaSelector, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Centre: 0
+        Radius: 2
+        Side: 0
+        IncludeTarget: 0
+        IncludeSource: 0
+        RequireLineOfFire: 1
+    - rid: 7809302127812142159
+      type: {class: AttackCondition, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Cost: 2
+        Range: 1
+    - rid: 8463253268699038320
+      type: {class: AttackEffect, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Targets:
+          rid: 7325566178907914308
+        Requires: []
+        Damage: 20
+        Note: 

@@ -6,9 +6,13 @@ namespace Runtime.Gameplay.Global
     /// Match-wide rule switches that belong to no single unit or tile. Handed to <see cref="CombatRules"/>
     /// by the Initiator, which is also where any future consumer should get it from. Held as a reference
     /// rather than copied into fields, so toggling a rule applies immediately - including during play.
+    ///
+    /// A <see cref="RuntimeSettings"/>, so a switch flipped in the inspector announces itself:
+    /// whoever draws from these subscribes to <see cref="RuntimeSettings.Changed"/> instead of
+    /// watching its own fields for drift.
     /// </summary>
     [CreateAssetMenu(menuName = "ScriptableObjects/Rules/Game Rules")]
-    public class GameRules : ScriptableObject
+    public class GameRules : RuntimeSettings
     {
         [Tooltip("Whether a defender strikes back after being attacked. Only the default: a unit's " +
                  "traits are asked afterwards, so gear can grant a counter-strike while this is off " +

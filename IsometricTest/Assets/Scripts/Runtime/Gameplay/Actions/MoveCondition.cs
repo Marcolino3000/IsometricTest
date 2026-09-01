@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Runtime.Gameplay.Actions
 {
-    [CreateAssetMenu(menuName = "Actions/MoveCondition")]
+    [System.Serializable]
     public class MoveCondition : ActionCondition
     {
         

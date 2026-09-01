@@ -19,6 +19,10 @@ namespace Runtime.Gameplay.Global
 
         [Header("References")]
         [SerializeField] private UnitSpawner unitSpawner;
+
+        // The one owner of what the cursor is over. This is the head of the world's hover road, so
+        // it reports here; the item bar reports the other road.
+        private HoverTarget hoverTarget;
         [SerializeField] private MatchOutcomeWatcher outcomeWatcher;
 
         #region Setup
@@ -31,10 +35,11 @@ namespace Runtime.Gameplay.Global
         }
 
         public void Setup(GameStateManager gameStateManagerArg, Raycaster raycaster, UnitSpawner unitSpawnerArg,
-            MatchOutcomeWatcher matchOutcomeWatcher)
+            MatchOutcomeWatcher matchOutcomeWatcher, HoverTarget hover)
         {
             unitSpawner = unitSpawnerArg;
             outcomeWatcher = matchOutcomeWatcher;
+            hoverTarget = hover;
             gameStateManagerArg.TurnReset += HandleTurnReset;
             gameStateManagerArg.TurnStarted += HandleTurnStarted;
             raycaster.OnClickedNothing += HandleClickNothing;
@@ -235,6 +240,11 @@ namespace Runtime.Gameplay.Global
 
         private void CreateSelectionChangedEvent()
         {
+            // The head of the world's hover road says what it is on, so the one owner of the cursor
+            // knows about both roads. Said before the event, so a subscriber asking it gets today's
+            // answer rather than the last frame's.
+            hoverTarget?.SetWorldHover(selection.HoveredUnit != null || selection.HoveredTile != null);
+
             var changeEvent = new ChangeEvent<Selection>(previousSelection.Clone(), selection.Clone());
 
             OnSelectionChanged?.Invoke(changeEvent);

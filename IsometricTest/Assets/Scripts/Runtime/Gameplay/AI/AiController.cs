@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,9 +14,11 @@ namespace Runtime.Gameplay.AI
 {
     /// <summary>
     /// Drives a team automatically. At the start of its turn it activates each of its units in order;
-    /// a unit attacks the closest enemy it can reach this turn, otherwise advances toward the closest
-    /// visible enemy, otherwise hunts the tile an enemy was last seen on, otherwise moves to uncover as
-    /// much unexplored map as possible. When every unit is spent it hands the turn back via
+    /// a unit attacks the closest enemy it can reach this turn - or, when its weapon does something
+    /// beyond hitting what it is aimed at, whichever reachable enemy the swing is worth the most
+    /// against - otherwise advances toward the closest visible enemy, otherwise hunts the tile an
+    /// enemy was last seen on, otherwise moves to uncover as much unexplored map as possible. When
+    /// every unit is spent it hands the turn back via
     /// <see cref="GameStateManager.ToggleCurrentTeam"/>.
     /// </summary>
     public class AiController : MonoBehaviour
@@ -73,6 +76,12 @@ namespace Runtime.Gameplay.AI
         public void ToggleEnabled() => SetEnabled(!aiEnabled);
 
         /// <summary>
+        /// The AI was switched on or off. Moves what the fog draws without any rule changing - a turn
+        /// the player has taken over is never hidden - so the fog listens rather than watching for it.
+        /// </summary>
+        public event Action EnabledChanged;
+
+        /// <summary>
         /// Whether the AI - rather than the player - is the one playing this team's turn.
         /// <see cref="Fog.FogOfWar"/> asks before hiding a turn, so a turn the player took over manually
         /// (AI switched off) is never hidden from them.
@@ -90,6 +99,8 @@ namespace Runtime.Gameplay.AI
                 return;
 
             aiEnabled = value;
+
+            EnabledChanged?.Invoke();
 
             // Re-enabled during my own turn (player was controlling): take over what's left now.
             // When disabled, the running coroutine notices and stops itself, so this does nothing.
@@ -243,7 +254,7 @@ namespace Runtime.Gameplay.AI
 
             var enemy = ClosestEnemy(unit, visibleOnly: true);
             if (enemy != null)
-                return EngageEnemy(unit, enemy);
+                return EngageEnemy(unit, BestAttackTarget(unit) ?? enemy);
 
             // Lost contact: go to where the enemy was, rather than forgetting it exists.
             var lastKnown = ClosestRememberedEnemyTile(unit);
@@ -287,6 +298,85 @@ namespace Runtime.Gameplay.AI
             }
 
             return closest;
+        }
+
+        /// <summary>
+        /// Which enemy this unit's swing is worth the most against. Null when its weapon does
+        /// nothing beyond the blow - every target then scores the same and the closest is as good as
+        /// any, which is the choice this made before area effects existed - and null when none of
+        /// them can be reached and struck this turn, so the caller falls back to closing the distance.
+        /// </summary>
+        private Unit BestAttackTarget(Unit unit)
+        {
+            if (!CombatRules.HasAreaEffects(unit))
+                return null;
+
+            Unit best = null;
+            var bestScore = 0f;
+            var bestDistance = int.MaxValue;
+
+            // A step costs at least one point, so range plus the budget is as far as this unit could
+            // possibly strike. Asked before planning, because the planner warns about every plan it
+            // turns down and most enemies on the map are nowhere near.
+            var reach = CombatRules.GetEffectiveAttackRange(unit) + unit.CurrentState.ActionPoints;
+
+            foreach (var enemy in unitSpawner.AllUnits)
+            {
+                if (enemy == null || !enemy.IsAlive || enemy.CurrentState.Team == aiTeam)
+                    continue;
+
+                var tile = enemy.CurrentState.Position;
+                if (tile == null || !fogOfWar.IsVisible(tile.Position))
+                    continue;
+
+                var distance = tileSpawner.GetDistanceBetweenTiles(unit.CurrentState.Position, tile);
+                if (distance > reach)
+                    continue;
+
+                if (!unit.ActionExecutor.PlanAttackAction(new ExecuteArgs(null, enemy)).IsValid)
+                    continue;
+
+                var score = ScoreAttack(unit, enemy);
+
+                // Ties go to the nearer one, so a unit with nothing to gain from either still closes
+                // rather than walking past.
+                if (best != null && !(score > bestScore + 0.001f
+                                      || score > bestScore - 0.001f && distance < bestDistance))
+                    continue;
+
+                best = enemy;
+                bestScore = score;
+                bestDistance = distance;
+            }
+
+            return best;
+        }
+
+        /// <summary>
+        /// What striking <paramref name="enemy"/> is worth: the blow itself, plus what the weapon's
+        /// area effects would catch - the AI's own units counting against it, so it does not cleave
+        /// through its own line to reach one more enemy.
+        ///
+        /// Read off the authored damage rather than resolved. Asking <c>CombatRules.AreaDamage</c>
+        /// for the number would resolve a real strike: it rolls what a trait rolls and writes the
+        /// roll to the combat log, for an attack that is only being considered.
+        /// </summary>
+        private float ScoreAttack(Unit unit, Unit enemy)
+        {
+            // From the tile it would actually swing from, not the one it stands on: an area centred
+            // on the attacker moves with it, and the approach path is where the strike is planned.
+            var fromTile = tileSpawner.GetAttackApproachPath(unit, enemy.CurrentState.Position).LastOrDefault();
+
+            var score = (float)CombatRules.BaseDamageOf(unit.CurrentState.AttackAction);
+
+            foreach (var hit in CombatRules.PlanAreaEffects(unit, fromTile, enemy, isRetaliation: false))
+            {
+                var own = hit.Victim.CurrentState.Team == aiTeam;
+
+                score += own ? -hit.Effect.Damage : hit.Effect.Damage;
+            }
+
+            return score;
         }
 
         private bool EngageEnemy(Unit unit, Unit enemy)

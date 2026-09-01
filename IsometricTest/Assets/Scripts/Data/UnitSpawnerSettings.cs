@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Runtime.Gameplay.Entities;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Data
 {
@@ -9,7 +10,14 @@ namespace Data
     public class UnitSpawnerSettings : ScriptableObject
     {
         [Header("Unit Settings")]
-        public Unit PlayerUnit;
+        [Tooltip("The one prefab every unit is drawn with. What tells one unit from another is its " +
+                 "blueprint, not a prefab of its own - the same shape the lootboxes use, where one " +
+                 "prefab is dressed by the type asset.")]
+        public Unit UnitPrefab;
+
+        [Tooltip("The character the player commands.")]
+        public UnitBlueprint PlayerUnit;
+
         public List<UnitAmount> OpponentUnits;
 
         [Header("Visual Settings")]
@@ -24,6 +32,8 @@ namespace Data
     public class UnitAmount
     {
         public int Amount;
-        public Unit Prefab;
+
+        [FormerlySerializedAs("Prefab")]
+        public UnitBlueprint Blueprint;
     }
 }

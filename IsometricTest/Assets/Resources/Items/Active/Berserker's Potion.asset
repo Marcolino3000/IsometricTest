@@ -16,5 +16,23 @@ MonoBehaviour:
   Description: 'Pay 4 health for 4 action points. 5Never kills. '
   Symbol: {fileID: -193375528, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
-  Condition: {fileID: 11400000, guid: 7d4faea9233642fab63c69341fe7c7cb, type: 2}
-  Effect: {fileID: 11400000, guid: 4381b36840d640a1a9ee4d89655c90fc, type: 2}
+  condition:
+    rid: 7558574375840969813
+  effects:
+  - rid: 8389247002259927935
+  - rid: 2771089785157611925
+  references:
+    version: 2
+    RefIds:
+    - rid: 2771089785157611925
+      type: {class: RestoreActionPointsEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Amount: 4
+    - rid: 7558574375840969813
+      type: {class: ActiveItemCondition, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Cost: 1
+    - rid: 8389247002259927935
+      type: {class: SacrificeHealthEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Amount: 4

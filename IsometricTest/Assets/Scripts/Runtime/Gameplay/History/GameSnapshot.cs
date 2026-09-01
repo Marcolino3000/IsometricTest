@@ -20,7 +20,6 @@ namespace Runtime.Gameplay.History
     public sealed class GameSnapshot
     {
         public Team ActiveTeam;
-        public bool UnitsHaveActionsLeft;
 
         public readonly List<UnitSnapshot> Units = new();
 
@@ -41,8 +40,7 @@ namespace Runtime.Gameplay.History
         {
             var snapshot = new GameSnapshot
             {
-                ActiveTeam = gameStateManager.State.Team,
-                UnitsHaveActionsLeft = gameStateManager.State.UnitsHaveActionsLeft
+                ActiveTeam = gameStateManager.State.Team
             };
 
             // Removed units are included too (they are kept aside rather than destroyed), so undoing
@@ -76,7 +74,7 @@ namespace Runtime.Gameplay.History
         public void RestoreTo(UnitSpawner unitSpawner, TileSpawner tileSpawner, GameStateManager gameStateManager,
             FogOfWar fogOfWar, LootSpawner lootSpawner, ItemManager itemManager)
         {
-            gameStateManager.RestoreTurn(ActiveTeam, UnitsHaveActionsLeft);
+            gameStateManager.RestoreTurn(ActiveTeam);
 
             fogOfWar.RestoreExplored(Explored);
 
@@ -107,10 +105,6 @@ namespace Runtime.Gameplay.History
 
             // A single fog pass for the whole board instead of one per unit placement.
             fogOfWar.Recompute();
-
-            // Restoring action points can make a unit report "no actions left" mid-restore, which
-            // flips the turn flag off the recorded value - assert it once everything is back.
-            gameStateManager.SetActionsLeft(UnitsHaveActionsLeft);
         }
     }
 

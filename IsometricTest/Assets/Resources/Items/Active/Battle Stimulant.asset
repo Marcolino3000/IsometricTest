@@ -16,5 +16,18 @@ MonoBehaviour:
   Description: Grants 3 AP
   Symbol: {fileID: 1230775888, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
-  Condition: {fileID: 11400000, guid: 7d4faea9233642fab63c69341fe7c7cb, type: 2}
-  Effect: {fileID: 11400000, guid: 2206cbfe5ade4767b505d120f06f4046, type: 2}
+  condition:
+    rid: 7077577436428057987
+  effects:
+  - rid: 1504422661179677552
+  references:
+    version: 2
+    RefIds:
+    - rid: 1504422661179677552
+      type: {class: RestoreActionPointsEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Amount: 3
+    - rid: 7077577436428057987
+      type: {class: ActiveItemCondition, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Cost: 1

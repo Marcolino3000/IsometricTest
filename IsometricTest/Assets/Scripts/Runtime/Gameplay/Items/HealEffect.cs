@@ -7,7 +7,7 @@ namespace Runtime.Gameplay.Items
     /// Restores health, never past the health the unit's blueprint starts it with - there is no
     /// separate maximum, so <see cref="Unit.MaxHealth"/> is that starting value.
     /// </summary>
-    [CreateAssetMenu(menuName = "ScriptableObjects/Items/Effects/Heal")]
+    [System.Serializable]
     public class HealEffect : ActiveItemEffect
     {
         [Tooltip("Health restored. Capped at the unit's starting health.")]
@@ -15,9 +15,9 @@ namespace Runtime.Gameplay.Items
 
         public override string Summary => $"Restores {Amount} health";
 
-        public override void Apply(Unit user)
+        public override void Apply(Unit target)
         {
-            user.CurrentState.Health = Mathf.Min(user.CurrentState.Health + Amount, user.MaxHealth);
+            target.CurrentState.Health = Mathf.Min(target.CurrentState.Health + Amount, target.MaxHealth);
         }
     }
 }

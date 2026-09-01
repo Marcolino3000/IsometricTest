@@ -6,8 +6,13 @@ namespace Runtime.Gameplay.Actions
 {
     public class ActionAssigner : MonoBehaviour
     {
-        public void Setup(Selector selector)
+        // Asked before the world clears a preview: the cursor leaving the map is also the cursor
+        // arriving on the item bar, and what the bar put up must survive that.
+        private HoverTarget hoverTarget;
+
+        public void Setup(Selector selector, HoverTarget hover)
         {
+            hoverTarget = hover;
             selector.OnSelectionChanged += HandleSelectionChanged;
         }
 
@@ -28,7 +33,10 @@ namespace Runtime.Gameplay.Actions
                     selection.NewValue.SelectedUnit.ActionExecutor.ExecuteAttackAction(new ExecuteArgs(null, selection.NewValue.ClickedUnit));
                     break;
                 case SelectionStatus.SelectionNoHover:
-                    selection.NewValue.SelectedUnit.ActionExecutor.ClearPreview();
+                    // Nothing under the cursor in the world - unless it is on the bar, which owns
+                    // the preview while it is and shows what the hovered item would cost.
+                    if (hoverTarget == null || !hoverTarget.UiHasCursor)
+                        selection.NewValue.SelectedUnit.ActionExecutor.ClearPreview();
                     break;
             }
         }

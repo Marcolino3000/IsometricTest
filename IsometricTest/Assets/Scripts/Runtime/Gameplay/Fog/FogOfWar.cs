@@ -57,6 +57,34 @@ namespace Runtime.Gameplay.Fog
             ResetExploration();
 
             gameStateManager.TurnReset += HandleTurnReset;
+
+            // Both switches the fog is drawn from are held live and may be flipped mid-play. They say
+            // so now rather than being watched for drift: the rules asset announces an edit, and the
+            // AI announces being switched off - which moves ViewingTeam without any rule changing.
+            if (_rules != null)
+                _rules.Changed += HandleSettingsChanged;
+
+            if (_aiController != null)
+                _aiController.EnabledChanged += HandleSettingsChanged;
+        }
+
+        private void OnDestroy()
+        {
+            if (_rules != null)
+                _rules.Changed -= HandleSettingsChanged;
+
+            if (_aiController != null)
+                _aiController.EnabledChanged -= HandleSettingsChanged;
+        }
+
+        /// <summary>
+        /// A switch the fog draws from was flipped. Recomputed only when it actually changes what is
+        /// drawn - an edit to an unrelated rule on the same asset announces itself just the same.
+        /// </summary>
+        private void HandleSettingsChanged()
+        {
+            if (_tileSpawner != null && (ViewingTeam != _shownTeam || HideUnexploredTerrain != _terrainHidden))
+                Recompute();
         }
 
         /// <summary>
@@ -78,17 +106,6 @@ namespace Runtime.Gameplay.Fog
         /// there was a switch.
         /// </summary>
         private bool HideUnexploredTerrain => _rules != null && _rules.HideUnexploredTerrain;
-
-        /// <summary>
-        /// Both the rules asset and the AI's switch are held live and may be toggled mid-play, but the
-        /// fog is pushed onto the tiles rather than polled by them — without this the new view would
-        /// only appear on the next action.
-        /// </summary>
-        private void Update()
-        {
-            if (_tileSpawner != null && (ViewingTeam != _shownTeam || HideUnexploredTerrain != _terrainHidden))
-                Recompute();
-        }
 
         public void ResetExploration()
         {

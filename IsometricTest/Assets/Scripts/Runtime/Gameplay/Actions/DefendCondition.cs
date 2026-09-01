@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Actions
 {
-    [CreateAssetMenu (menuName = "Actions/DefendCondition")]
+    [System.Serializable]
     public class DefendCondition : ActionCondition
     {
         public int DefenseAmount = 5;

@@ -13,8 +13,27 @@ MonoBehaviour:
   m_Name: Farsight Tonic
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Items.ActiveItemData
   DisplayName: Farsight Tonic
-  Description: Widens the character's sight by 1 for the rest of the match.
+  Description: Increases sight range permanently.
   Symbol: {fileID: -2065681830, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
-  Condition: {fileID: 11400000, guid: 4b9d78f8900e48b4ad9a17c394f0361a, type: 2}
-  Effect: {fileID: 11400000, guid: d3dfce5333564c159fd55360eaf8f3a3, type: 2}
+  condition:
+    rid: 739789715852551527
+  effects:
+  - rid: 7883084869355946652
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 739789715852551527
+      type: {class: ActiveItemCondition, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Cost: 0
+    - rid: 7883084869355946652
+      type: {class: IncreaseStatEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Targets:
+          rid: -2
+        Requires: []
+        Stat: 0
+        Amount: 1

@@ -1,4 +1,6 @@
+using Actions;
 using System.Collections.Generic;
+using Runtime.Core.Spawning;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Traits;
 using UnityEngine;
@@ -15,14 +17,25 @@ namespace Runtime.Gameplay.Global
         private static GameRules rules;
 
         /// <summary>
+        /// The board, for the one combat question that cannot be answered from its arguments alone:
+        /// which tiles an area covers. Injected the way <see cref="SightRules"/>' spawner is; without
+        /// one an area simply catches nobody rather than throwing.
+        /// </summary>
+        private static TileSpawner tiles;
+
+        /// <summary>
         /// Injected by the Initiator before anything can resolve combat.
         /// </summary>
-        public static void Setup(GameRules gameRules)
+        public static void Setup(GameRules gameRules, TileSpawner tileSpawner)
         {
             rules = gameRules;
+            tiles = tileSpawner;
 
             if (rules == null)
                 Debug.LogError("CombatRules got no GameRules asset - falling back to the built-in defaults.");
+
+            if (tiles == null)
+                Debug.LogError("CombatRules got no TileSpawner - area effects will catch nobody.");
         }
 
         /// <summary>
@@ -40,14 +53,47 @@ namespace Runtime.Gameplay.Global
         }
 
         /// <summary>
+        /// What a weapon hits for before whoever carries it has a say - its damage effects added up.
+        /// The one place that sum is taken, so the weapon card, the combat log and the strike itself
+        /// all read the same base; a weapon with nothing authored hits for nothing rather than null.
+        /// </summary>
+        public static int BaseDamageOf(AttackActionData weapon)
+        {
+            if (weapon?.Effects == null)
+                return 0;
+
+            var damage = 0;
+
+            // Only the effects aimed at whatever the attack was aimed at. One that names an area of
+            // its own is a further hit on further units, so counting it here would put its damage on
+            // the weapon card and into the blow that lands on the primary target.
+            foreach (var effect in weapon.Effects)
+                if (effect != null && !effect.HasOwnTargets)
+                    damage += effect.Damage;
+
+            return damage;
+        }
+
+        /// <summary>
         /// Damage a single strike deals once every trait has had its say: the attacker's traits shape the
         /// outgoing hit, then the defender's shape what actually lands. Never returns less than zero.
         /// </summary>
         public static int CalculateDamage(Unit attacker, Unit defender, bool isRetaliation = false)
         {
+            return CalculateDamage(attacker, defender, BaseDamageOf(attacker.CurrentState.AttackAction),
+                isRetaliation);
+        }
+
+        /// <summary>
+        /// The same fold over a base the caller names rather than the weapon's own: what one of the
+        /// weapon's area effects deals, which is its own number but everybody's traits. One fold for
+        /// both, so defence, terrain and crits cannot apply to a blow and skip the spill beside it.
+        /// </summary>
+        public static int CalculateDamage(Unit attacker, Unit defender, int baseDamage, bool isRetaliation)
+        {
             var context = new CombatContext(attacker, defender, isRetaliation);
 
-            var damage = attacker.CurrentState.AttackAction.Effect.Damage;
+            var damage = baseDamage;
 
             // The fold is written step by step rather than in place so CombatLog can report what each
             // trait did to the number. It does nothing at all while logging is off.
@@ -191,6 +237,123 @@ namespace Runtime.Gameplay.Global
             return range;
         }
         
+        #region Area effects
+
+        /// <summary>
+        /// Every tile within <paramref name="radius"/> of <paramref name="centre"/>, itself included.
+        /// Manhattan, like attack range and grid distance - enumerated off the spawner's circle,
+        /// which the diamond fits inside, rather than by walking the grid again.
+        /// </summary>
+        public static IEnumerable<Tile> TilesWithin(Tile centre, int radius)
+        {
+            if (centre == null || tiles == null)
+                yield break;
+
+            foreach (var tile in tiles.GetTilesInSightRange(centre.Position, radius))
+                if (centre.DistanceTo(tile) <= radius)
+                    yield return tile;
+        }
+
+        /// <summary>
+        /// The effects on the weapon in this unit's hand that name an area of their own - everything
+        /// a swing does besides landing on what it was aimed at.
+        /// </summary>
+        public static IEnumerable<AttackEffect> AreaEffectsOf(Unit unit)
+        {
+            var weapon = unit != null ? unit.CurrentState.AttackAction : null;
+
+            if (weapon?.Effects == null)
+                yield break;
+
+            foreach (var effect in weapon.Effects)
+                if (effect != null && effect.HasOwnTargets)
+                    yield return effect;
+        }
+
+        /// <summary>Whether a swing by this unit does anything beyond hitting what it is aimed at.</summary>
+        public static bool HasAreaEffects(Unit unit)
+        {
+            foreach (var _ in AreaEffectsOf(unit))
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Who a swing's area effects would catch, as the board stands right now. A pure query, so
+        /// the resolver, the AI weighing a target and anything that previews an attack all read the
+        /// same answer - and so it can be asked <i>before</i> the blow lands, which is what makes
+        /// "already damaged" mean damaged when the swing started rather than damaged by the swing.
+        /// </summary>
+        public static List<EffectHit> PlanAreaEffects(Unit attacker, Unit defender, bool isRetaliation)
+        {
+            return PlanAreaEffects(attacker, null, defender, isRetaliation);
+        }
+
+        /// <summary>
+        /// The same question asked of a swing made from <paramref name="fromTile"/> - what the AI
+        /// wants, since it weighs attacks it would walk up to first and an area centred on the
+        /// attacker moves with it.
+        /// </summary>
+        public static List<EffectHit> PlanAreaEffects(Unit attacker, Tile fromTile, Unit defender,
+            bool isRetaliation)
+        {
+            var hits = new List<EffectHit>();
+
+            if (attacker == null || !attacker.IsAlive || defender == null || !defender.IsAlive)
+                return hits;
+
+            var context = new EffectContext(attacker, defender, fromTile, null, isRetaliation);
+
+            foreach (var effect in AreaEffectsOf(attacker))
+            foreach (var victim in effect.ResolveTargets(context))
+                hits.Add(new EffectHit(effect, victim));
+
+            return hits;
+        }
+
+        /// <summary>
+        /// The ground a swing's area effects cover, whoever happens to be standing on it - what the
+        /// preview marks. Asked of the same selectors <see cref="PlanAreaEffects"/> takes its units
+        /// from, so the tiles shown and the units hit describe one shape.
+        ///
+        /// Unlike the units, this needs no board state beyond the two tiles, so it answers while an
+        /// attack is only being hovered.
+        /// </summary>
+        public static IEnumerable<Tile> AreaEffectTiles(Unit attacker, Tile fromTile, Unit defender)
+        {
+            if (attacker == null || !attacker.IsAlive || defender == null || !defender.IsAlive)
+                yield break;
+
+            var context = new EffectContext(attacker, defender, fromTile);
+
+            // Two effects may well cover the same ground; a tile is marked once.
+            var marked = new HashSet<Tile>();
+
+            foreach (var effect in AreaEffectsOf(attacker))
+            foreach (var tile in effect.Targets.ResolveTiles(context))
+                if (marked.Add(tile))
+                    yield return tile;
+        }
+
+        /// <summary>
+        /// What one caught unit takes: the effect's own damage, folded through
+        /// <see cref="CalculateDamage"/> so defence, terrain and the weapon's traits all still apply.
+        ///
+        /// Resolves a real strike - it rolls what a trait rolls and writes to the log - so it is for
+        /// whoever is actually applying the damage. Anything merely weighing a swing reads
+        /// <see cref="AttackEffect.Damage"/> instead.
+        /// </summary>
+        public static int AreaDamage(AttackEffect effect, Unit attacker, Unit victim, bool isRetaliation)
+        {
+            if (effect == null || attacker == null || victim == null)
+                return 0;
+
+            return CalculateDamage(attacker, victim, effect.Damage, isRetaliation);
+        }
+
+        #endregion
+
         private static IEnumerable<Trait> TraitsAffecting(Unit unit)
         {
             return TraitsAffecting(unit, unit.CurrentState.Position);
@@ -235,6 +398,23 @@ namespace Runtime.Gameplay.Global
             foreach (var trait in tile.Traits)
                 if (trait != null)
                     yield return trait;
+        }
+    }
+
+    /// <summary>
+    /// One unit an <see cref="AttackEffect"/> caught, paired with the effect that caught it. Planned
+    /// before the blow lands and applied after, so the pair has to be carried rather than re-derived
+    /// from a board that has meanwhile changed.
+    /// </summary>
+    public readonly struct EffectHit
+    {
+        public readonly AttackEffect Effect;
+        public readonly Unit Victim;
+
+        public EffectHit(AttackEffect effect, Unit victim)
+        {
+            Effect = effect;
+            Victim = victim;
         }
     }
 }

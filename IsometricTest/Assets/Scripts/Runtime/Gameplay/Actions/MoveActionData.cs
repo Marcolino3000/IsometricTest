@@ -5,11 +5,11 @@ using UnityEngine;
 namespace Runtime.Gameplay.Actions
 {
     [CreateAssetMenu(menuName = "Actions/Move")]
-    public class MoveActionData : ActionData<MoveCondition, MoveEffect>
+    public class MoveActionData : ActionData<MoveCondition>
     {
-        public override UnitAction<MoveCondition, MoveEffect> CreateAction(ActionContext context)
+        public override IUnitAction CreateAction(ActionContext context)
         {
-            return new MoveAction(Condition, Effect, context);
+            return new MoveAction(Condition, context);
         }
 
     }

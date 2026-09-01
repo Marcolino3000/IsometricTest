@@ -200,6 +200,12 @@ namespace Runtime.Gameplay.Actions
 
             ExecutePlannedActions();
 
+            // Said here rather than heard off the report, the way a strike and its flinch are said
+            // from CombatRunner.ApplyDamage: this is the one place an item is spent, and only a use
+            // that actually happened reaches it. A general presentation channel would subscribe to
+            // the report instead - see the open decision on sound and VFX in CLAUDE.md.
+            EffectAnimator.Play(EffectAnimation.ItemUsed, unit);
+
             ActionReporter.Report(ActionReport.UseItem(unit));
 
             return true;

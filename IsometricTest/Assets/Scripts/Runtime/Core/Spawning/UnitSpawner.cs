@@ -69,9 +69,18 @@ namespace Runtime.Core.Spawning
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private FogOfWar fogOfWar;
 
+        // Where a unit's state is bundled for whoever asks about a whole team. The spawner owns the
+        // units' lifetime, so it is what says which ones are on the board - but it does not compute
+        // the aggregate itself any more, and nothing here pushes one into turn state.
+        [SerializeField] private UnitStateManager unitStateManager;
+
         // Handed to every unit it spawns: whether a unit wears capability badges and whether it
         // shows a threat zone are match rules, and a unit is where both are drawn.
         [SerializeField] private GameRules gameRules;
+
+        // Handed on to every unit as well, and kept apart from the rules on purpose: how fast a
+        // unit is drawn moving decides nothing about the match.
+        [SerializeField] private AnimationSettings animationSettings;
 
         /// <summary>
         /// Takes a unit out of play. It is hidden instead of destroyed - that keeps it, and every
@@ -83,7 +92,7 @@ namespace Runtime.Core.Spawning
             if (unit == null || !units.Remove(unit))
                 return;
 
-            unit.CurrentState.OnNoActionsLeft -= CheckIfNoneHaveActionsLeft;
+            unitStateManager.Untrack(unit);
             removedUnits.Add(unit);
             unit.SetInPlay(false);
 
@@ -100,7 +109,7 @@ namespace Runtime.Core.Spawning
 
             units.Add(unit);
             unit.SetInPlay(true);
-            SubscribeToStateEvents(unit);
+            unitStateManager.Track(unit);
         }
 
         private void SpawnOpponentUnits()
@@ -109,27 +118,44 @@ namespace Runtime.Core.Spawning
             {
                 for (int i = 0; i < unitAmount.Amount; i++)
                 {
-                    SpawnUnit(Team.Opponent, unitAmount.Prefab, i);
+                    SpawnUnit(Team.Opponent, unitAmount.Blueprint, i);
                 }
             }
         }
 
-        private Unit SpawnUnit(Team team, Unit prefab, int index)
+        /// <summary>
+        /// Puts one unit of a kind on the board. A kind is a <see cref="UnitBlueprint"/> and nothing
+        /// else - the prefab is the one shared body every unit is drawn with, dressed by the
+        /// blueprint, exactly as a lootbox is one prefab dressed by its type. There is no
+        /// prefab-per-kind to keep in step with the blueprint any more.
+        /// </summary>
+        private Unit SpawnUnit(Team team, UnitBlueprint blueprint, int index)
         {
-            if (prefab == null)
+            if (blueprint == null)
             {
-                Debug.LogError($"No unit prefab set for team {team} in {nameof(UnitSpawnerSettings)}.", settings);
+                Debug.LogError($"No unit blueprint set for team {team} in {nameof(UnitSpawnerSettings)}.", settings);
                 return null;
             }
 
-            var instance = Instantiate(prefab, transform);
+            if (settings.UnitPrefab == null)
+            {
+                Debug.LogError($"No shared unit prefab set in {nameof(UnitSpawnerSettings)}.", settings);
+                return null;
+            }
+
+            var instance = Instantiate(settings.UnitPrefab, transform);
 
             var spriteRenderer = instance.GetComponentInChildren<SpriteRenderer>();
             spriteRenderer.sortingOrder = settings.OrderInLayer;
-            spriteRenderer.sprite = prefab.Blueprint.Sprite;
+            spriteRenderer.sprite = blueprint.Sprite;
+
+            // The body is shared, so the outline that was fitted to each old per-kind prefab has to
+            // be refitted here instead - what can be clicked follows what is drawn.
+            FitColliderToSprite(instance, blueprint.Sprite);
 
             var unit = instance.GetComponentInChildren<Unit>();
-            unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar, gameRules);
+            unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar, gameRules, animationSettings,
+                blueprint);
 
             PlaceUnit(unit, team);
 
@@ -137,36 +163,54 @@ namespace Runtime.Core.Spawning
             {
                 spriteRenderer.flipX = true;
                 spriteRenderer.color = settings.OpponentColor;
-                instance.name = $"Opponent {prefab.name} {index}";
+                instance.name = $"Opponent {blueprint.name} {index}";
             }
             else
             {
-                instance.name = $"Player {prefab.name}";
+                instance.name = $"Player {blueprint.name}";
             }
 
             units.Add(instance);
 
             selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
 
-            SubscribeToStateEvents(unit);
+            unitStateManager.Track(unit);
 
             return instance;
         }
 
-        private void SubscribeToStateEvents(Unit unit)
+        /// <summary>
+        /// Reshapes the unit's polygon collider to its sprite. Each kind used to carry its own
+        /// prefab whose collider was fitted to its own art; with one shared body the shape has to
+        /// come from the sprite, which is the blueprint's. Uses the sprite's authored physics shape
+        /// and leaves the collider alone when the importer has none, so a sprite nobody has fitted
+        /// yet keeps the shared body's outline rather than losing its collider.
+        /// </summary>
+        private static void FitColliderToSprite(Unit instance, Sprite sprite)
         {
-            unit.CurrentState.OnNoActionsLeft += CheckIfNoneHaveActionsLeft;
-        }
+            if (sprite == null)
+                return;
 
-        private void CheckIfNoneHaveActionsLeft() //todo: also check when unit dies
-        {
-            var noneHaveActionsLeft = units
-                .Where(u => u.CurrentState.Team == gameStateManager.State.Team)
-                .All(u => !u.CurrentState.HasActionsLeft);
-            
-            if(noneHaveActionsLeft)
-                gameStateManager.SetActionsLeft(false);     
-            
+            var collider = instance.GetComponentInChildren<PolygonCollider2D>();
+
+            if (collider == null)
+                return;
+
+            var shapeCount = sprite.GetPhysicsShapeCount();
+
+            if (shapeCount == 0)
+                return;
+
+            collider.pathCount = shapeCount;
+
+            var points = new List<Vector2>();
+
+            for (var i = 0; i < shapeCount; i++)
+            {
+                points.Clear();
+                sprite.GetPhysicsShape(i, points);
+                collider.SetPath(i, points);
+            }
         }
 
         /// <summary>
@@ -205,7 +249,7 @@ namespace Runtime.Core.Spawning
                 if (unit == null)
                     continue;
 
-                unit.CurrentState.OnNoActionsLeft -= CheckIfNoneHaveActionsLeft;
+                unitStateManager.Untrack(unit);
                 Destroy(unit.gameObject);
             }
 
@@ -217,12 +261,14 @@ namespace Runtime.Core.Spawning
         #region Setup
 
         public void Setup(GameStateManager gameStateManagerArg, Selector selectorArg, FogOfWar fogOfWarArg,
-            GameRules gameRulesArg)
+            GameRules gameRulesArg, AnimationSettings animationSettingsArg, UnitStateManager unitStateManagerArg)
         {
             gameStateManager = gameStateManagerArg;
             selector = selectorArg;
             fogOfWar = fogOfWarArg;
             gameRules = gameRulesArg;
+            animationSettings = animationSettingsArg;
+            unitStateManager = unitStateManagerArg;
         }
 
         [ContextMenu("Spawn Units")]

@@ -16,5 +16,18 @@ MonoBehaviour:
   Description: 'Drink to restore 3 health. '
   Symbol: {fileID: -2088117019, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
-  Condition: {fileID: 11400000, guid: 4b9d78f8900e48b4ad9a17c394f0361a, type: 2}
-  Effect: {fileID: 11400000, guid: 45ec3a90e73484f90808dc4b21160c2f, type: 2}
+  condition:
+    rid: 8065409298073562339
+  effects:
+  - rid: 6231339219244506603
+  references:
+    version: 2
+    RefIds:
+    - rid: 6231339219244506603
+      type: {class: HealEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Amount: 3
+    - rid: 8065409298073562339
+      type: {class: ActiveItemCondition, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Cost: 0

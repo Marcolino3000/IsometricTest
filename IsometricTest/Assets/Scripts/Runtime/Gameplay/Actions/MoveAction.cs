@@ -19,9 +19,9 @@ namespace Actions
         void ExecuteEffects();
     }
 
-    public class MoveAction : UnitAction<MoveCondition, MoveEffect>
+    public class MoveAction : UnitAction<MoveCondition>
     {
-        public MoveAction(MoveCondition condition, MoveEffect effect, ActionContext context) : base(condition, effect, context) { }
+        public MoveAction(MoveCondition condition, ActionContext context) : base(condition, context) { }
 
         public override ActionKind Kind => ActionKind.Move;
 

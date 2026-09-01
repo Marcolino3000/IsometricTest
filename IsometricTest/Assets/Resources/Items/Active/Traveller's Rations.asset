@@ -16,5 +16,23 @@ MonoBehaviour:
   Description: Restores 4 health and 2 action points.
   Symbol: {fileID: 1761427543, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
-  Condition: {fileID: 11400000, guid: 7d4faea9233642fab63c69341fe7c7cb, type: 2}
-  Effect: {fileID: 11400000, guid: 45be5348f1d841ae9d6ef00dc4c9df53, type: 2}
+  condition:
+    rid: 4649254009825697622
+  effects:
+  - rid: 3446806164221112879
+  - rid: 7406603717964564644
+  references:
+    version: 2
+    RefIds:
+    - rid: 3446806164221112879
+      type: {class: HealEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Amount: 4
+    - rid: 4649254009825697622
+      type: {class: ActiveItemCondition, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Cost: 1
+    - rid: 7406603717964564644
+      type: {class: RestoreActionPointsEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Amount: 2

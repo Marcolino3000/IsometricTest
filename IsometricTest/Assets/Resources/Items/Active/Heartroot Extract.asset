@@ -17,5 +17,19 @@ MonoBehaviour:
     new room.
   Symbol: {fileID: -1569564830, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
-  Condition: {fileID: 11400000, guid: a8618e14ba95a44819f245c10423b141, type: 2}
-  Effect: {fileID: 11400000, guid: e2f05d5bba174245b7a56e2ab7000c28, type: 2}
+  condition:
+    rid: 6927997596394779488
+  effects:
+  - rid: 1640418708418714522
+  references:
+    version: 2
+    RefIds:
+    - rid: 1640418708418714522
+      type: {class: IncreaseStatEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Stat: 2
+        Amount: 3
+    - rid: 6927997596394779488
+      type: {class: ActiveItemCondition, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Cost: 5

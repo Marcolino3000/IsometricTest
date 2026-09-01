@@ -12,17 +12,24 @@ namespace UI
         private GameStateManager _gameStateManager;
         private InputHandler _inputHandler;
         private MatchOutcomeWatcher _outcomeWatcher;
+        private UnitStateManager _unitStateManager;
 
         public void Setup(GameStateManager gameStateManager, InputHandler inputHandler,
-            MatchOutcomeWatcher outcomeWatcher)
+            MatchOutcomeWatcher outcomeWatcher, UnitStateManager unitStateManager)
         {
             _gameStateManager = gameStateManager;
             _inputHandler = inputHandler;
             _outcomeWatcher = outcomeWatcher;
+            _unitStateManager = unitStateManager;
             _button.clicked += EndTurn;
             // The key is the button's shortcut, so it ends the turn on exactly the same terms.
             _inputHandler.EndTurnPressed += EndTurn;
+            // Two things colour the button and they come from different places: whose turn it is is
+            // turn state, whether anyone can still act is asked of the units.
             gameStateManager.GameStateChanged += HandleStateChange;
+            _unitStateManager.Changed += UpdateButtonColor;
+
+            UpdateButtonColor();
         }
 
         /// <summary>
@@ -40,18 +47,27 @@ namespace UI
 
         private void HandleStateChange(Runtime.Core.State.ChangeEvent<State> changeEvent)
         {
-            UpdateButtonColor(changeEvent);
+            UpdateButtonColor();
         }
 
-        private void UpdateButtonColor(Runtime.Core.State.ChangeEvent<State> changeEvent)
+        /// <summary>
+        /// Gold once the active team has nothing left to do, otherwise the team's own colour. Whether
+        /// anyone can still act is asked of <see cref="UnitStateManager"/> rather than read off turn
+        /// state: it is derived from the units, so it is never a cached copy that can disagree with
+        /// them - a unit falling is noticed as surely as one spending its last point.
+        /// </summary>
+        private void UpdateButtonColor()
         {
-            if (!changeEvent.NewValue.UnitsHaveActionsLeft)
+            if (_button == null)
+                return;
+
+            if (_unitStateManager != null && !_unitStateManager.ActiveTeamHasActionsLeft)
             {
                 _button.style.backgroundColor = new StyleColor(new Color(1f, 215f/255f, 0f));
                 return;
             }
 
-            var team = changeEvent.NewValue.Team;
+            var team = _gameStateManager.State.Team;
             _button.style.backgroundColor = team == Team.Player ? new StyleColor(Color.green) : new StyleColor(Color.red);
         }
 
@@ -62,6 +78,7 @@ namespace UI
 
         private void OnDestroy()
         {
+            if (_unitStateManager != null) _unitStateManager.Changed -= UpdateButtonColor;
             if (_gameStateManager == null) return;
             _gameStateManager.GameStateChanged -= HandleStateChange;
             if (_button != null) _button.clicked -= EndTurn;

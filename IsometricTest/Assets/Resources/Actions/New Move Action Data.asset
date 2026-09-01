@@ -12,5 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40889b83b6f8484ab9ac297cd1944057, type: 3}
   m_Name: New Move Action Data
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Actions.MoveActionData
-  Condition: {fileID: 11400000, guid: 088bdde86b97d4ad19f9cb72f33799a4, type: 2}
-  Effect: {fileID: 11400000, guid: a4d779265412d4a3cb7f6627607a8e7a, type: 2}
+  condition:
+    rid: 5091451604518035218
+  references:
+    version: 2
+    RefIds:
+    - rid: 5091451604518035218
+      type: {class: MoveCondition, ns: Runtime.Gameplay.Actions, asm: Assembly-CSharp}
+      data:
+        Cost: 1

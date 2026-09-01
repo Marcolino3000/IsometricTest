@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Actions;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 
 namespace Runtime.Gameplay.Entities
@@ -24,6 +25,11 @@ namespace Runtime.Gameplay.Entities
     {
         private UnitAnimationSet set;
         private SpriteRenderer spriteRenderer;
+
+        // How fast all of this is drawn, held as the live asset rather than as a number copied off
+        // it: the multiplier is applied per frame, so a speed changed mid-play - mid-step, even -
+        // applies at once and nothing has to be told about it.
+        private AnimationSettings animationSettings;
 
         // Where the sprite still has to walk to. A move is one action per tile stepped on, so the
         // steps arrive one at a time and are walked in order - the corner around a mountain is walked
@@ -70,6 +76,13 @@ namespace Runtime.Gameplay.Entities
         private bool IsWalking => stepping || steps.Count > 0;
 
         /// <summary>
+        /// The global animation speed, as a multiplier on both halves of what is drawn - the walk
+        /// and the frames - so doubling it halves how long the whole thing takes rather than only
+        /// its frames. Full speed with no asset injected, so a unit still animates.
+        /// </summary>
+        private float Speed => animationSettings != null ? animationSettings.Speed : 1f;
+
+        /// <summary>
         /// Whether the unit can be seen at all. The fog hides a unit by deactivating the object the
         /// sprite is on, so a unit behind it has nothing to show and walks its steps at once - which
         /// is what keeps one from being revealed halfway between two tiles.
@@ -81,7 +94,7 @@ namespace Runtime.Gameplay.Entities
         /// authors no frames - a unit with no set keeps the still sprite the spawner gave it and
         /// arrives on its tiles the moment the rules say it does.
         /// </summary>
-        public static UnitAnimator Create(Unit unit, UnitAnimationSet set)
+        public static UnitAnimator Create(Unit unit, UnitAnimationSet set, AnimationSettings animationSettings)
         {
             if (unit == null || set == null)
                 return null;
@@ -94,6 +107,7 @@ namespace Runtime.Gameplay.Entities
             var animator = unit.gameObject.AddComponent<UnitAnimator>();
             animator.set = set;
             animator.spriteRenderer = spriteRenderer;
+            animator.animationSettings = animationSettings;
 
             return animator;
         }
@@ -215,7 +229,10 @@ namespace Runtime.Gameplay.Entities
                 return;
             }
 
-            transform.position = Vector3.MoveTowards(transform.position, activeStep, stepSpeed * Time.deltaTime);
+            // The global speed is folded in here rather than into stepSpeed, so a speed changed
+            // while a unit is walking applies to the step it is on.
+            transform.position = Vector3.MoveTowards(transform.position, activeStep,
+                stepSpeed * Speed * Time.deltaTime);
 
             if (transform.position == activeStep)
                 stepping = false;
@@ -261,7 +278,7 @@ namespace Runtime.Gameplay.Entities
             if (current == null)
                 return;
 
-            frameTimer += Time.deltaTime;
+            frameTimer += Time.deltaTime * Speed;
 
             var secondsPerFrame = 1f / Mathf.Max(current.FramesPerSecond, 0.01f);
 

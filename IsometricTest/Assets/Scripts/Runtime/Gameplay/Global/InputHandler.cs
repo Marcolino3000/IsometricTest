@@ -33,6 +33,28 @@ namespace Runtime.Gameplay.Global
         /// <summary>Raised when the end-turn key (Q) goes down.</summary>
         public event Action EndTurnPressed;
 
+        /// <summary>
+        /// The right button went down, with the screen point it went down at. What a drag means in
+        /// the world is <see cref="CameraController"/>'s: this reports pointer facts in screen
+        /// pixels and never touches a camera.
+        /// </summary>
+        public event Action<Vector2> PanDragStarted;
+
+        /// <summary>The cursor moved with the right button held, at this screen point.</summary>
+        public event Action<Vector2> PanDragMoved;
+
+        /// <summary>The right button came up.</summary>
+        public event Action PanDragEnded;
+
+        /// <summary>Raised with the scroll wheel's notch: positive zooms in.</summary>
+        public event Action<float> ZoomChanged;
+
+        /// <summary>
+        /// The pan axis as it stands - WASD, read rather than raised because it is a held direction
+        /// rather than an event. Polled once a frame by whoever moves the view.
+        /// </summary>
+        public Vector2 PanAxis => moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
+
         /// <summary>Keys 1..9. Zero and the numpad are deliberately left alone.</summary>
         private const int NumberKeyCount = 9;
 
@@ -41,9 +63,6 @@ namespace Runtime.Gameplay.Global
         /// as a click rather than as a pan. A few pixels of slip belong to every press.
         /// </summary>
         private const float ClickTravelThreshold = 4f;
-
-        [SerializeField] private float cameraPanSpeed = 10f;
-        [SerializeField] private Transform cameraRig;
 
         /// <summary>
         /// Whatever currently stands in front of the game — the find popup is the only one today.
@@ -58,11 +77,9 @@ namespace Runtime.Gameplay.Global
         private InputAction cancelAction;
         private InputAction interactAction;
         private InputAction endTurnAction;
-        private Transform panTarget;
-        private Camera cam;
+        private InputAction zoomAction;
 
         private bool isDragging;
-        private Vector3 dragWorldAnchor;
         private Vector2 dragScreenStart;
 
         /// <summary>
@@ -97,130 +114,69 @@ namespace Runtime.Gameplay.Global
                 blockers.Add(blocker);
         }
 
-        /// <summary>
-        /// Puts <paramref name="target"/> in the middle of the screen by moving the same rig WASD and
-        /// the drag pan move, so the match opens on the character wherever the spawn zone put it.
-        /// The offset is measured the way the drag measures its own: the world point currently at the
-        /// screen centre is what has to become the target, so a camera sitting off-centre inside the
-        /// rig keeps its offset instead of being corrected away.
-        /// </summary>
-        public void CenterCameraOn(Transform target)
-        {
-            if (target == null)
-                return;
-
-            ResolveCamera();
-
-            if (cam == null || panTarget == null)
-                return;
-
-            Vector3 screenCenter = ScreenToWorld(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f));
-            Vector3 delta = target.position - screenCenter;
-            delta.z = 0f;
-            panTarget.position += delta;
-        }
-
         private void Update()
         {
-            PanCamera();
-            DragPan();
-        }
-
-        private void PanCamera()
-        {
-            if (panTarget == null)
-                return;
-
-            Vector2 move = moveAction.ReadValue<Vector2>();
-
-            if (move == Vector2.zero)
-                return;
-
-            Vector3 delta = new Vector3(move.x, move.y, 0f) * (cameraPanSpeed * Time.deltaTime);
-            panTarget.Translate(delta, Space.World);
+            TrackRightButton();
+            ReadZoom();
         }
 
         /// <summary>
-        /// Pans by dragging with the right mouse button. The world point grabbed when the button
-        /// went down is kept under the cursor (grab-the-world). Moves the same rig as WASD, so the
-        /// UI overlay camera follows along too.
-        ///
-        /// Also decides where a press ends up: one that never travelled was meant as a click and is
-        /// announced as <see cref="RightClicked"/> on release. Both live here because the drag is
-        /// what tells the two apart, and it is tracked from the mouse directly rather than through an
-        /// InputAction so the travelled distance is available at the same moment.
+        /// Tells a pan from a right click and announces whichever it was. Both live here because the
+        /// travelled distance is what separates them: a press that never moved was meant as a click
+        /// and is announced on release, one that moved is a drag and is handed to whoever owns the
+        /// view. Tracked from the mouse directly rather than through an InputAction, so the distance
+        /// is available at the same moment the button state is.
         /// </summary>
-        private void DragPan()
+        private void TrackRightButton()
         {
-            if (cam == null || Mouse.current == null)
+            if (Mouse.current == null)
                 return;
 
             Vector2 screenPosition = Mouse.current.position.ReadValue();
 
             if (Mouse.current.rightButton.wasPressedThisFrame)
             {
-                dragWorldAnchor = ScreenToWorld(screenPosition);
                 dragScreenStart = screenPosition;
                 isDragging = true;
                 dragBlocked = Blocked;
+
+                PanDragStarted?.Invoke(screenPosition);
             }
             else if (!Mouse.current.rightButton.isPressed)
             {
-                if (isDragging && !dragBlocked
-                               && Vector2.Distance(screenPosition, dragScreenStart) <= ClickTravelThreshold)
-                    RightClicked?.Invoke();
+                if (isDragging)
+                {
+                    if (!dragBlocked && Vector2.Distance(screenPosition, dragScreenStart) <= ClickTravelThreshold)
+                        RightClicked?.Invoke();
+
+                    PanDragEnded?.Invoke();
+                }
 
                 isDragging = false;
                 dragBlocked = false;
+                return;
             }
 
-            if (!isDragging || panTarget == null)
+            if (isDragging)
+                PanDragMoved?.Invoke(screenPosition);
+        }
+
+        private void ReadZoom()
+        {
+            if (zoomAction == null)
                 return;
 
-            Vector3 worldUnderCursor = ScreenToWorld(screenPosition);
-            Vector3 delta = dragWorldAnchor - worldUnderCursor;
-            delta.z = 0f;
-            panTarget.position += delta;
-        }
+            var scroll = zoomAction.ReadValue<Vector2>().y;
 
-        private Vector3 ScreenToWorld(Vector2 screenPosition)
-        {
-            return cam.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0f));
-        }
-
-        /// <summary>
-        /// Resolves the camera and the transform it pans. Asked again before centring, since that is
-        /// requested from the Initiator's Awake, which may run before this component's own OnEnable.
-        /// </summary>
-        private void ResolveCamera()
-        {
-            if (cam == null)
-                cam = Camera.main;
-
-            if (panTarget == null)
-                panTarget = ResolvePanTarget();
-        }
-
-        /// <summary>
-        /// Resolves what WASD pans. Defaults to the main camera's parent to move all cameras
-        /// at once (also UI-Cam).
-        /// </summary>
-        private Transform ResolvePanTarget()
-        {
-            if (cameraRig != null)
-                return cameraRig;
-
-            Camera main = Camera.main;
-            if (main == null)
-                return null;
-
-            return main.transform.parent != null ? main.transform.parent : main.transform;
+            if (!Mathf.Approximately(scroll, 0f))
+                ZoomChanged?.Invoke(Mathf.Sign(scroll));
         }
 
         /// <summary>
         /// Announces <paramref name="input"/> unless something in front of the game swallows it.
         /// Every event goes through here, so a card that blocks blocks all of them at once — the
-        /// camera is the exception and is left alone, since panning is nothing the game answers.
+        /// pan and the zoom are the exception and are left alone, since moving the view is nothing
+        /// the game answers.
         /// </summary>
         private void Raise(Action input)
         {
@@ -258,8 +214,6 @@ namespace Runtime.Gameplay.Global
 
         private void OnEnable()
         {
-            ResolveCamera();
-
             leftClickAction = new InputAction(
                 type: InputActionType.Button,
                 binding: "<Mouse>/leftButton");
@@ -296,6 +250,10 @@ namespace Runtime.Gameplay.Global
                 type: InputActionType.Button,
                 binding: "<Keyboard>/q");
 
+            zoomAction = new InputAction(
+                type: InputActionType.Value,
+                binding: "<Mouse>/scroll");
+
             leftClickAction.performed += OnLeftClickPerformed;
             numberKeyAction.performed += OnNumberKeyPerformed;
             confirmAction.performed += OnConfirmPerformed;
@@ -310,6 +268,7 @@ namespace Runtime.Gameplay.Global
             cancelAction.Enable();
             interactAction.Enable();
             endTurnAction.Enable();
+            zoomAction.Enable();
         }
 
         private void OnDisable()
@@ -351,6 +310,7 @@ namespace Runtime.Gameplay.Global
             }
 
             moveAction?.Disable();
+            zoomAction?.Disable();
         }
     }
 }

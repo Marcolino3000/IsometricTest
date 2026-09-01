@@ -17,5 +17,19 @@ MonoBehaviour:
     this one included.
   Symbol: {fileID: -1745111977, guid: d8dfea5f46f7149ad82f41a7befc11ec, type: 3}
   FoundIn: {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
-  Condition: {fileID: 11400000, guid: a8618e14ba95a44819f245c10423b141, type: 2}
-  Effect: {fileID: 11400000, guid: b76e2136d7d4469ebedfdf9c238d7a34, type: 2}
+  condition:
+    rid: 6027931141650900660
+  effects:
+  - rid: 1336561050577272349
+  references:
+    version: 2
+    RefIds:
+    - rid: 1336561050577272349
+      type: {class: IncreaseStatEffect, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Stat: 1
+        Amount: 1
+    - rid: 6027931141650900660
+      type: {class: ActiveItemCondition, ns: Runtime.Gameplay.Items, asm: Assembly-CSharp}
+      data:
+        Cost: 5

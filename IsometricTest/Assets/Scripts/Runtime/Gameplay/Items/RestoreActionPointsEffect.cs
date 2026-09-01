@@ -7,7 +7,7 @@ namespace Runtime.Gameplay.Items
     /// Hands the character extra action points for the current turn. Uncapped on purpose: the turn's
     /// refresh is what the blueprint sets, and an item that pushes past it is the point of the item.
     /// </summary>
-    [CreateAssetMenu(menuName = "ScriptableObjects/Items/Effects/Restore Action Points")]
+    [System.Serializable]
     public class RestoreActionPointsEffect : ActiveItemEffect
     {
         [Tooltip("Action points granted. Spent from the item's own cost first, so a cost of 1 and an " +
@@ -16,9 +16,9 @@ namespace Runtime.Gameplay.Items
 
         public override string Summary => $"Grants {Amount} action points";
 
-        public override void Apply(Unit user)
+        public override void Apply(Unit target)
         {
-            user.CurrentState.ActionPoints += Amount;
+            target.CurrentState.ActionPoints += Amount;
         }
     }
 }

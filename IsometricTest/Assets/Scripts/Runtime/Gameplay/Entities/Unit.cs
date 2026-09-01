@@ -69,31 +69,45 @@ namespace Runtime.Gameplay.Entities
         // which is what leaves that unit standing still and stepping onto its tiles at once.
         private UnitAnimator animator;
 
-        private int lastHealth;
-
         // What the popup for the next damage taken says beside the number, e.g. "Crit!". Handed over
         // by whoever resolved the strike rather than looked up here, since the popup is raised by the
         // health setter and that knows only how much changed.
         private string damageNote;
 
-        // Set while undo/redo puts recorded values back, so replaying a hit does not replay its
-        // damage popup.
+        // Set while undo/redo puts recorded values back, so the step onto a tile is put back rather
+        // than walked. Only the movement needs it: a value change says for itself why it moved, and
+        // whoever reacts to one reads the reason off the event instead of a flag kept out here.
         private bool restoringSnapshot;
 
         private void OnDestroy()
         {
             if (gameStateManager != null)
                 gameStateManager.TurnReset -= HandleTurnReset;
+
+            if (currentState != null)
+            {
+                currentState.HealthChanged -= HandleHealthChanged;
+                currentState.ActionPointsChanged -= HandleActionPointsChanged;
+            }
         }
 
+        /// <summary>
+        /// Builds the unit from its blueprint. The blueprint is handed in rather than authored on the
+        /// prefab: a kind of unit is one asset, and the prefab is the shared body every kind is drawn
+        /// with. The serialized field is only a fallback, for a unit placed in the scene by hand.
+        /// </summary>
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team,
-            GameStateManager gameStateManagerArg, FogOfWar fogOfWarArg, GameRules gameRules)
+            GameStateManager gameStateManagerArg, FogOfWar fogOfWarArg, GameRules gameRules,
+            AnimationSettings animationSettings, UnitBlueprint unitBlueprint = null)
         {
+            if (unitBlueprint != null)
+                blueprint = unitBlueprint;
+
             currentState = blueprint.DefaultState;
             currentState.Team = team;
-            lastHealth = currentState.Health;
             IsAlive = true;
-            currentState.SetValueChangedCallbacks(HealthChangedCallback, ActionPointsChangedCallback);
+            currentState.HealthChanged += HandleHealthChanged;
+            currentState.ActionPointsChanged += HandleActionPointsChanged;
 
             tileSpawner = tileSpawnerArg;
             unitSpawner = unitSpawnerArg;
@@ -109,7 +123,7 @@ namespace Runtime.Gameplay.Entities
 
             // Before the badges only because both are built here: what the unit is drawn with is its
             // blueprint's business, so there is nothing to author on the prefab either way.
-            animator = UnitAnimator.Create(this, blueprint.Animations);
+            animator = UnitAnimator.Create(this, blueprint.Animations, animationSettings);
 
             CreateBadges(gameRules);
         }
@@ -201,14 +215,19 @@ namespace Runtime.Gameplay.Entities
             healthBar.SetBlobAmount(currentState.Health);
         }
 
-        private void HealthChangedCallback(int amount)
+        /// <summary>
+        /// The bar follows every change whatever caused it; the popup answers gameplay only. The
+        /// reason comes off the event rather than a flag set around the restore, so anything else
+        /// that reacts to a hit later - a sound, a flash, a shake - can tell them apart the same way
+        /// without a guard of its own.
+        /// </summary>
+        private void HandleHealthChanged(Runtime.Core.State.ChangeEvent<int> changeEvent)
         {
-            healthBar.SetBlobAmount(amount);
+            healthBar.SetBlobAmount(changeEvent.NewValue);
 
-            int delta = amount - lastHealth;
-            lastHealth = amount;
+            var delta = changeEvent.NewValue - changeEvent.PreviousValue;
 
-            if (delta == 0 || restoringSnapshot)
+            if (delta == 0 || changeEvent.Reason != ChangeReason.Gameplay)
             {
                 // A hit taken back by an undo says nothing, and its word must not carry to the next one.
                 damageNote = null;
@@ -246,9 +265,9 @@ namespace Runtime.Gameplay.Entities
                 FloatingText.ShowDamage(delta, transform.position, panelSettings, note);
         }
         
-        private void ActionPointsChangedCallback(int amount)
+        private void HandleActionPointsChanged(Runtime.Core.State.ChangeEvent<int> changeEvent)
         {
-            actionExecutor.HandleActionPointsChanged(amount);
+            actionExecutor.HandleActionPointsChanged(changeEvent.NewValue);
         }
 
         public bool TryPlaceAtTile(Tile selectedTile)
@@ -329,6 +348,10 @@ namespace Runtime.Gameplay.Entities
         {
             restoringSnapshot = true;
 
+            // Everything written from here says so: the values put back raise their events with
+            // Restore on them, so a bar redraws and a damage popup stays away without being told.
+            using var _ = currentState.Changing(ChangeReason.Restore);
+
             // A board is put back rather than played out again, the way the step onto a tile is put
             // back rather than walked. A unit that should be down is simply down - a redone kill has
             // queued its fall a moment ago, and this is what finishes it without it being watched.
@@ -356,7 +379,6 @@ namespace Runtime.Gameplay.Entities
             }
 
             currentState.Health = health;
-            lastHealth = health;
             currentState.ActionPoints = actionPoints;
 
             // The action point bar may still be showing the cost of a plan that belongs to the state

@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1c599704cdf42c1a1466a89341ea0b3, type: 3}
   m_Name: Default UnitSpawnerSettings
   m_EditorClassIdentifier: 
-  PlayerUnit: {fileID: 1033920189357735479, guid: 940f94232c4d24678868939d3863644e, type: 3}
+  UnitPrefab: {fileID: 6973456096741093380, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
+  PlayerUnit: {fileID: 11400000, guid: 695076710910a4876b11b9da1fb83cdf, type: 2}
   OpponentUnits:
   - Amount: 8
-    Prefab: {fileID: 1033920189357735479, guid: 560cd3456b51c4f609e960b3b8f037c6, type: 3}
+    Blueprint: {fileID: 11400000, guid: 1aef4d4a54c8a4b5fb157b976c361afe, type: 2}
   - Amount: 4
-    Prefab: {fileID: 8279638395231357746, guid: cc378132656d04836986c39202c89fca, type: 3}
+    Blueprint: {fileID: 11400000, guid: bd0379b61e8bb485e8bfc2b29a7280be, type: 2}
   - Amount: 2
-    Prefab: {fileID: 8279638395231357746, guid: 8df49071ccaf942fcb3ded50c54f9f27, type: 3}
+    Blueprint: {fileID: 11400000, guid: 17566dd16041b4372890634bf05ef688, type: 2}
   OrderInLayer: 3
   OpponentColor: {r: 0.8396226, g: 0.40792987, b: 0.40792987, a: 1}

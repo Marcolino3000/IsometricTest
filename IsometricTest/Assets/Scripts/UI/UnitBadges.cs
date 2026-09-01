@@ -34,14 +34,6 @@ namespace UI
         private Unit unit;
         private VisualElement root;
 
-        // What the row was last built from. Compared rather than subscribed to: a weapon swap, a
-        // looted passive, a used-up item and an undo all change what a unit can do, and every one of
-        // them would otherwise have to remember to say so. Three references and a count, tested once
-        // a frame per unit.
-        private AttackActionData shownWeapon;
-        private int shownTraitCount;
-        private Tile shownTile;
-
         /// <summary>
         /// Hangs a badge row on <paramref name="unit"/>. <paramref name="panelSettings"/> is the
         /// health bar's, so the badges live on the same world-space panel the bars do.
@@ -72,12 +64,6 @@ namespace UI
             if (unit == null || root == null)
                 return;
 
-            var state = unit.CurrentState;
-
-            shownWeapon = state.AttackAction;
-            shownTraitCount = state.Traits.Count;
-            shownTile = state.Position;
-
             root.Clear();
 
             foreach (var capability in UnitRules.GetCapabilities(unit))
@@ -94,28 +80,25 @@ namespace UI
             root.style.alignItems = Align.Center;
             root.style.justifyContent = Justify.Center;
 
+            // Two things change what a unit can do and they now both say so: what it carries, and
+            // the ground under it - the tile is in here because what a weapon reaches depends on
+            // where it is standing, which is the one capability that moves with nothing picked up.
+            unit.CurrentState.LoadoutChanged += Refresh;
+            unit.CurrentState.PositionChanged += HandlePositionChanged;
+
             Refresh();
         }
 
-        /// <summary>
-        /// Watches for the unit becoming able to do something else. The tile is in the test because
-        /// what the weapon reaches depends on the ground under it, which is the one capability that
-        /// changes without anything being picked up or put down.
-        /// </summary>
-        private void LateUpdate()
+        private void OnDestroy()
         {
-            if (unit == null || root == null)
+            if (unit == null || unit.CurrentState == null)
                 return;
 
-            var state = unit.CurrentState;
-
-            if (state.AttackAction == shownWeapon
-                && state.Traits.Count == shownTraitCount
-                && state.Position == shownTile)
-                return;
-
-            Refresh();
+            unit.CurrentState.LoadoutChanged -= Refresh;
+            unit.CurrentState.PositionChanged -= HandlePositionChanged;
         }
+
+        private void HandlePositionChanged(Runtime.Core.State.ChangeEvent<Tile> changeEvent) => Refresh();
 
         private static VisualElement BuildBadge(Capability capability)
         {

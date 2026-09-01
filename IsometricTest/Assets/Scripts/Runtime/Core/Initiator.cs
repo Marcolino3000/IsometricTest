@@ -3,6 +3,7 @@ using Runtime.Core.State;
 using Runtime.Debugger;
 using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.AI;
+using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Feedback;
 using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
@@ -21,6 +22,11 @@ namespace Runtime.Core
         [Tooltip("Match-wide rule switches (retaliation, ...). Toggling one applies immediately, also during play.")]
         [SerializeField] private GameRules gameRules;
 
+        [Tooltip("How fast the game is drawn - the speed every unit animation runs at. Its own asset " +
+                 "rather than a rule: it decides nothing about the match, only how long it takes to " +
+                 "watch. Applies immediately, also during play.")]
+        [SerializeField] private AnimationSettings animationSettings;
+
         [Header("References")]
         [SerializeField] private GameStateManager gameStateManager;
         [SerializeField] private TileSpawner tileSpawner;
@@ -32,9 +38,14 @@ namespace Runtime.Core
         [SerializeField] private ActionAssigner actionAssigner;
         [SerializeField] private FogOfWar fogOfWar;
         [SerializeField] private AiController aiController;
+
+        [Tooltip("Owns the view: pan, drag, zoom and how far it may travel. Separate from the input " +
+                 "handler, which only reports what was pressed.")]
+        [SerializeField] private CameraController cameraController;
         [SerializeField] private ActionHistory actionHistory;
         [SerializeField] private ItemManager itemManager;
         [SerializeField] private LootSpawner lootSpawner;
+
 
         [Header("UI")]
         [SerializeField] private NextTurnButton nextTurnButton;
@@ -55,6 +66,14 @@ namespace Runtime.Core
         // Created in SetupReferences, like the attack preview: it holds nothing worth authoring and
         // nothing worth keeping across a restart, only the verdict it reads off the board.
         private MatchOutcomeWatcher matchOutcomeWatcher;
+
+        // Created here for the same reason: it is a query over the units plus a signal, so it holds
+        // no copy of anything and there is nothing on it to author or to restore.
+        private UnitStateManager unitStateManager;
+
+        // The one owner of what the cursor is over. Both roads into the game report to it - the
+        // world raycast and the item bar - so neither can undo what the other drew.
+        private HoverTarget hoverTarget;
 
 
         private void Awake()
@@ -97,19 +116,22 @@ namespace Runtime.Core
         /// </summary>
         private void CenterCameraOnPlayer()
         {
+            // The board exists by now, so how far the view may travel can be handed over with it.
+            cameraController.SetBounds(tileSpawner.GetBoardBounds());
+
             var player = unitSpawner.PlayerUnit;
 
             if (player != null)
-                inputHandler.CenterCameraOn(player.transform);
+                cameraController.CenterOn(player.transform);
         }
 
         private void SetupUI()
         {
-            nextTurnButton.Setup(gameStateManager, inputHandler, matchOutcomeWatcher);
+            nextTurnButton.Setup(gameStateManager, inputHandler, matchOutcomeWatcher, unitStateManager);
             itemBar.Setup(inputHandler);
             // The rules go in live, like they do into CombatRules: whether the same draught may be
             // carried twice is switchable during play.
-            itemManager.Setup(itemBar, CreateItemPopup(), CreateMergeScreen(), gameRules);
+            itemManager.Setup(itemBar, CreateItemPopup(), CreateMergeScreen(), gameRules, hoverTarget);
             CreateUnitCard();
             CreateGameOverScreen();
         }
@@ -185,29 +207,46 @@ namespace Runtime.Core
 
         private void SetupReferences()
         {
-            CombatRules.Setup(gameRules);
+            CombatRules.Setup(gameRules, tileSpawner);
             // Before anything asks what can be seen or shot at: the line is walked over the tiles.
             SightRules.Setup(tileSpawner);
             CombatLog.Setup(gameRules);
             gameStateManager.Setup();
+            // Before the spawner: every unit it puts on the board is handed to this to be tracked.
+            CreateUnitStateManager();
+            // Before the selector and the item bar: both report what the cursor is on to it.
+            hoverTarget = gameObject.AddComponent<HoverTarget>();
             // Early: the selector and the AI are both told to stand down by it, so it has to exist
             // before either is wired.
             CreateMatchOutcomeWatcher();
-            unitSpawner.Setup(gameStateManager, selector, fogOfWar, gameRules);
+            unitSpawner.Setup(gameStateManager, selector, fogOfWar, gameRules, animationSettings,
+                unitStateManager);
             tileSpawner.Setup(selector, gameRules);
-            selector.Setup(gameStateManager, raycaster, unitSpawner, matchOutcomeWatcher);
+            selector.Setup(gameStateManager, raycaster, unitSpawner, matchOutcomeWatcher, hoverTarget);
             raycaster.Setup(inputHandler, hudDocuments);
+            cameraController.Setup(inputHandler);
             outlineManager.Setup(selector);
             CreateAttackPreview();
             actionHistory.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, aiController, selector,
                 lootSpawner, itemManager);
-            actionAssigner.Setup(selector);
+            actionAssigner.Setup(selector, hoverTarget);
             fogOfWar.Setup(tileSpawner, unitSpawner, gameStateManager, aiController, gameRules);
             aiController.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, matchOutcomeWatcher);
             lootSpawner.Setup(tileSpawner, unitSpawner, itemManager, gameStateManager, inputHandler, gameRules);
             Direction.Setup(gameStateManager);
         }
         
+        /// <summary>
+        /// Bundles the units' state for whoever asks about a whole team. On the Initiator's own object
+        /// like the outcome watcher, and for the same reason: it is nothing but a question asked of
+        /// the units, so there is nothing to author on it and nothing in it to snapshot.
+        /// </summary>
+        private void CreateUnitStateManager()
+        {
+            unitStateManager = gameObject.AddComponent<UnitStateManager>();
+            unitStateManager.Setup(gameStateManager);
+        }
+
         /// <summary>
         /// The watcher of the win and loss conditions. Created here rather than placed on the Systems
         /// prefab because it is nothing but a question asked of the board, and it goes on the

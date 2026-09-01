@@ -16,6 +16,13 @@ namespace Runtime.Gameplay.Entities
         public bool IsOccupied {get; private set;}
 
         /// <summary>
+        /// The unit standing here, or null. Exposed like <see cref="Lootbox"/> is, so anything
+        /// spatial that has to reach the occupant - an area effect asking who is caught - finds it
+        /// in one step instead of scanning every unit for a matching position.
+        /// </summary>
+        public Unit Unit => unit;
+
+        /// <summary>
         /// The lootbox lying here, or null. Unlike a unit it does not occupy the tile - it has to be
         /// walked onto to be taken. Kept on the tile so the box is found in one step and follows the
         /// fog the ground is already tinted with.

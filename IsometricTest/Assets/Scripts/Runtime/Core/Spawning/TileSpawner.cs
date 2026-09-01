@@ -280,6 +280,25 @@ namespace Runtime.Core.Spawning
             return Mathf.Clamp01(Vector2.Distance(tile.Position, settings.GridCenter) / radius);
         }
 
+        /// <summary>
+        /// The world extent of the board, for whatever has to be kept over it - the camera's travel
+        /// today. Here rather than on the camera because anything spatial is the spawner that owns
+        /// the tiles' business, the way distance and reachability are. Empty until tiles are spawned.
+        /// </summary>
+        public Bounds GetBoardBounds()
+        {
+            if (Tiles == null || Tiles.Count == 0)
+                return new Bounds(Vector3.zero, Vector3.zero);
+
+            var bounds = new Bounds(Tiles[0].transform.position, Vector3.zero);
+
+            foreach (var tile in Tiles)
+                if (tile != null)
+                    bounds.Encapsulate(tile.transform.position);
+
+            return bounds;
+        }
+
         public Vector3 GridIndexToWorldPosition(Vector2Int gridPosition)
         {
             return new Vector3(
@@ -354,14 +373,23 @@ namespace Runtime.Core.Spawning
             rules = gameRules;
             coordinatesShown = ShowCoordinates;
             _pathfinder = new Pathfinder(this);
+
+            if (rules != null)
+                rules.Changed += HandleRulesChanged;
+        }
+
+        private void OnDestroy()
+        {
+            if (rules != null)
+                rules.Changed -= HandleRulesChanged;
         }
 
         /// <summary>
-        /// The only reason this class has an Update: the coordinate labels are a debug switch meant to
-        /// be flipped while the game runs, and nothing else would tell the tiles about it. Without a
-        /// rules asset they stay on, which is what the board did before there was a switch.
+        /// The coordinate labels are a debug switch meant to be flipped while the game runs, and the
+        /// rules asset is what says it has been. Without one they stay on, which is what the board did
+        /// before there was a switch.
         /// </summary>
-        private void Update()
+        private void HandleRulesChanged()
         {
             if (ShowCoordinates != coordinatesShown)
                 ApplyCoordinateLabels();

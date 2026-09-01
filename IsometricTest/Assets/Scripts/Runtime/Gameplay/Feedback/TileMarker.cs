@@ -48,6 +48,12 @@ namespace Runtime.Gameplay.Feedback
                     spriteRenderer.sprite = WhiteMarker;
                     spriteRenderer.color = Color.lightBlue;
                     break;
+                // Tinted rather than drawn, like the blues: what a swing catches beside its target is
+                // read against the orange of the target itself, so only the hue has to differ.
+                case MarkerColor.Red:
+                    spriteRenderer.sprite = WhiteMarker;
+                    spriteRenderer.color = new Color(1f, 0.3f, 0.3f);
+                    break;
             }
         }
         
@@ -67,6 +73,7 @@ namespace Runtime.Gameplay.Feedback
         Blue,
         TransparentOrange,
         TransparentWhite,
-        TransparentBlue
+        TransparentBlue,
+        Red
     }
 }

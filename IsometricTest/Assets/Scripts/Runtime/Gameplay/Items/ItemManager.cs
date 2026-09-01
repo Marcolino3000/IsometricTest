@@ -79,19 +79,13 @@ namespace Runtime.Gameplay.Items
         private GameRules gameRules;
         private Unit playerUnit;
 
+        // The one owner of what the cursor is on. The bar's hover is reported to it rather than acted
+        // on here, so the world's own hover and this one cannot undo each other within a frame.
+        private HoverTarget hoverTarget;
+
         /// <summary>The slot the cursor rests on, or -1. Kept because what a slot holds can change
         /// under a resting cursor - a potion drunk out of it, a second copy taking its place.</summary>
         private int hoveredSlot = -1;
-
-        /// <summary>
-        /// Set when the hover changed, and acted on once more in <see cref="LateUpdate"/>. The cursor
-        /// reaching the bar is also the cursor leaving the map, so the world answers with
-        /// <see cref="SelectionStatus.SelectionNoHover"/> and clears the very preview this one sets,
-        /// in the same frame - and which of the two runs last is up to where the panel's pointer
-        /// events land in the player loop. Saying it again at the end of the frame settles that
-        /// either way, and costs nothing while the cursor rests.
-        /// </summary>
-        private bool hoverPreviewPending;
 
         /// <summary>
         /// What the two merge slots hold. Kept here rather than on the screen for the same reason the
@@ -111,15 +105,20 @@ namespace Runtime.Gameplay.Items
         /// <summary>How many slots the layout above describes - what the bar has to build.</summary>
         public static int SlotCount => SlotKinds.Length;
 
-        public void Setup(ItemBar bar, ItemPopup popup, MergeScreen merge, GameRules rules)
+        public void Setup(ItemBar bar, ItemPopup popup, MergeScreen merge, GameRules rules,
+            HoverTarget hover)
         {
             itemBar = bar;
             itemPopup = popup;
             mergeScreen = merge;
             gameRules = rules;
+            hoverTarget = hover;
             itemBar.SlotActivated += HandleSlotActivated;
             itemBar.OptionChosen += HandleOptionChosen;
             itemBar.SlotHovered += HandleSlotHovered;
+
+            if (hoverTarget != null)
+                hoverTarget.Changed += HandleHoverChanged;
 
             // The same dialogue the bar has, over two slots instead of nine: the screen says which
             // one was activated, this answers with what fits, and the screen says which was picked.
@@ -363,26 +362,21 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
-        /// Remembers what the cursor is on and shows what it would cost. Its own step from
-        /// <see cref="ShowHoverPreview"/> because the slots change under a cursor that has not moved.
+        /// Remembers what the cursor is on and tells the one owner of that. The preview follows from
+        /// <see cref="HoverTarget.Changed"/> rather than from here, so it is set once per change
+        /// instead of being re-asserted every frame against the world's own hover.
         /// </summary>
         private void HandleSlotHovered(int slot)
         {
             hoveredSlot = slot;
-            hoverPreviewPending = true;
 
-            ShowHoverPreview();
+            if (hoverTarget != null)
+                hoverTarget.SetUiSlot(slot);
+            else
+                ShowHoverPreview();
         }
 
-        private void LateUpdate()
-        {
-            if (!hoverPreviewPending)
-                return;
-
-            hoverPreviewPending = false;
-
-            ShowHoverPreview();
-        }
+        private void HandleHoverChanged() => ShowHoverPreview();
 
         /// <summary>
         /// Puts what the hovered slot would cost into the character's action point bar, the way
@@ -754,16 +748,15 @@ namespace Runtime.Gameplay.Items
 
             if (playerUnit != null)
             {
-                var traits = playerUnit.CurrentState.Traits;
+                var state = playerUnit.CurrentState;
 
                 if (previous is PassiveItem worn)
                     foreach (var trait in worn.Traits)
-                        traits.Remove(trait);
+                        state.RemoveTrait(trait);
 
                 if (item is PassiveItem chosen)
                     foreach (var trait in chosen.Traits)
-                        if (trait != null)
-                            traits.Add(trait);
+                        state.AddTrait(trait);
             }
 
             equippedBySlot[slot] = item;

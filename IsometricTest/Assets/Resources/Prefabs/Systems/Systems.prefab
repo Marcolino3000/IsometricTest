@@ -63,6 +63,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3584839227383772315}
   - component: {fileID: 6856408782053871251}
+  - component: {fileID: 6856408782053871252}
   m_Layer: 0
   m_Name: InputHander
   m_TagString: Untagged
@@ -97,8 +98,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35ef050c45634719802d268b61599bd5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Global.InputHandler
-  cameraPanSpeed: 10
+--- !u!114 &6856408782053871252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 125376349985527540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f68c8741c4c46ad87b9c796e4c27758, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Runtime.Gameplay.Global.CameraController
+  panSpeed: 10
   cameraRig: {fileID: 0}
+  zoomSpeed: 2
+  minOrthographicSize: 2
+  maxOrthographicSize: 20
+  boundsPadding: 4
 --- !u!1 &433851073694078129
 GameObject:
   m_ObjectHideFlags: 0
@@ -152,6 +169,7 @@ MonoBehaviour:
   gameStateManager: {fileID: 0}
   fogOfWar: {fileID: 6967780869941050052}
   gameRules: {fileID: 0}
+  animationSettings: {fileID: 0}
 --- !u!1 &1014679833672591487
 GameObject:
   m_ObjectHideFlags: 0
@@ -911,6 +929,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Runtime.Core.Initiator
   gameRules: {fileID: 11400000, guid: 4284ec3bd44b42bbbcffb6af636c7e57, type: 2}
+  animationSettings: {fileID: 11400000, guid: 59812f10b84d4c8b8ded67764f695cba, type: 2}
   gameStateManager: {fileID: 3478318959186095542}
   tileSpawner: {fileID: 1090123498142972224}
   unitSpawner: {fileID: 6164232492054156886}
@@ -921,6 +940,7 @@ MonoBehaviour:
   actionAssigner: {fileID: 1772559824657402244}
   fogOfWar: {fileID: 6967780869941050052}
   aiController: {fileID: 5918375744286621566}
+  cameraController: {fileID: 6856408782053871252}
   actionHistory: {fileID: 7274685206248742136}
   itemManager: {fileID: 6154338141543025472}
   lootSpawner: {fileID: 6420958871133264903}

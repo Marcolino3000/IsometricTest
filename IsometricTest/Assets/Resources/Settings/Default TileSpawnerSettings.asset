@@ -21,7 +21,7 @@ MonoBehaviour:
   GridSizeY: 24
   AllowMovementInAllDirections: 0
   PlayerSpawnRadius: 0
-  OpponentSpawnZoneSize: 3
+  OpponentSpawnZoneSize: 10
   FlatTerrain:
     Type: 0
     Passable: 1
@@ -56,7 +56,7 @@ MonoBehaviour:
     OverrideSprite: {fileID: -402664073, guid: 510239b11da99442c80051e1aa316c0e, type: 3}
     Traits: []
   RandomTerrainPlacement: 1
-  RandomHillPercent: 19
+  RandomHillPercent: 33
   RandomMountainPercent: 9
   HillPositions: []
   MountainPositions: []

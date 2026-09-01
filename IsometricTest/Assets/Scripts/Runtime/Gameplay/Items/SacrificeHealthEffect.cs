@@ -8,7 +8,7 @@ namespace Runtime.Gameplay.Items
     /// reduces below one: dying to an item would have to go through <see cref="Unit.Remove"/> like a
     /// killing blow does, and nothing in the item path is set up to remove a unit.
     /// </summary>
-    [CreateAssetMenu(menuName = "ScriptableObjects/Items/Effects/Sacrifice Health")]
+    [System.Serializable]
     public class SacrificeHealthEffect : ActiveItemEffect
     {
         [Tooltip("Health paid. The user is always left with at least one.")]
@@ -16,9 +16,9 @@ namespace Runtime.Gameplay.Items
 
         public override string Summary => $"Costs {Amount} health";
 
-        public override void Apply(Unit user)
+        public override void Apply(Unit target)
         {
-            user.CurrentState.Health = Mathf.Max(1, user.CurrentState.Health - Amount);
+            target.CurrentState.Health = Mathf.Max(1, target.CurrentState.Health - Amount);
         }
     }
 }

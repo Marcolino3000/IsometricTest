@@ -3,21 +3,24 @@ using Runtime.Gameplay.History;
 
 namespace Actions
 {
-    public abstract class UnitAction<UCondition, TEffect> : IUnitAction
-        where UCondition : ActionCondition 
-        where TEffect : ActionEffect
+    /// <summary>
+    /// One planned use of an action: what it costs and the context it runs in. What it <i>does</i> is
+    /// the subclass's - the effects sit on the authored action, not here; see the note on
+    /// <see cref="ActionData{UCondition}"/>.
+    /// </summary>
+    public abstract class UnitAction<UCondition> : IUnitAction
+        where UCondition : ActionCondition
     {
         public UCondition Condition;
-        public TEffect Effect;
 
-        public UnitAction(UCondition condition, TEffect effect, ActionContext context)
+        protected ActionContext Context;
+
+        protected UnitAction(UCondition condition, ActionContext context)
         {
             Condition = condition;
-            Effect = effect;
             Context = context;
         }
-        
-        protected ActionContext Context;
+
         public virtual int Cost => Condition.Cost;
 
         // Abstract on purpose: an action that can be planned has to say what it is, or it would be
@@ -27,6 +30,5 @@ namespace Actions
         public abstract bool TestConditions();
 
         public abstract void ExecuteEffects();
-        
     }
 }
