@@ -26,6 +26,14 @@ namespace Data
                  "begins where the one before it ended.")]
         public List<MapZone> Zones = new();
 
+        [Tooltip("When on, a ring's opponents and boxes are held back until the character first " +
+                 "walks into it, instead of the whole map being filled at the start. Everything is " +
+                 "still made and rolled up front - only its arrival waits - so a match yields the " +
+                 "same things either way and undo takes an arrival back like any other change. " +
+                 "Switch it off to fill the board at the start, which is what the game did before " +
+                 "rings existed.")]
+        public bool SpawnOnEntry = true;
+
         [Header("Border")]
         [Tooltip("What stands on the seam between two rings - a strip drawn upright, cut into " +
                  "half-tile pieces and set along the boundary, so a wall of flame reads as one " +
@@ -146,11 +154,12 @@ namespace Data
     }
 
     /// <summary>
-    /// One ring of the map, measured out from the tile the player spawns on. A zone is a distance
-    /// and what is found at that distance: who guards it and which kinds of box lie in it. The
-    /// further out a zone is, the richer the boxes and the stronger the opponents it lists - which
-    /// is authored here rather than derived from anything, since what "stronger" means is the
-    /// blueprints'.
+    /// One ring of the map, measured out from the tile the player spawns on. A zone is a
+    /// <b>distance</b> and nothing else: how far out it reaches, what colour marks its edge and
+    /// what the screen says on the way in. Who guards it and what lies in it are authored where
+    /// those things are spawned - <see cref="UnitSpawnerSettings.OpponentUnits"/> and
+    /// <see cref="LootSpawnerSettings.Boxes"/>, each entry naming a ring and a count - so how many
+    /// of a thing a match holds is read in one place rather than split between here and there.
     ///
     /// A zone owns only its <b>outer</b> edge. Where it begins is where the zone before it ended,
     /// so the rings tile the map with no gap and no overlap however they are authored - the same
@@ -170,18 +179,6 @@ namespace Data
                  "colour of the zone being entered - the line marks the danger ahead, not the " +
                  "ground behind.")]
         public Color Color = new(1f, 1f, 1f, 1f);
-
-        [Tooltip("Who spawns in this ring, and how many of each. The opponents of a zone are placed " +
-                 "inside it the way a spawn zone places a unit: its own ground first, then the " +
-                 "nearest tile outside it, so a ring walled off by mountains spills over its border " +
-                 "instead of losing its units.")]
-        public List<UnitAmount> Opponents = new();
-
-        [Tooltip("Which kinds of lootbox lie in this ring. How many boxes of a kind a match holds " +
-                 "stays the kind's own count - a kind listed by two zones spreads that count over " +
-                 "both rings rather than making twice as many - and a kind no zone lists lies " +
-                 "anywhere on the map.")]
-        public List<LootboxType> Loot = new();
 
         [Tooltip("What the screen says when this ring is first entered. Falls back to the line " +
                  "authored for every zone in the settings while empty.")]

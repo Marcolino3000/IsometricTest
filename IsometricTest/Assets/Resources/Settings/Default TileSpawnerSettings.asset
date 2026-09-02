@@ -18,8 +18,8 @@ MonoBehaviour:
   HalfTileOffsetY: 0.25
   SurfaceOffset: 0.25
   StartPosition: {x: -8.19, y: -0.88, z: 0}
-  GridSizeX: 24
-  GridSizeY: 24
+  GridSizeX: 32
+  GridSizeY: 32
   AllowMovementInAllDirections: 0
   PlayerSpawnRadius: 0
   OpponentSpawnZoneSize: 10
@@ -57,7 +57,27 @@ MonoBehaviour:
     OverrideSprite: {fileID: -402664073, guid: 510239b11da99442c80051e1aa316c0e, type: 3}
     Traits: []
   RandomTerrainPlacement: 1
-  RandomHillPercent: 33
-  RandomMountainPercent: 9
+  RandomTerrain:
+  - Terrain: 0
+    Percent: 100
+    Zone: 0
+  - Terrain: 1
+    Percent: 36
+    Zone: 1
+  - Terrain: 2
+    Percent: 0
+    Zone: 1
+  - Terrain: 1
+    Percent: 27
+    Zone: 2
+  - Terrain: 2
+    Percent: 13
+    Zone: 2
+  - Terrain: 1
+    Percent: 47
+    Zone: 3
+  - Terrain: 2
+    Percent: 16
+    Zone: 3
   HillPositions: []
   MountainPositions: []

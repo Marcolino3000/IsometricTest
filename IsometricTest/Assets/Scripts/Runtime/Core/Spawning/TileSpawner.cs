@@ -444,7 +444,9 @@ namespace Runtime.Core.Spawning
         {
             ClearGrid();
 
-            _terrainMap = settings.BuildTerrainMap();
+            // The rings decide how rough each ring is, so the terrain is asked where each tile
+            // lies. Handed in rather than looked up by the asset itself.
+            _terrainMap = settings.BuildTerrainMap(ZoneRules.IndexAt);
 
             for (int x = 0; x < settings.GridSizeX; x++)
             for (int y = 0; y < settings.GridSizeY; y++)

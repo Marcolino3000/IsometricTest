@@ -54,6 +54,12 @@ namespace Runtime.Core.Spawning
         // so an item reassigned in the inspector takes effect on the next match.
         private readonly Dictionary<LootboxType, List<Item>[]> pools = new();
 
+        // Which ring each box waiting on one belongs to. Only scattered boxes are in here, and only
+        // while the rings hold them back: a drop belongs to no ring, it lands where its unit fell.
+        // Never changes once a box is made, so there is nothing here to snapshot - whether it is on
+        // the board is the box's own state, which is recorded.
+        private readonly Dictionary<Lootbox, int> zoneOfBox = new();
+
         // One bag per kind of box and per category within it, so each category's box count can be
         // honoured on its own and two kinds offering the same item do not deal from one pile. Each is
         // a shuffled copy of the matching pool, refilled only once it runs out: rolling every box
@@ -264,6 +270,7 @@ namespace Runtime.Core.Spawning
 
             lootboxes.Clear();
             dropOrder.Clear();
+            zoneOfBox.Clear();
             bags.Clear();
         }
 
@@ -352,23 +359,23 @@ namespace Runtime.Core.Spawning
         }
 
         /// <summary>
-        /// The tiles left, ordered by how far each misses the zones listing <paramref name="type"/>:
-        /// their ground first, then the nearest outside it. Ordered rather than filtered, exactly as
-        /// a spawn zone is, so a ring walled off by mountains or already taken up by the tiers
-        /// before it spills over its border instead of losing its boxes.
-        ///
-        /// Which ring a tier lies in is the zone's to say (<see cref="ZoneRules"/>), so the boxes
-        /// and the opponents of a ring are placed against one authored distance. A kind no zone
-        /// lists misses nothing anywhere and is scattered over the whole map.
+        /// The tiles left, ordered by how far each misses the ring this entry names: its ground
+        /// first, then the nearest outside it. Ordered rather than filtered, exactly as a spawn zone
+        /// is, so a ring walled off by mountains or already taken up by the entries before it spills
+        /// over its border instead of losing its boxes. An entry naming no ring is left in the order
+        /// it came in, which scatters it over the whole map.
         ///
         /// The list handed in was shuffled once, and the sort is stable, so that shuffle survives as
         /// the random tiebreak within a ring - the tier lands somewhere else along its ring each
         /// match while staying at its distance.
         /// </summary>
-        private List<Tile> OrderByRing(List<Tile> tiles, LootboxType type)
+        private List<Tile> OrderByRing(List<Tile> tiles, LootboxAmount entry)
         {
+            if (entry == null || !entry.HasZone)
+                return tiles;
+
             return tiles
-                .OrderBy(tile => ZoneRules.DistanceOutside(type, tile))
+                .OrderBy(tile => ZoneRules.DistanceOutside(entry.Zone, tile.Position))
                 .ToList();
         }
 
@@ -383,7 +390,11 @@ namespace Runtime.Core.Spawning
         {
             var count = 0;
 
-            foreach (var unit in unitSpawner.AllUnits)
+            // Every opponent this match will field, in play or still waiting for its ring to be
+            // walked into: a unit that arrives later falls like any other and has to have a box for
+            // it, and asking only for the ones already on the board would leave the last arrivals
+            // with nothing to leave behind.
+            foreach (var unit in unitSpawner.AllSpawnedUnits)
                 if (unit != null && unit.CurrentState.Team != Team.Player)
                     count++;
 
@@ -398,20 +409,20 @@ namespace Runtime.Core.Spawning
         /// </summary>
         private int[] CountPerType()
         {
-            var counts = new int[settings.Types.Count];
+            var counts = new int[settings.Boxes.Count];
             var dropping = new List<int>();
 
-            for (var index = 0; index < settings.Types.Count; index++)
+            for (var index = 0; index < settings.Boxes.Count; index++)
             {
-                var type = settings.Types[index];
+                var entry = settings.Boxes[index];
 
-                if (type == null)
+                if (entry?.Type == null)
                     continue;
 
-                if (type.Source == LootboxSource.DroppedByUnits)
+                if (entry.Type.Source == LootboxSource.DroppedByUnits)
                     dropping.Add(index);
                 else
-                    counts[index] = type.LootboxCount;
+                    counts[index] = entry.Count;
             }
 
             if (dropping.Count == 0)
@@ -430,6 +441,43 @@ namespace Runtime.Core.Spawning
                 counts[dropping[i]] = split[i];
 
             return counts;
+        }
+
+        /// <summary>
+        /// Puts down whatever of ring <paramref name="index"/> is still waiting - what answers
+        /// <see cref="Runtime.Gameplay.Global.ZoneWatcher.ZoneReached"/>, alongside the units. Safe
+        /// to call for a ring already lying open, and meant to be: it is said on every step, so a
+        /// ring an undo has emptied fills again when the character walks back into it.
+        ///
+        /// The ground is chosen now rather than at the start, so a box never lands under a unit that
+        /// arrived with it.
+        /// </summary>
+        public void ReleaseZone(int index)
+        {
+            var waiting = new List<Lootbox>();
+
+            foreach (var pair in zoneOfBox)
+                if (pair.Value == index && pair.Key != null && pair.Key.IsPending)
+                    waiting.Add(pair.Key);
+
+            if (waiting.Count == 0)
+                return;
+
+            var candidates = GetShuffledLootTiles();
+
+            candidates = candidates
+                .OrderBy(tile => ZoneRules.DistanceOutside(index, tile.Position))
+                .ToList();
+
+            var placed = 0;
+
+            foreach (var lootbox in waiting)
+            {
+                if (placed >= candidates.Count)
+                    break;
+
+                Place(lootbox, LootboxState.InPlay, candidates[placed++]);
+            }
         }
 
         private static void Shuffle<T>(List<T> list)
@@ -553,9 +601,9 @@ namespace Runtime.Core.Spawning
                 return;
             }
 
-            if (settings.Types == null || settings.Types.Count == 0)
+            if (settings.Boxes == null || settings.Boxes.Count == 0)
             {
-                Debug.LogWarning($"No kinds of lootbox listed in {nameof(LootSpawnerSettings)}.", settings);
+                Debug.LogWarning($"No boxes listed in {nameof(LootSpawnerSettings)}.", settings);
                 return;
             }
 
@@ -568,9 +616,10 @@ namespace Runtime.Core.Spawning
             // of boxes it was asked for. A kind is also placed as a whole because its ring is its
             // own: the tiles it takes are the ones nearest its distance from the middle of the map,
             // and what it takes is gone for the kinds after it.
-            for (var index = 0; index < settings.Types.Count; index++)
+            for (var index = 0; index < settings.Boxes.Count; index++)
             {
-                var type = settings.Types[index];
+                var entry = settings.Boxes[index];
+                var type = entry?.Type;
                 var total = counts[index];
 
                 if (type == null || total <= 0)
@@ -606,7 +655,19 @@ namespace Runtime.Core.Spawning
                     continue;
                 }
 
-                var candidates = OrderByRing(tiles, type);
+                // Held back until its ring is walked into, when the rings say so and this entry
+                // names one. The box is made and filled here all the same - what a match yields is
+                // settled before the first turn either way - and only its arrival waits, which is
+                // what lets undo take that arrival back without any history code.
+                if (ZoneRules.SpawnOnEntry && entry.HasZone)
+                {
+                    foreach (var content in contents)
+                        zoneOfBox[CreateLootbox(type, content)] = entry.Zone;
+
+                    continue;
+                }
+
+                var candidates = OrderByRing(tiles, entry);
                 var placed = 0;
 
                 foreach (var content in contents)

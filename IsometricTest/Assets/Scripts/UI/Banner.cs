@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Runtime.Gameplay.Global;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,6 +21,11 @@ namespace UI
     /// <see cref="Label"/> is drawn as one block and could only be moved as one. A banner nobody
     /// waves is simply a still row of letters, which is what the merge screen shows.
     ///
+    /// <b>The word a line ends on gets a wave of its own</b>, which is what the two
+    /// <see cref="WaveSettings"/> handed to <see cref="Wave"/> are for: the sentence carries the
+    /// news and the last word is the news, so it moves faster and starts its wave over at its own
+    /// first letter.
+    ///
     /// It picks nothing: an announcement is read, not pressed, and one over the board must not
     /// swallow a click meant for the tile behind it.
     /// </summary>
@@ -31,22 +37,6 @@ namespace UI
 
         /// <summary>The red the other kind is stated in.</summary>
         public static readonly Color Warning = new(0.89f, 0.31f, 0.27f);
-
-        /// <summary>
-        /// How far a letter rides, as a share of its own size, so the wave keeps its proportions
-        /// whatever the headline is set in.
-        /// </summary>
-        private const float WaveHeight = 0.14f;
-
-        /// <summary>How fast the wave runs, in radians a second.</summary>
-        private const float WaveSpeed = 4.5f;
-
-        /// <summary>
-        /// How far one letter lags behind the one before it, in radians. Enough that a word is
-        /// visibly a wave rather than a line bobbing as one, and not so much that neighbours fly
-        /// apart.
-        /// </summary>
-        private const float WaveLag = 0.45f;
 
         /// <summary>The gap a space stands for, as a share of the letter size.</summary>
         private const float SpaceWidth = 0.28f;
@@ -61,18 +51,30 @@ namespace UI
         // order is what carries it along the line.
         private readonly List<VisualElement> letters = new();
 
+        // Where the last word starts in that list. The word a line ends on is the thing being
+        // said - the horde is *enraged* - so it is given a wave of its own rather than being the
+        // tail of the sentence's.
+        private int lastWordStart;
+
         private float headlineSize;
+
+        // The face both lines are set in, or null for the interface's own. Handed in rather than
+        // decided here: what a banner is set in belongs to whoever is saying something - the
+        // announcement is stated in a display face, the merge result stays in the interface's.
+        private Font font;
 
         /// <summary>
         /// Adds a banner to <paramref name="parent"/>. <paramref name="reservedHeight"/> above zero
         /// keeps the block that tall whether or not it says anything and hangs the lines from its
         /// bottom edge - what a panel underneath it needs, so a result appearing does not shove the
         /// panel down the screen. At zero the block is as tall as its text.
+        /// <paramref name="font"/> is the face both lines are set in; unset leaves them in the
+        /// interface's own.
         /// </summary>
         public static Banner Create(VisualElement parent, float headlineSize = 46f, float detailSize = 17f,
-            float reservedHeight = 0f)
+            float reservedHeight = 0f, Font font = null)
         {
-            var banner = new Banner { headlineSize = headlineSize };
+            var banner = new Banner { headlineSize = headlineSize, font = font };
 
             var block = new VisualElement { pickingMode = PickingMode.Ignore };
             block.style.alignItems = Align.Center;
@@ -94,7 +96,7 @@ namespace UI
             banner.headlineRow.style.alignItems = Align.Center;
             block.Add(banner.headlineRow);
 
-            banner.detail = Text(block, detailSize, CardStyle.Text);
+            banner.detail = Text(block, detailSize, CardStyle.Text, font);
             banner.detail.style.marginTop = 2f;
 
             parent?.Add(block);
@@ -119,15 +121,30 @@ namespace UI
         /// line reads as a wave running through it. <paramref name="time"/> is seconds - whatever
         /// the caller is already counting, since it only ever moves forward.
         ///
+        /// The last word is given <paramref name="lastWord"/> instead of <paramref name="text"/>,
+        /// and its wave starts over at its own first letter: that word is what the line is about,
+        /// so it moves on its own terms rather than as the far end of the sentence's wave. Pass the
+        /// same settings twice for one wave through the whole line.
+        ///
         /// Asked for rather than automatic: a banner is a piece of a view and has no frame of its
-        /// own, so whoever owns the screen decides whether its news moves. Nothing here changes the
-        /// layout - a letter is translated, not repositioned - so the wave costs no reflow.
+        /// own, so whoever owns the screen decides whether its news moves - and the settings come
+        /// in per call, so they can be tuned while it is on screen. Nothing here changes the layout
+        /// - a letter is translated, not repositioned - so the wave costs no reflow.
         /// </summary>
-        public void Wave(float time)
+        public void Wave(float time, WaveSettings text, WaveSettings lastWord)
         {
             for (var i = 0; i < letters.Count; i++)
             {
-                var offset = Mathf.Sin(time * WaveSpeed - i * WaveLag) * headlineSize * WaveHeight;
+                var tail = i >= lastWordStart;
+                var wave = (tail ? lastWord : text) ?? text;
+
+                if (wave == null)
+                    continue;
+
+                // Counted from the word's own start, so the last word's wave reads as one running
+                // through that word rather than as whatever phase the sentence had reached.
+                var place = tail ? i - lastWordStart : i;
+                var offset = Mathf.Sin(time * wave.Speed - place * wave.Lag) * headlineSize * wave.Height;
 
                 letters[i].style.translate = new Translate(0f, offset);
             }
@@ -139,6 +156,13 @@ namespace UI
             Set(null, null, Accent);
         }
 
+        /// <summary>Puts every letter back on the line - what a banner that has stopped waving shows.</summary>
+        public void Still()
+        {
+            foreach (var letter in letters)
+                letter.style.translate = new Translate(0f, 0f);
+        }
+
         /// <summary>
         /// Lays the headline out as words of letters. Rebuilt on every line rather than reused: a
         /// headline is set once and read, so there is nothing to gain from keeping the elements of
@@ -148,6 +172,7 @@ namespace UI
         {
             headlineRow.Clear();
             letters.Clear();
+            lastWordStart = 0;
 
             headlineRow.style.display = string.IsNullOrWhiteSpace(text)
                 ? DisplayStyle.None
@@ -179,9 +204,12 @@ namespace UI
                     word.style.flexDirection = FlexDirection.Row;
                     word.style.flexShrink = 0f;
                     headlineRow.Add(word);
+
+                    // Every word claims it; the one that still holds it at the end is the last.
+                    lastWordStart = letters.Count;
                 }
 
-                var letter = Text(word, headlineSize, accent);
+                var letter = Text(word, headlineSize, accent, font);
                 letter.text = character.ToString();
                 letter.style.unityFontStyleAndWeight = FontStyle.Bold;
 
@@ -193,10 +221,17 @@ namespace UI
         /// A line of the banner, or one letter of it. Outlined, since one of the two places it is
         /// drawn is the board itself, where a pale tile would otherwise swallow it.
         /// </summary>
-        private static Label Text(VisualElement parent, float fontSize, Color color)
+        private static Label Text(VisualElement parent, float fontSize, Color color, Font font = null)
         {
             var label = new Label { pickingMode = PickingMode.Ignore };
             label.style.fontSize = fontSize;
+
+            // Unity's own null check - an unassigned asset reference is not the CLR's null. Written
+            // as a FontDefinition rather than through unityFont: the two set the same style, and
+            // this is the one the current text engine reads.
+            if (font != null)
+                label.style.unityFontDefinition = FontDefinition.FromFont(font);
+
             label.style.color = color;
             label.style.whiteSpace = WhiteSpace.Normal;
             label.style.unityTextAlign = TextAnchor.MiddleCenter;

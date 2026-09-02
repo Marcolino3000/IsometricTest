@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8c1ff0229fb4b8badb6b75e679c860b, type: 3}
+  m_Name: Demon UnitAnimations
+  m_EditorClassIdentifier: 
+  secondsPerStep: 0.18
+  clips:
+  - Animation: 0
+    Frames:
+    - {fileID: -805604907, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1052938626, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 1688454466, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1909911371, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1965621050, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 1078928259, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    FramesPerSecond: 6
+    Loop: 1
+  - Animation: 1
+    Frames:
+    - {fileID: -2006567224, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -724454682, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1117618651, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 1646623041, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 17737201, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 38388505, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -645637531, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1063116995, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    FramesPerSecond: 12
+    Loop: 1
+  - Animation: 2
+    Frames:
+    - {fileID: 1993279648, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -910580999, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1949669531, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1287564567, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1829899960, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -551194549, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -692567194, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    FramesPerSecond: 14
+    Loop: 0
+  - Animation: 3
+    Frames:
+    - {fileID: 1551660067, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -776108032, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -20725718, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 876829107, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 162764583, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1020532284, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -856122902, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    FramesPerSecond: 14
+    Loop: 0
+  - Animation: 4
+    Frames:
+    - {fileID: -623508426, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1596973745, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 253179504, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -2144182703, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    FramesPerSecond: 14
+    Loop: 0
+  - Animation: 5
+    Frames:
+    - {fileID: 1320775783, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: 772317031, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1820832788, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    - {fileID: -1118609407, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+    FramesPerSecond: 8
+    Loop: 0

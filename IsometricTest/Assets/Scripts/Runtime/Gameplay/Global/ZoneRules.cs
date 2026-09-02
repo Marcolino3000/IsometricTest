@@ -56,6 +56,13 @@ namespace Runtime.Gameplay.Global
         /// <summary>How many rings the map is divided into; 0 for an undivided one.</summary>
         public static int Count => Zones.Count;
 
+        /// <summary>
+        /// Whether a ring's opponents and boxes wait for the character to walk in - see
+        /// <see cref="ZoneSettings.SpawnOnEntry"/>. False for a map with no rings at all: there is
+        /// no arrival to wait for, so everything is placed at the start as it always was.
+        /// </summary>
+        public static bool SpawnOnEntry => Count > 0 && settings.SpawnOnEntry;
+
         /// <summary>Which ring <paramref name="position"/> falls in, or -1 while none are authored.</summary>
         public static int IndexAt(Vector2Int position)
         {
@@ -107,36 +114,6 @@ namespace Runtime.Gameplay.Global
         public static float DistanceOutside(MapZone zone, Vector2Int position)
         {
             return DistanceOutside(IndexOf(zone), position);
-        }
-
-        /// <summary>
-        /// How far <paramref name="tile"/> misses the ground a kind of lootbox belongs on: the
-        /// nearest of the rings listing it, or 0 everywhere for a kind no zone lists - which is what
-        /// puts an unclaimed kind anywhere on the map, since every tile then misses by the same
-        /// nothing.
-        ///
-        /// The nearest rather than one ring of its own is what lets a kind be listed by several
-        /// zones without its count having to be split between them: its boxes are simply scattered
-        /// over whichever of those rings has room.
-        /// </summary>
-        public static float DistanceOutside(LootboxType type, Tile tile)
-        {
-            if (type == null || tile == null || Count == 0)
-                return 0f;
-
-            var nearest = float.MaxValue;
-
-            for (var index = 0; index < Count; index++)
-            {
-                var zone = Zones[index];
-
-                if (zone?.Loot == null || !zone.Loot.Contains(type))
-                    continue;
-
-                nearest = Mathf.Min(nearest, DistanceOutside(index, tile.Position));
-            }
-
-            return nearest == float.MaxValue ? 0f : nearest;
         }
 
         /// <summary>

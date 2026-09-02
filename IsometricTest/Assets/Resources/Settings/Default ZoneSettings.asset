@@ -13,48 +13,23 @@ MonoBehaviour:
   m_Name: Default ZoneSettings
   m_EditorClassIdentifier: 
   Zones:
-  - Radius: 0.28
-    Color: {r: 1, g: 0, b: 0.9345741, a: 1}
-    Opponents: []
-    Loot:
-    - {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
-    Headline: 
+  - Radius: 0.086
+    Color: {r: 1, g: 0.25943398, b: 0.950629, a: 1}
+    Headline: The horde awakened.
     Detail: 
-  - Radius: 0.52
-    Color: {r: 1, g: 0, b: 0.9372549, a: 1}
-    Opponents:
-    - Amount: 3
-      Blueprint: {fileID: 11400000, guid: 17566dd16041b4372890634bf05ef688, type: 2}
-    - Amount: 1
-      Blueprint: {fileID: 11400000, guid: 1aef4d4a54c8a4b5fb157b976c361afe, type: 2}
-    Loot:
-    - {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
+  - Radius: 0.297
+    Color: {r: 1, g: 1, b: 1, a: 1}
     Headline: The horde is puzzled
     Detail: 
-  - Radius: 0.72
-    Color: {r: 0.62, g: 0.84, b: 1, a: 1}
-    Opponents:
-    - Amount: 4
-      Blueprint: {fileID: 11400000, guid: 1aef4d4a54c8a4b5fb157b976c361afe, type: 2}
-    - Amount: 2
-      Blueprint: {fileID: 11400000, guid: bd0379b61e8bb485e8bfc2b29a7280be, type: 2}
-    Loot:
-    - {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
-    - {fileID: 11400000, guid: 64d5d4cbf96b4d1583c631089ba07e2a, type: 2}
+  - Radius: 0.491
+    Color: {r: 1, g: 0, b: 0.28235292, a: 1}
     Headline: The horde is angered
     Detail: 
   - Radius: 1
     Color: {r: 0.45, g: 0.68, b: 1, a: 1}
-    Opponents:
-    - Amount: 2
-      Blueprint: {fileID: 11400000, guid: 1aef4d4a54c8a4b5fb157b976c361afe, type: 2}
-    - Amount: 2
-      Blueprint: {fileID: 11400000, guid: cecc87184d3ea47b69ecbb2e2e901f05, type: 2}
-    Loot:
-    - {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
-    - {fileID: 11400000, guid: 64d5d4cbf96b4d1583c631089ba07e2a, type: 2}
     Headline: The horde is enraged
     Detail: 
+  SpawnOnEntry: 1
   BorderSprite: {fileID: 21300000, guid: 4b7d92c1e0f34a5d8c1b6e2f37a9d840, type: 3}
   BorderHeight: 0.42
   BorderSink: 0.06

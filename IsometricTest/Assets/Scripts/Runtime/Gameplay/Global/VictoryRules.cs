@@ -88,7 +88,10 @@ namespace Runtime.Gameplay.Global
         /// <summary>
         /// Whether the team had units and none of them is left in play. Removed units are counted too -
         /// they are only hidden, so they are what tells "wiped out" apart from "not spawned yet", which
-        /// is the state the board is in for the first moments of a match.
+        /// is the state the board is in for the first moments of a match. A unit still waiting for its
+        /// ring to be entered answers this on its own: it has never stood anywhere, so the team is not
+        /// beaten while any of them is still to come - which is also what keeps the boxes waiting in
+        /// those rings from being written off as loot that can never arrive (see IsAllLootCollected).
         /// </summary>
         private static bool IsWipedOut(UnitSpawner unitSpawner, Team team)
         {
@@ -100,6 +103,12 @@ namespace Runtime.Gameplay.Global
                     continue;
 
                 if (unit.IsAlive)
+                    return false;
+
+                // One that stands on no tile has never been on the board: its ring has not been
+                // walked into yet, so the team is not beaten - it still has units to come. Both
+                // kinds are hidden, and standing nowhere is what tells them apart.
+                if (unit.CurrentState.Position == null)
                     return false;
 
                 hadAny = true;

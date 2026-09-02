@@ -14,6 +14,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   UnitPrefab: {fileID: 6973456096741093380, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
   PlayerUnit: {fileID: 11400000, guid: 695076710910a4876b11b9da1fb83cdf, type: 2}
-  OpponentUnits: []
+  OpponentUnits:
+  - Amount: 1
+    Blueprint: {fileID: 11400000, guid: 17566dd16041b4372890634bf05ef688, type: 2}
+    Zone: 1
+  - Amount: 2
+    Blueprint: {fileID: 11400000, guid: 1aef4d4a54c8a4b5fb157b976c361afe, type: 2}
+    Zone: 1
+  - Amount: 4
+    Blueprint: {fileID: 11400000, guid: 1aef4d4a54c8a4b5fb157b976c361afe, type: 2}
+    Zone: 2
+  - Amount: 2
+    Blueprint: {fileID: 11400000, guid: bd0379b61e8bb485e8bfc2b29a7280be, type: 2}
+    Zone: 2
+  - Amount: 2
+    Blueprint: {fileID: 11400000, guid: 4d3f04ab7b2244afeb76848c1ba43431, type: 2}
+    Zone: 3
+  - Amount: 2
+    Blueprint: {fileID: 11400000, guid: 65e437a21c5bf4bfb9be99cf44d6906b, type: 2}
+    Zone: 3
   OrderInLayer: 3
   OpponentColor: {r: 0.8396226, g: 0.40792987, b: 0.40792987, a: 1}

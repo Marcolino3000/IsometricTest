@@ -13,10 +13,21 @@ MonoBehaviour:
   m_Name: Default LootSpawnerSettings
   m_EditorClassIdentifier: 
   LootboxPrefab: {fileID: 2295367724618930731, guid: 05367eb55461417e97b73345ce78b4e3, type: 3}
-  Types:
-  - {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
-  - {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
-  - {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
-  - {fileID: 11400000, guid: 64d5d4cbf96b4d1583c631089ba07e2a, type: 2}
+  Boxes:
+  - Type: {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
+    Count: 2
+    Zone: 0
+  - Type: {fileID: 11400000, guid: 435b80460e9d4c1d87398ee4db2b0395, type: 2}
+    Count: 8
+    Zone: 1
+  - Type: {fileID: 11400000, guid: 019f462a8d6049fe8d2675ea5672f262, type: 2}
+    Count: 11
+    Zone: 2
+  - Type: {fileID: 11400000, guid: 28fdf4dbb7204cb4b3f902f4fbaff24f, type: 2}
+    Count: 5
+    Zone: 3
+  - Type: {fileID: 11400000, guid: 64d5d4cbf96b4d1583c631089ba07e2a, type: 2}
+    Count: 3
+    Zone: 3
   OrderInLayer: 2
   Scale: 1.25

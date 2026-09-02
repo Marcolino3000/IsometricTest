@@ -18,6 +18,9 @@ namespace Data
         [Tooltip("The character the player commands.")]
         public UnitBlueprint PlayerUnit;
 
+        [Tooltip("Every opponent this match fields: which kind, how many, and which ring of the map " +
+                 "they stand in. One roster rather than one per ring, so how many of a kind a match " +
+                 "holds is read in one place - the rings themselves only say where their edges lie.")]
         public List<UnitAmount> OpponentUnits;
 
         [Header("Visual Settings")]
@@ -28,6 +31,11 @@ namespace Data
         public Color OpponentColor;
     }
 
+    /// <summary>
+    /// How many of one kind of unit a match fields, and where. <see cref="Zone"/> is what ties the
+    /// roster to the map's rings: a ring is a distance and says nothing about who guards it, so who
+    /// guards it is authored here beside how many of them there are.
+    /// </summary>
     [Serializable]
     public class UnitAmount
     {
@@ -35,5 +43,13 @@ namespace Data
 
         [FormerlySerializedAs("Prefab")]
         public UnitBlueprint Blueprint;
+
+        [Tooltip("Which ring of the map these stand in, counted from the middle out: 0 is the one " +
+                 "the player spawns in. Below zero they belong to no ring and take the spawn band " +
+                 "along the rim, which is what a map with no rings authored uses.")]
+        public int Zone = -1;
+
+        /// <summary>Whether these belong to a ring of the map at all.</summary>
+        public bool HasZone => Zone >= 0;
     }
 }

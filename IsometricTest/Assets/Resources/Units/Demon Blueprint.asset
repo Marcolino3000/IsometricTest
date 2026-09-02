@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbcaca3db3794b188c3bb2227ae55a0d, type: 3}
   m_Name: Demon Blueprint
   m_EditorClassIdentifier: Assembly-CSharp::Data.UnitBlueprint
-  Sprite: {fileID: 0}
-  Animations: {fileID: 0}
+  Sprite: {fileID: -805604907, guid: a4630f516b15944d59140c3704c5bd88, type: 3}
+  Animations: {fileID: 11400000, guid: 0bb9129fd3b33406aebd0c3714ffaf28, type: 2}
   defaultState:
     Team: 0
     SightRange: 4
-    MoveAction: {fileID: 0}
+    MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
     Traits:
     - {fileID: 11400000, guid: 1ca75753f20541bcb1ba80225cab6fc3, type: 2}
     - {fileID: 11400000, guid: bb9b31f40b1746b292fc04c862cb3a22, type: 2}

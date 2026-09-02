@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Runtime.Gameplay.Items;
 using UnityEngine;
@@ -20,9 +21,12 @@ namespace Data
                  "carries, so all kinds share this one prefab.")]
         public Lootbox LootboxPrefab;
 
-        [Tooltip("The kinds of box this match uses. A kind listed twice is spawned twice, and one " +
-                 "left out of the list simply does not appear.")]
-        public List<LootboxType> Types = new();
+        [Tooltip("Every box this match holds: which kind, how many of it, and which ring of the map " +
+                 "they lie in. A kind may be listed more than once - the same tier in two rings is " +
+                 "two entries with a count each - and one left out of the list does not appear at " +
+                 "all. How many of a kind there are is authored here rather than on the kind, since " +
+                 "it is a question about this match rather than about what a chest is.")]
+        public List<LootboxAmount> Boxes = new();
 
         [Header("Visual Settings")]
         [Tooltip("Sorting order of the box sprite. Above the tiles' markers, so a box is not buried " +
@@ -47,12 +51,39 @@ namespace Data
             {
                 var count = 0;
 
-                foreach (var type in Types)
-                    if (type != null && type.Source == LootboxSource.ScatteredOnMap)
-                        count += type.LootboxCount;
+                foreach (var entry in Boxes)
+                    if (entry?.Type != null && entry.Type.Source == LootboxSource.ScatteredOnMap)
+                        count += entry.Count;
 
                 return count;
             }
         }
+    }
+
+    /// <summary>
+    /// How many boxes of one kind a match holds, and where they lie. <see cref="Zone"/> is what ties
+    /// the loot to the map's rings - a ring is a distance and says nothing about what is found at it,
+    /// so what is found there is authored here beside how many of them there are.
+    ///
+    /// A dropped kind (<see cref="LootboxSource.DroppedByUnits"/>) ignores both: every unit leaves
+    /// one box, so how many there are is how many units there are to fall, and one lands wherever
+    /// its unit fell rather than in a ring.
+    /// </summary>
+    [Serializable]
+    public class LootboxAmount
+    {
+        public LootboxType Type;
+
+        [Tooltip("How many boxes of this kind lie in this ring. Still capped by how many free tiles " +
+                 "the ring has to lie on - the rest spill over its border rather than being lost.")]
+        [Min(0)] public int Count = 1;
+
+        [Tooltip("Which ring of the map they lie in, counted from the middle out: 0 is the one the " +
+                 "player spawns in. Below zero they belong to no ring and are scattered over the " +
+                 "whole map, which is what a map with no rings authored does.")]
+        public int Zone = -1;
+
+        /// <summary>Whether these belong to a ring of the map at all.</summary>
+        public bool HasZone => Zone >= 0;
     }
 }

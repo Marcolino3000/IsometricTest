@@ -112,6 +112,14 @@ namespace Runtime.Gameplay.Entities
 
             currentState = blueprint.DefaultState;
             currentState.Team = team;
+
+            // Said once here rather than from the AP setter, which is written on every turn: a
+            // blueprint missing one of its two actions can neither walk nor strike, and it is the
+            // asset that is at fault, not the write that noticed.
+            if (currentState.MoveAction == null || currentState.AttackAction == null)
+                Debug.LogError($"{blueprint.name} names no " +
+                               (currentState.MoveAction == null ? "move action" : "attack action") +
+                               " - the unit will not be able to act.", blueprint);
             IsAlive = true;
             currentState.HealthChanged += HandleHealthChanged;
             currentState.ActionPointsChanged += HandleActionPointsChanged;
@@ -418,6 +426,17 @@ namespace Runtime.Gameplay.Entities
             currentState.RestoreBonuses(statBonuses);
             RefreshHealthBar();
             actionExecutor.RefreshActionPointsBar();
+
+            // Nowhere is a place a unit can have been: one whose ring had not been walked into yet
+            // stood on no tile, and putting it back means taking it off the one it has since
+            // arrived on - otherwise an undone arrival would leave it looking like a unit that fell.
+            if (tile == null)
+            {
+                if (currentState.Position != null && currentState.Position.Unit == this)
+                    currentState.Position.SetUnit(null);
+
+                currentState.Position = null;
+            }
 
             if (tile != null)
             {

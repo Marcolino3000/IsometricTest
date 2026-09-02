@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8c1ff0229fb4b8badb6b75e679c860b, type: 3}
+  m_Name: Blood Monster UnitAnimations
+  m_EditorClassIdentifier: 
+  secondsPerStep: 0.18
+  clips:
+  - Animation: 0
+    Frames:
+    - {fileID: -272029079, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 673713214, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -615061772, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 412323386, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 1077909549, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -111306880, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    FramesPerSecond: 6
+    Loop: 1
+  - Animation: 1
+    Frames:
+    - {fileID: 1376315926, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -578871808, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -837346023, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -1299449124, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 542542140, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -300140188, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 1621599089, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 2053636150, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    FramesPerSecond: 12
+    Loop: 1
+  - Animation: 2
+    Frames:
+    - {fileID: -65408276, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 93907363, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -1483059760, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 366322009, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -788525588, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -2050881730, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -1686663666, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -73475532, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    FramesPerSecond: 14
+    Loop: 0
+  - Animation: 3
+    Frames:
+    - {fileID: 278646324, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 913048154, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 438047230, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -1760770351, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 1726645982, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -715478760, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -517460162, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 1956182486, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    FramesPerSecond: 14
+    Loop: 0
+  - Animation: 4
+    Frames:
+    - {fileID: -752508720, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 118075876, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 990559457, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: 1262639687, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    FramesPerSecond: 14
+    Loop: 0
+  - Animation: 5
+    Frames:
+    - {fileID: 350576110, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -1273139835, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -529382677, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    - {fileID: -1488178356, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+    FramesPerSecond: 8
+    Loop: 0

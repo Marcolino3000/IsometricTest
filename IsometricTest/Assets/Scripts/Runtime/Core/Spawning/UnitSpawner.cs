@@ -82,6 +82,11 @@ namespace Runtime.Core.Spawning
         // unit is drawn moving decides nothing about the match.
         [SerializeField] private AnimationSettings animationSettings;
 
+        // Which ring each opponent belongs to. Never changes once it is spawned, so there is nothing
+        // here for a snapshot to put back: what *does* change - whether it has arrived - is the unit
+        // being in play at all, which the snapshot already records.
+        private readonly Dictionary<Unit, int> zoneOfUnit = new();
+
         /// <summary>
         /// Takes a unit out of play. It is hidden instead of destroyed - that keeps it, and every
         /// reference to it, intact so <see cref="RestoreUnit"/> can bring it back when the action that
@@ -125,20 +130,54 @@ namespace Runtime.Core.Spawning
         private void SpawnOpponentUnits()
         {
             var index = 0;
+            var onEntry = ZoneRules.SpawnOnEntry;
 
-            foreach (var zone in ZoneRules.Zones)
+            foreach (var roster in settings.OpponentUnits)
             {
-                if (zone?.Opponents == null)
+                if (roster == null)
                     continue;
 
-                foreach (var unitAmount in zone.Opponents)
-                    for (int i = 0; i < unitAmount.Amount; i++)
-                        SpawnUnit(Team.Opponent, unitAmount.Blueprint, index++, zone);
-            }
+                // One that belongs to no ring takes the spawn band along the rim and is placed at
+                // once: there is no arrival to wait for. One that belongs to a ring is placed
+                // inside it, and waits for the character to walk in when the rings say so.
+                var zone = roster.HasZone ? ZoneRules.Settings.At(roster.Zone) : null;
+                var hold = onEntry && zone != null;
 
-            foreach (var unitAmount in settings.OpponentUnits)
-                for (int i = 0; i < unitAmount.Amount; i++)
-                    SpawnUnit(Team.Opponent, unitAmount.Blueprint, index++);
+                for (var i = 0; i < roster.Amount; i++)
+                {
+                    var unit = SpawnUnit(Team.Opponent, roster.Blueprint, index++, zone, hold);
+
+                    if (unit != null && zone != null)
+                        zoneOfUnit[unit] = roster.Zone;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Brings on whatever of ring <paramref name="index"/> is still waiting - what answers
+        /// <see cref="Runtime.Gameplay.Global.ZoneWatcher.ZoneReached"/>. Safe to call for a ring
+        /// that is already there, and meant to be: it is said on every step, so a ring an undo has
+        /// emptied fills again the next time the character walks into it.
+        ///
+        /// A held-back unit is one that has never been placed. It is made with all the others, so
+        /// what a match fields is settled before the first turn, and only its arrival waits - which
+        /// is why undo needs nothing new: the snapshot already records whether a unit is in play and
+        /// which tile it stands on.
+        /// </summary>
+        public void ReleaseZone(int index)
+        {
+            // Copied, since placing one puts it back into the list this walks.
+            foreach (var unit in removedUnits.ToList())
+            {
+                if (unit == null || unit.CurrentState.Position != null)
+                    continue;
+
+                if (!zoneOfUnit.TryGetValue(unit, out var zone) || zone != index)
+                    continue;
+
+                if (PlaceUnit(unit, unit.CurrentState.Team, ZoneRules.Zones[index]))
+                    RestoreUnit(unit);
+            }
         }
 
         /// <summary>
@@ -147,7 +186,8 @@ namespace Runtime.Core.Spawning
         /// blueprint, exactly as a lootbox is one prefab dressed by its type. There is no
         /// prefab-per-kind to keep in step with the blueprint any more.
         /// </summary>
-        private Unit SpawnUnit(Team team, UnitBlueprint blueprint, int index, MapZone zone = null)
+        private Unit SpawnUnit(Team team, UnitBlueprint blueprint, int index, MapZone zone = null,
+            bool hold = false)
         {
             if (blueprint == null)
             {
@@ -175,7 +215,12 @@ namespace Runtime.Core.Spawning
             unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar, gameRules, animationSettings,
                 blueprint);
 
-            PlaceUnit(unit, team, zone);
+            // A held-back unit is made and dressed like any other and then simply waits: no tile,
+            // out of play, and hidden by the same call a fallen unit is hidden with.
+            if (hold)
+                SetAside(instance);
+            else
+                PlaceUnit(unit, team, zone);
 
             if(team == Team.Opponent)
             {
@@ -188,11 +233,13 @@ namespace Runtime.Core.Spawning
                 instance.name = $"Player {blueprint.name}";
             }
 
-            units.Add(instance);
-
             selector.RegisterClickable(instance.GetComponentInChildren<Clickable>());
 
-            unitStateManager.Track(unit);
+            if (!hold)
+            {
+                units.Add(instance);
+                unitStateManager.Track(unit);
+            }
 
             return instance;
         }
@@ -239,7 +286,7 @@ namespace Runtime.Core.Spawning
         /// re-rolling inside it would spin forever - the tail of the list spills over its border
         /// instead.
         /// </summary>
-        private void PlaceUnit(Unit unit, Team team, MapZone zone = null)
+        private bool PlaceUnit(Unit unit, Team team, MapZone zone = null)
         {
             var candidates = zone != null
                 ? tileSpawner.GetZonePositions(zone)
@@ -255,10 +302,23 @@ namespace Runtime.Core.Spawning
                 // Placed, not moved: a fresh unit would otherwise be seen walking to its spawn tile
                 // from wherever the prefab was instantiated.
                 unit.SnapToCurrentTile();
-                return;
+                return true;
             }
 
             Debug.LogError($"No free tile left to spawn {unit.name} on.", settings);
+
+            return false;
+        }
+
+        /// <summary>
+        /// Sets a freshly made unit aside until its ring is reached: kept where removed units are
+        /// kept, on no tile at all. Standing on none is what tells a unit that has not arrived from
+        /// one that has fallen - both are hidden, and only the first was never anywhere.
+        /// </summary>
+        private void SetAside(Unit unit)
+        {
+            removedUnits.Add(unit);
+            unit.SetInPlay(false);
         }
 
         public Vector3 GridToWorldPosition(Vector2Int gridPosition)
@@ -279,6 +339,7 @@ namespace Runtime.Core.Spawning
 
             units.Clear();
             removedUnits.Clear();
+            zoneOfUnit.Clear();
             playerUnit = null;
         }
 

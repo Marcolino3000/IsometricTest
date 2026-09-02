@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Runtime;
@@ -6,6 +7,32 @@ using UnityEngine;
 
 namespace Data
 {
+    /// <summary>
+    /// How much of one ring is made of one kind of terrain. The same shape as the roster and the
+    /// loot list: a kind, an amount and the ring it belongs to, so where the ground gets rough is
+    /// authored beside where the boxes and the opponents are rather than in a place of its own.
+    ///
+    /// The kind is named rather than described - the three profiles are authored once on the
+    /// settings, so an entry says how much of a ring is hills, not what a hill is.
+    /// </summary>
+    [Serializable]
+    public class TerrainAmount
+    {
+        public TerrainType Terrain = TerrainType.Hills;
+
+        [Tooltip("Percent of this ring's tiles made of it. Whatever the ring's entries leave over " +
+                 "is flat ground.")]
+        [Range(0, 100)] public int Percent;
+
+        [Tooltip("Which ring of the map, counted from the middle out: 0 is the one the player " +
+                 "spawns in. Below zero the entry is the mix for every ring that authors none of " +
+                 "its own.")]
+        public int Zone = -1;
+
+        /// <summary>Whether this entry belongs to a ring of the map at all.</summary>
+        public bool HasZone => Zone >= 0;
+    }
+
     [CreateAssetMenu(menuName = "Data/Settings/TileSpawnerSettings")]
     public class TileSpawnerSettings : ScriptableObject
     {
@@ -76,14 +103,15 @@ namespace Data
         [Tooltip("When enabled, hills and mountains are scattered on random tiles (outside spawn zones) instead of using the fixed position lists below.")]
         public bool RandomTerrainPlacement;
 
-        [Tooltip("Percent of the map's tiles that are hills when random terrain placement is enabled. " +
-                 "A share of the whole grid rather than a number of tiles, so it means the same on any map size.")]
-        [Range(0, 100)] public int RandomHillPercent;
-
-        [Tooltip("Percent of the map's tiles that are mountains, on the same scale. Whatever the two " +
-                 "leave over is flat, so they only have to be authored up to 100 - past it they are " +
-                 "scaled down between them rather than the second losing out to the first.")]
-        [Range(0, 100)] public int RandomMountainPercent;
+        [Tooltip("What the ground is made of, ring by ring: a kind of terrain, how much of that " +
+                 "ring's tiles it takes, and which ring. Whatever the entries of a ring leave over " +
+                 "is flat. An entry naming no ring is the mix used for every ring that authors none " +
+                 "of its own, which is what a map with no rings uses for the whole board.")]
+        public List<TerrainAmount> RandomTerrain = new()
+        {
+            new TerrainAmount { Terrain = TerrainType.Hills, Percent = 33 },
+            new TerrainAmount { Terrain = TerrainType.Mountain, Percent = 9 }
+        };
 
         [Tooltip("Grid positions that should spawn as hills (used when random placement is disabled).")]
         public List<Vector2Int> HillPositions = new();
@@ -96,9 +124,14 @@ namespace Data
         /// tiles, as many of each as their percentage of the whole grid asks for; otherwise the fixed
         /// <see cref="HillPositions"/>/<see cref="MountainPositions"/> lists are used.
         /// </summary>
-        public Dictionary<Vector2Int, TerrainProfile> BuildTerrainMap()
+        /// <param name="zoneOf">
+        /// Which ring a position falls in, or -1 for a map with no rings. Handed in rather than
+        /// asked of the rules, so an asset stays a thing that is read rather than one that reaches
+        /// into the game to answer.
+        /// </param>
+        public Dictionary<Vector2Int, TerrainProfile> BuildTerrainMap(Func<Vector2Int, int> zoneOf = null)
         {
-            return RandomTerrainPlacement ? BuildRandomTerrainMap() : BuildFixedTerrainMap();
+            return RandomTerrainPlacement ? BuildRandomTerrainMap(zoneOf) : BuildFixedTerrainMap();
         }
 
         private Dictionary<Vector2Int, TerrainProfile> BuildFixedTerrainMap()
@@ -117,55 +150,124 @@ namespace Data
             return map;
         }
 
-        private Dictionary<Vector2Int, TerrainProfile> BuildRandomTerrainMap()
+        /// <summary>
+        /// Scatters the terrain one ring at a time: each ring's own tiles are shuffled and handed
+        /// out in the proportions authored for it, so how rough the ground is can grow with the
+        /// distance from the middle the way the loot and the opponents do. A map with no rings is
+        /// one ring as far as this is concerned - every tile in the same bag, which is what the
+        /// board did before rings existed.
+        /// </summary>
+        private Dictionary<Vector2Int, TerrainProfile> BuildRandomTerrainMap(Func<Vector2Int, int> zoneOf)
         {
             var map = new Dictionary<Vector2Int, TerrainProfile>();
-            var candidates = GetShuffledRandomTerrainCandidates();
-            var (hills, mountains) = RandomTerrainCounts(candidates.Count);
-            var index = 0;
 
-            for (int i = 0; i < mountains; i++, index++)
-                map[candidates[index]] = MountainTerrain;
+            foreach (var ring in GroupByZone(zoneOf))
+            {
+                var candidates = ring.Value;
+                var entries = TerrainFor(ring.Key);
 
-            for (int i = 0; i < hills; i++, index++)
-                map[candidates[index]] = HillTerrain;
+                if (entries.Count == 0)
+                    continue;
+
+                Shuffle(candidates);
+
+                var counts = RandomTerrainCounts(candidates.Count, entries);
+                var index = 0;
+
+                for (var i = 0; i < entries.Count; i++)
+                    for (var placed = 0; placed < counts[i + 1] && index < candidates.Count; placed++, index++)
+                        map[candidates[index]] = ProfileOf(entries[i].Terrain);
+            }
 
             return map;
         }
 
         /// <summary>
-        /// How many of <paramref name="total"/> tiles are hills and how many are mountains, derived from
-        /// the authored percentages rather than authored as counts, so a resized map keeps the same mix
-        /// instead of having every number rewritten.
+        /// The tiles of each ring, keyed by it. Every position lands in exactly one, so nothing is
+        /// handed out twice however the rings are authored.
         /// </summary>
-        public (int Hills, int Mountains) RandomTerrainCounts(int total)
+        private Dictionary<int, List<Vector2Int>> GroupByZone(Func<Vector2Int, int> zoneOf)
         {
-            // Flat is the share nothing else asked for, which is what keeps the three adding back up to
-            // the map: read as shares of whatever they come to, so hills and mountains authored past 100
-            // between them are scaled down rather than the second one being starved by the first.
-            var flat = Mathf.Max(0, 100 - RandomHillPercent - RandomMountainPercent);
-            var counts = LootboxType.Distribute(total, new[] { flat, RandomHillPercent, RandomMountainPercent });
+            var rings = new Dictionary<int, List<Vector2Int>>();
 
-            return (counts[1], counts[2]);
+            foreach (var position in AllPositions())
+            {
+                var zone = zoneOf?.Invoke(position) ?? -1;
+
+                if (!rings.TryGetValue(zone, out var tiles))
+                    rings[zone] = tiles = new List<Vector2Int>();
+
+                tiles.Add(position);
+            }
+
+            return rings;
         }
 
         /// <summary>
-        /// All grid positions, returned in randomized order, used to scatter random terrain. Spawn zones are
-        /// included: they move with the player's roll, and a zone that ends up walled off spills outwards
-        /// (see <see cref="GetSpawnZonePositions"/>) rather than losing its spawn.
+        /// What ring <paramref name="zone"/> is made of: the entries naming it, or the ones naming
+        /// no ring at all, which is the mix every ring falls back to.
         /// </summary>
-        private List<Vector2Int> GetShuffledRandomTerrainCandidates()
+        private List<TerrainAmount> TerrainFor(int zone)
         {
-            var candidates = AllPositions().ToList();
+            var own = new List<TerrainAmount>();
+            var shared = new List<TerrainAmount>();
 
-            // Fisher–Yates shuffle
-            for (int i = candidates.Count - 1; i > 0; i--)
+            foreach (var entry in RandomTerrain)
             {
-                var j = Random.Range(0, i + 1);
-                (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
+                if (entry == null || entry.Percent <= 0)
+                    continue;
+
+                if (entry.Zone == zone)
+                    own.Add(entry);
+                else if (!entry.HasZone)
+                    shared.Add(entry);
             }
 
-            return candidates;
+            return own.Count > 0 ? own : shared;
+        }
+
+        /// <summary>
+        /// How many of <paramref name="total"/> tiles each entry takes, with flat ground first as
+        /// the share nothing else asked for. Derived from the percentages rather than authored as
+        /// counts, so a resized map keeps the same mix instead of having every number rewritten -
+        /// and read as shares of whatever they come to, so entries adding past 100 are scaled down
+        /// between them rather than the last ones being starved by the first.
+        /// </summary>
+        private static int[] RandomTerrainCounts(int total, List<TerrainAmount> entries)
+        {
+            var shares = new int[entries.Count + 1];
+            var asked = 0;
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                shares[i + 1] = Mathf.Max(0, entries[i].Percent);
+                asked += shares[i + 1];
+            }
+
+            shares[0] = Mathf.Max(0, 100 - asked);
+
+            return LootboxType.Distribute(total, shares);
+        }
+
+        /// <summary>The profile a kind of terrain is drawn and walked with.</summary>
+        private TerrainProfile ProfileOf(TerrainType terrain)
+        {
+            return terrain switch
+            {
+                TerrainType.Hills => HillTerrain,
+                TerrainType.Mountain => MountainTerrain,
+                _ => FlatTerrain
+            };
+        }
+
+        private static void Shuffle(List<Vector2Int> positions)
+        {
+            // Fisher–Yates shuffle
+            for (int i = positions.Count - 1; i > 0; i--)
+            {
+                var j = UnityEngine.Random.Range(0, i + 1);
+                (positions[i], positions[j]) = (positions[j], positions[i]);
+            }
         }
 
         /// <summary>
@@ -184,7 +286,7 @@ namespace Data
         {
             return AllPositions()
                 .OrderBy(position => DistanceOutsideZone(position, team))
-                .ThenBy(_ => Random.value)
+                .ThenBy(_ => UnityEngine.Random.value)
                 .ToList();
         }
 

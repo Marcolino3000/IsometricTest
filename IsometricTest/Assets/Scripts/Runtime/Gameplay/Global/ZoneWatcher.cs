@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Runtime.Core.Spawning;
 using Runtime.Gameplay.Entities;
@@ -25,6 +26,15 @@ namespace Runtime.Gameplay.Global
     /// </summary>
     public class ZoneWatcher : MonoBehaviour
     {
+        /// <summary>
+        /// The character stands in this ring - said on <b>every</b> arrival, not only the first, and
+        /// deliberately so. What answers it puts the ring's opponents and boxes on the board, and an
+        /// undo can take that back: saying it once would leave a ring that was undone and walked
+        /// into again empty forever. Whoever answers has to be happy to hear it about a ring that is
+        /// already there, which is what makes it safe to repeat.
+        /// </summary>
+        public event Action<int> ZoneReached;
+
         private UnitSpawner unitSpawner;
         private AnnouncementScreen announcements;
 
@@ -74,8 +84,14 @@ namespace Runtime.Gameplay.Global
 
             var zone = ZoneRules.IndexAt(player != null ? player.CurrentState.Position : null);
 
-            if (zone >= 0)
-                announced.Add(zone);
+            if (zone < 0)
+                return;
+
+            announced.Add(zone);
+
+            // The ring it starts in is reached without being entered, so nothing is announced - but
+            // whatever waits for a ring to be reached still has to hear about this one.
+            ZoneReached?.Invoke(zone);
         }
 
         private void HandleUnitEnteredTile(Unit unit)
@@ -85,7 +101,14 @@ namespace Runtime.Gameplay.Global
 
             var zone = ZoneRules.IndexAt(unit.CurrentState.Position);
 
-            if (zone < 0 || !announced.Add(zone))
+            if (zone < 0)
+                return;
+
+            // Every step, so a ring emptied by an undo fills again when it is walked into again.
+            ZoneReached?.Invoke(zone);
+
+            // The news, on the other hand, is only news once.
+            if (!announced.Add(zone))
                 return;
 
             if (announcements != null)

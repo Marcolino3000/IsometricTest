@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbcaca3db3794b188c3bb2227ae55a0d, type: 3}
   m_Name: Blood Monster Blueprint
   m_EditorClassIdentifier: Assembly-CSharp::Data.UnitBlueprint
-  Sprite: {fileID: 0}
-  Animations: {fileID: 0}
+  Sprite: {fileID: -272029079, guid: 569c071a4487b4d21975b59329d26828, type: 3}
+  Animations: {fileID: 11400000, guid: 2bf38b8e3ece7cb6df4adc8cbc711a50, type: 2}
   defaultState:
     Team: 0
     SightRange: 3
-    MoveAction: {fileID: 0}
+    MoveAction: {fileID: 11400000, guid: 3a29eb804ad414775ae8096d87e0895d, type: 2}
     Traits:
     - {fileID: 11400000, guid: e39ef3961e384f18a5424164e0b6b823, type: 2}
     - {fileID: 11400000, guid: 55535b6937f04d4f8a260b2cb21876e6, type: 2}

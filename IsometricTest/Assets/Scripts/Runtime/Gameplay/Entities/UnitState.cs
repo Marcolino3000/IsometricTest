@@ -80,14 +80,20 @@ namespace Runtime.Gameplay.Entities
                 actionPoints = value;
                 ActionPointsChanged?.Invoke(new ChangeEvent<int>(previous, actionPoints, reason));
 
-                hasActionsLeft =
-                    actionPoints >= MoveAction.Condition.Cost ||
-                    actionPoints >= AttackAction.Condition.Cost;
+                hasActionsLeft = CanAfford(MoveAction) || CanAfford(AttackAction);
                 if(!hasActionsLeft)
                     OnNoActionsLeft?.Invoke();
 
             }
         }
+
+        /// <summary>
+        /// Whether the points in hand pay for <paramref name="action"/>. An action the blueprint
+        /// never named is not affordable rather than a null reference: a half-authored unit is
+        /// worth a warning, not an exception that takes the whole spawn down with it.
+        /// </summary>
+        private bool CanAfford<UCondition>(ActionData<UCondition> action) where UCondition : ActionCondition =>
+            action != null && action.Condition != null && actionPoints >= action.Condition.Cost;
 
         public Tile Position
         {

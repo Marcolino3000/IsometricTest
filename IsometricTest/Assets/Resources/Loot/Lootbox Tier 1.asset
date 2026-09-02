@@ -17,7 +17,6 @@ MonoBehaviour:
   ShowsContent: 0
   PickupCost: 1
   Source: 0
-  LootboxCount: 19
   MeleeWeaponPercent: 16
   RangedWeaponPercent: 16
   ActiveItemPercent: 42

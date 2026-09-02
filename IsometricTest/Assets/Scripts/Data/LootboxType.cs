@@ -25,10 +25,10 @@ namespace Data
     /// One kind - in practice one tier - of lootbox: what it looks like, what it costs to take, where
     /// its boxes come from, how many of them a match contains and what share of them holds what.
     ///
-    /// It says nothing about *where* on the map its boxes lie either. That is a zone's
-    /// (<see cref="MapZone.Loot"/>): a ring lists the kinds found in it, so the distance a tier is
-    /// walked to and the distance its guards spawn at are one authored number rather than two that
-    /// can drift. A kind no zone lists lies anywhere.
+    /// It says nothing about *how many* of it a match holds or *where* they lie either. Both are
+    /// authored on <see cref="LootSpawnerSettings.Boxes"/>, one entry per ring, since they are
+    /// questions about a match rather than about what a chest is - the same list the units' rings
+    /// are authored in.
     ///
     /// It deliberately does **not** list what may be inside it. That is authored the other way round:
     /// every <see cref="Item"/> names the kind of box it turns up in on <see cref="Item.FoundIn"/>,
@@ -66,12 +66,7 @@ namespace Data
                  "share those units evenly.")]
         public LootboxSource Source;
 
-        [Header("How Many And What Is In Them")]
-        [Tooltip("How many boxes of this kind a match contains. Only asked of a kind scattered over " +
-                 "the map - a dropped one makes one box per unit. Still capped by how many free " +
-                 "tiles are left to lie on.")]
-        [Min(0)] public int LootboxCount = 1;
-
+        [Header("What Is In Them")]
         [Tooltip("Percent of this kind's boxes holding a melee weapon.")]
         [Range(0, 100)] public int MeleeWeaponPercent;
 

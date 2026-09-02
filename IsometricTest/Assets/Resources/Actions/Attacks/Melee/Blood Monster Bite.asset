@@ -12,15 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
   m_Name: Blood Monster Bite
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
-  DisplayName: 
-  Description: 
+  DisplayName: Blood Monster Bite
+  Description: Claws and teeth at close quarters.
   Symbol: {fileID: 0}
   FoundIn: {fileID: 0}
   condition:
-    rid: -2
+    rid: 5549857560001100002
   Kind: 0
-  Traits:
-  - {fileID: 0}
+  Traits: []
   effects:
   - rid: 4896932351812829250
   references:
@@ -36,3 +35,8 @@ MonoBehaviour:
         Requires: []
         Damage: 8
         Note: 
+    - rid: 5549857560001100002
+      type: {class: AttackCondition, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Cost: 2
+        Range: 1

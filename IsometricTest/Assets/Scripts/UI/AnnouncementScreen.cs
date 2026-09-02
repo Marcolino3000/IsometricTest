@@ -1,3 +1,4 @@
+using Runtime.Gameplay.Global;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -24,16 +25,9 @@ namespace UI
     /// </summary>
     public class AnnouncementScreen : MonoBehaviour
     {
-        private const float FadeInDuration = 0.35f;
-        private const float HoldDuration = 2.2f;
-        private const float FadeOutDuration = 0.9f;
-
-        private const float HeadlineSize = 64f;
-        private const float DetailSize = 22f;
-
-        /// <summary>How far down the screen the lines hang - clear of the top HUD, well above the
-        /// character, so the announcement never covers what it is being said about.</summary>
-        private const float TopInsetPercent = 14f;
+        // How it is said and how long for: its own asset, loaded rather than wired, since this
+        // screen is built from code and nothing in the scene reaches it. Never null - see Load.
+        private AnnouncementSettings settings;
 
         private VisualElement root;
         private Banner banner;
@@ -54,6 +48,7 @@ namespace UI
             document.sortingOrder = sortingOrder;
 
             var screen = host.AddComponent<AnnouncementScreen>();
+            screen.settings = AnnouncementSettings.Load();
             screen.Build(document);
 
             return screen;
@@ -89,6 +84,10 @@ namespace UI
         {
             showing = false;
             root.style.display = DisplayStyle.None;
+
+            // Nothing is riding a wave while there is nothing to read, so the next line starts flat
+            // rather than wherever the last one was lifted to.
+            banner.Still();
         }
 
         private void Build(UIDocument document)
@@ -102,10 +101,13 @@ namespace UI
             root.style.bottom = 0f;
             root.style.alignItems = Align.Center;
             root.style.justifyContent = Justify.FlexStart;
-            root.style.paddingTop = new Length(TopInsetPercent, LengthUnit.Percent);
+            root.style.paddingTop = new Length(settings.TopInsetPercent, LengthUnit.Percent);
             root.style.display = DisplayStyle.None;
 
-            banner = Banner.Create(root, HeadlineSize, DetailSize);
+            // The two sizes, the face and the inset are settled here, when the screen is built;
+            // the timings and the waves are read as they are used, so they can be tuned while it is
+            // on screen.
+            banner = Banner.Create(root, settings.HeadlineSize, settings.DetailSize, font: settings.Font);
         }
 
         private void Update()
@@ -116,16 +118,16 @@ namespace UI
             age += Time.deltaTime;
 
             // Every frame it is up, fading in or out included: the wave is what the line is doing,
-            // not part of its arrival.
-            banner.Wave(age);
+            // not part of its arrival. The last word is given its own, faster one.
+            banner.Wave(age, settings.Text, settings.LastWord);
 
-            if (age < FadeInDuration)
+            if (age < settings.FadeInDuration)
             {
-                root.style.opacity = age / FadeInDuration;
+                root.style.opacity = age / settings.FadeInDuration;
                 return;
             }
 
-            var held = age - FadeInDuration - HoldDuration;
+            var held = age - settings.FadeInDuration - settings.HoldDuration;
 
             if (held <= 0f)
             {
@@ -133,13 +135,13 @@ namespace UI
                 return;
             }
 
-            if (held >= FadeOutDuration)
+            if (held >= settings.FadeOutDuration)
             {
                 Hide();
                 return;
             }
 
-            root.style.opacity = 1f - held / FadeOutDuration;
+            root.style.opacity = 1f - held / settings.FadeOutDuration;
         }
     }
 }

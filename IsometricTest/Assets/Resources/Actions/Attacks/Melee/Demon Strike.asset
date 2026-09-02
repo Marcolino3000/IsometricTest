@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
   m_Name: Demon Strike
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
-  DisplayName: 
-  Description: 
+  DisplayName: Demon Strike
+  Description: A sweep of the demon's blade.
   Symbol: {fileID: 0}
   FoundIn: {fileID: 0}
   condition:
-    rid: -2
+    rid: 7582357675001100001
   Kind: 0
   Traits: []
   effects:
@@ -35,3 +35,8 @@ MonoBehaviour:
         Requires: []
         Damage: 7
         Note: 
+    - rid: 7582357675001100001
+      type: {class: AttackCondition, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Cost: 2
+        Range: 1

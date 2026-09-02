@@ -166,6 +166,13 @@ namespace Runtime.Core
 
             zoneWatcher = gameObject.AddComponent<ZoneWatcher>();
             zoneWatcher.Setup(unitSpawner, announcements);
+
+            // What a ring holds arrives when the character walks into it - the units from the
+            // spawner that owns them, the boxes from the one that owns those. Wired here rather
+            // than either of them watching the board, and said on every step, so a ring emptied by
+            // an undo fills again when it is walked into again.
+            zoneWatcher.ZoneReached += unitSpawner.ReleaseZone;
+            zoneWatcher.ZoneReached += lootSpawner.ReleaseZone;
         }
 
         /// <summary>
