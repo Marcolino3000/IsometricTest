@@ -15,10 +15,10 @@ MonoBehaviour:
   UnitPrefab: {fileID: 6973456096741093380, guid: 69a8d3cb1741c4c9a8913810f9f275ca, type: 3}
   PlayerUnit: {fileID: 11400000, guid: 695076710910a4876b11b9da1fb83cdf, type: 2}
   OpponentUnits:
-  - Amount: 1
+  - Amount: 0
     Blueprint: {fileID: 11400000, guid: 17566dd16041b4372890634bf05ef688, type: 2}
     Zone: 1
-  - Amount: 2
+  - Amount: 0
     Blueprint: {fileID: 11400000, guid: 1aef4d4a54c8a4b5fb157b976c361afe, type: 2}
     Zone: 1
   - Amount: 4
@@ -27,10 +27,10 @@ MonoBehaviour:
   - Amount: 2
     Blueprint: {fileID: 11400000, guid: bd0379b61e8bb485e8bfc2b29a7280be, type: 2}
     Zone: 2
-  - Amount: 4
+  - Amount: 3
     Blueprint: {fileID: 11400000, guid: 4d3f04ab7b2244afeb76848c1ba43431, type: 2}
     Zone: 1
-  - Amount: 4
+  - Amount: 3
     Blueprint: {fileID: 11400000, guid: 65e437a21c5bf4bfb9be99cf44d6906b, type: 2}
     Zone: 1
   OrderInLayer: 3

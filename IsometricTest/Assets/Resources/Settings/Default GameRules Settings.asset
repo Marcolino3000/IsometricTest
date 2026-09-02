@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Default GameRules Settings
   m_EditorClassIdentifier: 
   RetaliationEnabled: 0
-  ShowEnemyTurns: 1
+  ConfineOpponentsToSpawnZone: 1
+  ShowEnemyTurns: 0
   HideUnexploredTerrain: 1
   StackDuplicateActiveItems: 1
   AutoCollectLootboxes: 1

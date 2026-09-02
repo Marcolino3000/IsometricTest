@@ -340,7 +340,7 @@ namespace Runtime.Gameplay.AI
                 if (distance > reach)
                     continue;
 
-                if (!unit.ActionExecutor.PlanAttackAction(new ExecuteArgs(null, enemy)).IsValid)
+                if (!unit.ActionExecutor.TestAttackAction(new ExecuteArgs(null, enemy)).IsValid)
                     continue;
 
                 var score = ScoreAttack(unit, enemy);
@@ -403,10 +403,12 @@ namespace Runtime.Gameplay.AI
                 return true;
             }
 
-            // Can we reach a shot and take it this turn? PlanAttackAction tests AP and asks
-            // CombatRules.CanAttackFrom where to stop, so this is the cheapest approach-and-hit -
-            // and a blocked shot simply falls through to closing the distance below.
-            if (unit.ActionExecutor.PlanAttackAction(new ExecuteArgs(null, enemy)).IsValid)
+            // Can we reach a shot and take it this turn? TestAttackAction plans exactly what
+            // ExecuteAttackAction would - it tests AP and asks CombatRules.CanAttackFrom where to
+            // stop, so this is the cheapest approach-and-hit - and a blocked shot simply falls
+            // through to closing the distance below. Asked rather than previewed: the preview
+            // belongs to the player's hover, and drawing it here left it on the enemy's own bar.
+            if (unit.ActionExecutor.TestAttackAction(new ExecuteArgs(null, enemy)).IsValid)
             {
                 unit.ActionExecutor.ExecuteAttackAction(new ExecuteArgs(null, enemy));
                 return true;

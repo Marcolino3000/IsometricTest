@@ -32,6 +32,10 @@ namespace Runtime.Gameplay.Actions
         // Rebuilt on every hovered tile, so it is kept rather than allocated per preview.
         private readonly List<Sprite> previewIcons = new();
 
+        /// <summary>
+        /// Plans a move and shows it - the previewed points on the action point bar and the
+        /// highlighted path. What a hover asks for.
+        /// </summary>
         public ConditionTestResult PlanMoveAction(ExecuteArgs executeArgs)
         {
             // Callers can hold on to a unit past its death (stale selection, an AI loop in the frame
@@ -47,14 +51,34 @@ namespace Runtime.Gameplay.Actions
             
             PlanMoveActionsFromPath(path);
             var result = TestConditionsForPlannedActions();
-            
+
             SetActionsPointsBar();
             unit.TileHighlighter.HighlightTilesAlongPath(path, result.FailedConditionIndex);
 
             return result;
         }
 
-        public ConditionTestResult PlanAttackAction(ExecuteArgs executeArgs)
+        /// <summary>
+        /// Plans a strike and shows what it would cost. See <see cref="PlanMoveAction"/>.
+        /// </summary>
+        public ConditionTestResult PlanAttackAction(ExecuteArgs executeArgs) =>
+            PlanAttack(executeArgs, preview: true);
+
+        /// <summary>
+        /// Whether this unit could reach the target and strike it with the points it has - the same
+        /// plan, asked as a question rather than shown.
+        ///
+        /// Apart from <see cref="PlanAttackAction"/> because a preview is an answer to a hover, and
+        /// only the player hovers: the AI weighs every candidate target through here, and each plan
+        /// it turned down used to be left standing on the bar over that unit's own head, showing
+        /// fewer points than the unit actually had for the rest of the match. Nothing cleared it -
+        /// <see cref="ClearPreview"/> only ever reaches the selected unit, which is always the
+        /// player's.
+        /// </summary>
+        public ConditionTestResult TestAttackAction(ExecuteArgs executeArgs) =>
+            PlanAttack(executeArgs, preview: false);
+
+        private ConditionTestResult PlanAttack(ExecuteArgs executeArgs, bool preview)
         {
             // Same guard as PlanMoveAction: a dead attacker (or target) must not produce a plan.
             if (unit == null || !unit.IsAlive || executeArgs.TargetUnit == null || !executeArgs.TargetUnit.IsAlive)
@@ -82,7 +106,9 @@ namespace Runtime.Gameplay.Actions
 
             plannedActions.Add(unit.CurrentState.AttackAction.CreateAction(context));
 
-            SetActionsPointsBar();
+            if (preview)
+                SetActionsPointsBar();
+
             return TestConditionsForPlannedActions();
         }
 
@@ -135,7 +161,12 @@ namespace Runtime.Gameplay.Actions
         public void ExecuteMoveActions(ExecuteArgs executeArgs)
         {
             if(!PlanMoveAction(executeArgs).IsValid)
+            {
+                // A plan that is not run must not stay on the bar - nothing else would take it off.
+                // Executing puts the bar right by itself, since spending the points redraws it.
+                ClearPreview();
                 return;
+            }
 
             ExecutePlannedActions();
 
@@ -145,7 +176,11 @@ namespace Runtime.Gameplay.Actions
         public void ExecuteAttackAction(ExecuteArgs executeArgs)
         {
             if(!PlanAttackAction(executeArgs).IsValid)
+            {
+                // See ExecuteMoveActions.
+                ClearPreview();
                 return;
+            }
 
             var target = executeArgs.TargetUnit;
 
@@ -296,6 +331,10 @@ namespace Runtime.Gameplay.Actions
 
         public void ClearPreview()
         {
+            // Reached from a plan that failed, and a plan can fail because the unit is gone.
+            if (unit == null)
+                return;
+
             actionsPointsBar.SetBlobAmount(unit.CurrentState.ActionPoints);
         }
 
