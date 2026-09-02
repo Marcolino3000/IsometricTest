@@ -263,13 +263,22 @@ namespace Runtime.Gameplay.Actions
         }
 
 
-        public void Setup(Unit unit, TileSpawner tileSpawner)
+        /// <summary>
+        /// <paramref name="vitals"/> is the HUD row over the item slots, handed in for the player's
+        /// character alone: its points are drawn there rather than over its head. Everything else
+        /// about the bar is unchanged, since only where it hangs differs.
+        /// </summary>
+        public void Setup(Unit unit, TileSpawner tileSpawner, PlayerVitals vitals = null)
         {
             this.unit = unit;
             this.tileSpawner = tileSpawner;
             // The points a turn hands out, not what is left of one: that is how many blobs the row
             // needs, and SetBlobAmount clamps to them.
-            actionsPointsBar.Setup(unit.MaxActionPoints);
+            if (vitals != null)
+                actionsPointsBar.SetupIn(vitals.ActionPointRow, vitals.ActionPointBlob,
+                    unit.MaxActionPoints);
+            else
+                actionsPointsBar.Setup(unit.MaxActionPoints);
         }
 
         /// <summary>

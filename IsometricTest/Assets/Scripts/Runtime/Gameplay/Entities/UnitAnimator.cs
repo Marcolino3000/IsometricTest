@@ -67,6 +67,11 @@ namespace Runtime.Gameplay.Entities
         // whichever half arrived last.
         private readonly Queue<OneShot> oneShots = new();
 
+        // How long the one at the head of that queue has been held back. A flinch is said in the
+        // same frame as the swing that caused it and is drawn by an animator of its own, so it waits
+        // out its beat here rather than being said late by whoever struck.
+        private float waited;
+
         private readonly struct OneShot
         {
             public readonly UnitAnimationSet.Clip Clip;
@@ -78,11 +83,16 @@ namespace Runtime.Gameplay.Entities
             // says its swing before it sets off, and turning then would turn it out of the walk.
             public readonly float? FaceTowardsX;
 
-            public OneShot(UnitAnimationSet.Clip clip, Action finished, float? faceTowardsX)
+            // How long this is held back once it comes to the head of the queue, in the seconds
+            // animations are measured in. Zero for everything that is drawn the moment it is said.
+            public readonly float Delay;
+
+            public OneShot(UnitAnimationSet.Clip clip, Action finished, float? faceTowardsX, float delay)
             {
                 Clip = clip;
                 Finished = finished;
                 FaceTowardsX = faceTowardsX;
+                Delay = delay;
             }
         }
 
@@ -94,6 +104,12 @@ namespace Runtime.Gameplay.Entities
         /// its frames. Full speed with no asset injected, so a unit still animates.
         /// </summary>
         private float Speed => animationSettings != null ? animationSettings.Speed : 1f;
+
+        /// <summary>
+        /// The beat a flinch waits out before it is drawn. None with no asset injected, which is the
+        /// unit being struck flinching in the frame it is struck in.
+        /// </summary>
+        private float HitDelay => animationSettings != null ? animationSettings.HitDelay : 0f;
 
         /// <summary>
         /// Whether the unit can be seen at all. The fog hides a unit by deactivating the object the
@@ -158,6 +174,7 @@ namespace Runtime.Gameplay.Entities
             oneShots.Clear();
             currentFinished = null;
             playingOnce = false;
+            waited = 0f;
         }
 
         /// <summary>
@@ -176,10 +193,14 @@ namespace Runtime.Gameplay.Entities
         /// Draws the unit taking a blow. Said for every strike that lands on it, an absorbed one
         /// included: a hit shrugged off still has to read as a hit, which is the same reason
         /// <see cref="Unit.ShowAbsorbedHit"/> exists.
+        ///
+        /// The one animation that is not drawn the moment it is said: the swing that caused it is
+        /// announced in the same frame and drawn by another animator, so the flinch waits out
+        /// <see cref="AnimationSettings.HitDelay"/> and lands during the blow rather than before it.
         /// </summary>
         public void PlayHit()
         {
-            Enqueue(set.For(UnitAnimation.Hit));
+            Enqueue(set.For(UnitAnimation.Hit), delay: HitDelay);
         }
 
         /// <summary>
@@ -195,14 +216,15 @@ namespace Runtime.Gameplay.Entities
             return Enqueue(set.For(UnitAnimation.Death), finished);
         }
 
-        private bool Enqueue(UnitAnimationSet.Clip clip, Action finished = null, float? faceTowardsX = null)
+        private bool Enqueue(UnitAnimationSet.Clip clip, Action finished = null, float? faceTowardsX = null,
+            float delay = 0f)
         {
             // Nothing authored, nothing queued - and nothing holding a callback that would never be
             // called, which is what a fall depends on being able to trust.
             if (clip == null)
                 return false;
 
-            oneShots.Enqueue(new OneShot(clip, finished, faceTowardsX));
+            oneShots.Enqueue(new OneShot(clip, finished, faceTowardsX, delay));
 
             return true;
         }
@@ -297,15 +319,29 @@ namespace Runtime.Gameplay.Entities
             // unit that walked into range still has to be seen to strike.
             if (oneShots.Count > 0 && !IsWalking)
             {
-                var next = oneShots.Dequeue();
+                var next = oneShots.Peek();
 
-                if (next.FaceTowardsX.HasValue)
-                    FaceTowards(next.FaceTowardsX.Value);
+                // Its beat is counted at the speed everything else is drawn at, so a flinch keeps
+                // its place in the swing rather than drifting out of it as the speed is changed.
+                // The wait runs from where the queue got to, not from when the blow was said: an
+                // exchange is a swing, a flinch, the answer and its flinch, each after the last.
+                if (waited < next.Delay)
+                {
+                    waited += Time.deltaTime * Speed;
+                }
+                else
+                {
+                    oneShots.Dequeue();
+                    waited = 0f;
 
-                currentFinished = next.Finished;
-                Play(next.Clip, once: true);
+                    if (next.FaceTowardsX.HasValue)
+                        FaceTowards(next.FaceTowardsX.Value);
 
-                return;
+                    currentFinished = next.Finished;
+                    Play(next.Clip, once: true);
+
+                    return;
+                }
             }
 
             Play(set.For(IsWalking ? UnitAnimation.Move : UnitAnimation.Idle), once: false);

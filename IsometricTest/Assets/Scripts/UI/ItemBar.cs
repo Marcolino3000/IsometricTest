@@ -136,6 +136,18 @@ namespace UI
         }
 
         /// <summary>
+        /// Puts <paramref name="element"/> in the bar's own column, directly above the slots. What is
+        /// in it is nobody's business here — the bar says only where "above the slots" is, so
+        /// whatever hangs there is centred on the row and moves with it without measuring anything.
+        /// </summary>
+        public void MountAbove(VisualElement element)
+        {
+            EnsureBuilt();
+
+            hudRoot.Insert(0, element);
+        }
+
+        /// <summary>
         /// Offers <paramref name="items"/> above <paramref name="slot"/> with
         /// <paramref name="highlighted"/> pre-selected — what the owner of the items answers a
         /// <see cref="SlotActivated"/> with. Nothing to offer means no picker, so a slot whose
@@ -371,6 +383,19 @@ namespace UI
         // created its tree by then, and Setup is left to do nothing but wire events.
         private void Awake()
         {
+            EnsureBuilt();
+        }
+
+        /// <summary>
+        /// Which of two Awakes runs first is not ours to say, and the Initiator hangs things above
+        /// the row from its own — so the row is built on the first ask rather than only on this
+        /// object's turn.
+        /// </summary>
+        private void EnsureBuilt()
+        {
+            if (hudRoot != null)
+                return;
+
             BuildSlots();
         }
 

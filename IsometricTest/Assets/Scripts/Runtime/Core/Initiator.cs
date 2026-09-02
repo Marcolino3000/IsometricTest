@@ -79,6 +79,11 @@ namespace Runtime.Core
         // the attack preview, and redrawn with the board: the rings are measured against the grid.
         private ZoneBorder zoneBorder;
 
+        // The character's health and action points, drawn in the HUD above the item slots rather
+        // than on two panels over its head. Built here like the other views on the HUD, and not
+        // rebuilt on a restart: the rows outlive the character standing in them.
+        private PlayerVitals playerVitals;
+
         // What says a ring has been reached for the first time. On the Initiator's own object like
         // the outcome watcher, and for the same reason: it is a question asked of where the
         // character stands, so there is nothing on it to author and nothing in it to snapshot.
@@ -141,6 +146,11 @@ namespace Runtime.Core
         {
             nextTurnButton.Setup(gameStateManager, inputHandler, matchOutcomeWatcher, unitStateManager);
             itemBar.Setup(inputHandler, hoverTarget);
+            // The character's rows go in the bar's own column, so they hang directly above the
+            // slots - mounted there rather than given a document of their own like the cards are,
+            // since the bar is what they have to line up with and borrowing its column spares them
+            // measuring where it ended up. The bar never learns what is in the element.
+            itemBar.MountAbove(playerVitals.Root);
             // The rules go in live, like they do into CombatRules: whether the same draught may be
             // carried twice is switchable during play.
             itemManager.Setup(itemBar, CreateItemPopup(), CreateMergeScreen(), gameRules, hoverTarget);
@@ -266,8 +276,13 @@ namespace Runtime.Core
             // Early: the selector and the AI are both told to stand down by it, so it has to exist
             // before either is wired.
             CreateMatchOutcomeWatcher();
+            // Before the unit spawner: the character's bars are drawn in these rows rather than
+            // over its head, so they have to exist by the time it is built. Where they hang is
+            // settled later, in SetupUI - a row is built detached and mounted when there is
+            // something to mount it in.
+            playerVitals = new PlayerVitals();
             unitSpawner.Setup(gameStateManager, selector, fogOfWar, gameRules, animationSettings,
-                unitStateManager);
+                unitStateManager, playerVitals);
             tileSpawner.Setup(selector, gameRules);
             selector.Setup(gameStateManager, raycaster, unitSpawner, matchOutcomeWatcher, hoverTarget);
             raycaster.Setup(inputHandler, hudDocuments);

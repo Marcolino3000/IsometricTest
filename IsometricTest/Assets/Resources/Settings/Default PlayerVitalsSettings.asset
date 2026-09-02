@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfc80993c5d44de29d07449669005b69, type: 3}
+  m_Name: Default PlayerVitalsSettings
+  m_EditorClassIdentifier: 
+  healthBlobWidth: 6.94
+  healthBlobHeight: 36
+  healthBlobRadius: 0
+  healthColor: {r: 0.604, g: 0.11, b: 0.11, a: 1}
+  actionPointBlobSize: 36.4
+  actionPointBlobRadius: 500
+  actionPointColor: {r: 0.886, g: 0.694, b: 0.055, a: 1}
+  previewColor: {r: 0.745, g: 0.682, b: 0.467, a: 1}
+  spentColor: {r: 0.878, g: 0.878, b: 0.878, a: 1}
+  blobGap: 3
+  rowGap: 4
+  bottomGap: 6
+  trackPaddingVertical: 6
+  trackPaddingHorizontal: 5
+  trackBorderWidth: 2
+  trackCornerRadius: 6
+  trackColor: {r: 0.07, g: 0.07, b: 0.086, a: 0.85}
+  trackBorderColor: {r: 1, g: 1, b: 1, a: 0.35}

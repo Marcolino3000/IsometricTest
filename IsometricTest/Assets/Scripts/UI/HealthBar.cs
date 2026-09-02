@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -11,6 +12,10 @@ namespace UI
     
         private VisualElement container;
 
+        // What makes a blob when the row is not this object's own - see SetupIn. Null leaves the
+        // authored template, which is what a unit's own bar over its head is drawn with.
+        private Func<string, VisualElement> blobFactory;
+
         public void SetBlobAmount(int amount)
         {
             currentElements = amount;
@@ -20,9 +25,32 @@ namespace UI
             }
         }
     
+        /// <summary>
+        /// Draws the row on this object's own world-space panel, over the unit's head.
+        /// </summary>
         public void Setup(int maxBlobs)
         {
             container = GetComponent<UIDocument>().rootVisualElement.Q<VisualElement>("container");
+
+            Build(maxBlobs);
+        }
+
+        /// <summary>
+        /// Draws the row into <paramref name="row"/> instead, with <paramref name="blobs"/> making
+        /// each blob in place of the template — what the player's character does, since its numbers
+        /// are shown in the HUD over the item slots rather than over its head (see
+        /// <see cref="PlayerVitals"/>). Which blob is lit stays here either way: the two rows differ
+        /// in where they are mounted and how big a blob is drawn, and in nothing else.
+        /// </summary>
+        public void SetupIn(VisualElement row, Func<string, VisualElement> blobs, int maxBlobs)
+        {
+            // Mounted elsewhere, so the panel this component sits on is taken down rather than left
+            // hanging an empty frame over the unit. The component itself goes on answering — it is
+            // called directly and never ticks.
+            gameObject.SetActive(false);
+
+            container = row;
+            blobFactory = blobs;
 
             Build(maxBlobs);
         }
@@ -48,9 +76,13 @@ namespace UI
 
             for (int i = 0; i < maxElements; i++)
             {
-                VisualElement blop = blopTemplate.Instantiate().Q("blob");
+                VisualElement blop = Blob("blob");
                 container.Add(blop);
             }
         }
+
+        /// <summary>One blob, from whichever of the two the row was set up with.</summary>
+        private VisualElement Blob(string name) =>
+            blobFactory != null ? blobFactory(name) : blopTemplate.Instantiate().Q(name);
     }
 }

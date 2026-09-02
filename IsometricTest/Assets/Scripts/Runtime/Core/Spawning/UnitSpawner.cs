@@ -7,6 +7,7 @@ using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
+using UI;
 using UnityEngine;
 
 namespace Runtime.Core.Spawning
@@ -81,6 +82,10 @@ namespace Runtime.Core.Spawning
         // Handed on to every unit as well, and kept apart from the rules on purpose: how fast a
         // unit is drawn moving decides nothing about the match.
         [SerializeField] private AnimationSettings animationSettings;
+
+        // The HUD rows the character's health and points are drawn in, over the item slots. Only
+        // its own: an enemy's numbers stay over the enemy, and there is one HUD.
+        private PlayerVitals playerVitals;
 
         // Which ring each opponent belongs to. Never changes once it is spawned, so there is nothing
         // here for a snapshot to put back: what *does* change - whether it has arrived - is the unit
@@ -213,7 +218,7 @@ namespace Runtime.Core.Spawning
 
             var unit = instance.GetComponentInChildren<Unit>();
             unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar, gameRules, animationSettings,
-                blueprint);
+                blueprint, team == Team.Player ? playerVitals : null);
 
             // A held-back unit is made and dressed like any other and then simply waits: no tile,
             // out of play, and hidden by the same call a fallen unit is hidden with.
@@ -355,7 +360,8 @@ namespace Runtime.Core.Spawning
         #region Setup
 
         public void Setup(GameStateManager gameStateManagerArg, Selector selectorArg, FogOfWar fogOfWarArg,
-            GameRules gameRulesArg, AnimationSettings animationSettingsArg, UnitStateManager unitStateManagerArg)
+            GameRules gameRulesArg, AnimationSettings animationSettingsArg, UnitStateManager unitStateManagerArg,
+            PlayerVitals playerVitalsArg)
         {
             gameStateManager = gameStateManagerArg;
             selector = selectorArg;
@@ -363,6 +369,7 @@ namespace Runtime.Core.Spawning
             gameRules = gameRulesArg;
             animationSettings = animationSettingsArg;
             unitStateManager = unitStateManagerArg;
+            playerVitals = playerVitalsArg;
         }
 
         [ContextMenu("Spawn Units")]

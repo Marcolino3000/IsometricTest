@@ -105,7 +105,8 @@ namespace Runtime.Gameplay.Entities
         /// </summary>
         public void Init(TileSpawner tileSpawnerArg, UnitSpawner unitSpawnerArg, Team team,
             GameStateManager gameStateManagerArg, FogOfWar fogOfWarArg, GameRules gameRules,
-            AnimationSettings animationSettings, UnitBlueprint unitBlueprint = null)
+            AnimationSettings animationSettings, UnitBlueprint unitBlueprint = null,
+            PlayerVitals vitals = null)
         {
             if (unitBlueprint != null)
                 blueprint = unitBlueprint;
@@ -133,8 +134,16 @@ namespace Runtime.Gameplay.Entities
             gameStateManager = gameStateManagerArg;
             gameStateManager.TurnReset += HandleTurnReset;
 
-            healthBar.Setup(MaxHealth);
-            actionExecutor.Setup(this, tileSpawner);
+            // The character's two rows are the HUD's, over the item slots, rather than two panels
+            // over its head: they are read constantly and alongside the board, and the player
+            // commands one unit. Handed in rather than asked for, so nothing here has to know which
+            // unit is the player's - the spawner that spawns it does.
+            if (vitals != null)
+                healthBar.SetupIn(vitals.HealthRow, vitals.HealthBlob, MaxHealth);
+            else
+                healthBar.Setup(MaxHealth);
+
+            actionExecutor.Setup(this, tileSpawner, vitals);
 
             TileHighlighter.Setup(this, tileSpawner, gameRules);
 
