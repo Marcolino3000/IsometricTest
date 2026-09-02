@@ -15,6 +15,13 @@ namespace Data
         public float HalfTileOffsetX;
         public float HalfTileOffsetY;
 
+        [Tooltip("How high above its grid position a tile's surface is drawn, in world units - the " +
+                 "diamond a unit stands on, which the tile art puts in the upper half of its sprite " +
+                 "rather than at the tile's own position. What anything laid flat on the board is " +
+                 "placed at; it is the offset of the tile prefab's marker, the sprite covering " +
+                 "exactly that face.")]
+        public float SurfaceOffset = 0.25f;
+
         [Header("Grid Settings")]
         public Vector3 StartPosition;
         public int GridSizeX;
@@ -46,6 +53,19 @@ namespace Data
 
                 return Mathf.Sqrt(x * x + y * y);
             }
+        }
+
+        /// <summary>
+        /// How far out <paramref name="position"/> lies: 0 at the middle of the map and 1 at the
+        /// tile furthest from it. What anything authored as a fraction of the map is measured
+        /// against - which ring a zone ends at, which ring a kind of lootbox lies in - so all of
+        /// them mean the same thing whatever size the grid is.
+        /// </summary>
+        public float DistanceFromCenter(Vector2Int position)
+        {
+            var radius = GridRadius;
+
+            return radius <= 0f ? 0f : Mathf.Clamp01(Vector2.Distance(position, GridCenter) / radius);
         }
 
         [Header("Terrain Settings")]

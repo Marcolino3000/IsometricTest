@@ -352,10 +352,14 @@ namespace Runtime.Core.Spawning
         }
 
         /// <summary>
-        /// The tiles left, ordered by how far each misses <paramref name="type"/>'s ring: its own
-        /// ground first, then the nearest outside it. Ordered rather than filtered, exactly as a
-        /// spawn zone is, so a ring walled off by mountains or already taken up by the tiers before
-        /// it spills over its border instead of losing its boxes.
+        /// The tiles left, ordered by how far each misses the zones listing <paramref name="type"/>:
+        /// their ground first, then the nearest outside it. Ordered rather than filtered, exactly as
+        /// a spawn zone is, so a ring walled off by mountains or already taken up by the tiers
+        /// before it spills over its border instead of losing its boxes.
+        ///
+        /// Which ring a tier lies in is the zone's to say (<see cref="ZoneRules"/>), so the boxes
+        /// and the opponents of a ring are placed against one authored distance. A kind no zone
+        /// lists misses nothing anywhere and is scattered over the whole map.
         ///
         /// The list handed in was shuffled once, and the sort is stable, so that shuffle survives as
         /// the random tiebreak within a ring - the tier lands somewhere else along its ring each
@@ -364,7 +368,7 @@ namespace Runtime.Core.Spawning
         private List<Tile> OrderByRing(List<Tile> tiles, LootboxType type)
         {
             return tiles
-                .OrderBy(tile => type.DistanceOutsideRing(tileSpawner.DistanceFromCenter(tile)))
+                .OrderBy(tile => ZoneRules.DistanceOutside(type, tile))
                 .ToList();
         }
 

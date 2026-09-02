@@ -20,6 +20,7 @@ MonoBehaviour:
   ShowMovementRange: 0
   ShowUnitBadges: 0
   ShowUnitCard: 1
+  ShowZoneBorders: 1
   ShowThreatZone: 0
   WinByDefeatingAllEnemies: 1
   WinByExploringMap: 0

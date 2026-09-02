@@ -55,10 +55,11 @@ namespace UI
 
         /// <summary>
         /// How an outcome is coloured - the gold and the red the game-over card states a won and a
-        /// lost match in, so a result reads the same wherever the game announces one.
+        /// lost match in, so a result reads the same wherever the game announces one. Taken from
+        /// <see cref="Banner"/>, which is also what draws them here.
         /// </summary>
-        private static readonly Color SucceededAccent = new(0.98f, 0.82f, 0.29f);
-        private static readonly Color FailedAccent = new(0.89f, 0.31f, 0.27f);
+        private static readonly Color SucceededAccent = Banner.Accent;
+        private static readonly Color FailedAccent = Banner.Warning;
 
         /// <summary>
         /// The banner is as tall as this whether or not it says anything, so the card below it
@@ -93,8 +94,11 @@ namespace UI
         private VisualElement picker;
         private Label chance;
         private Label notice;
-        private Label outcomeTitle;
-        private Label outcomeDetail;
+
+        // How the last merge went, in the same two lines the map announces a new zone in - see
+        // Banner. Only what it says is this screen's; the look of a headline over a sentence is not.
+        private Banner outcome;
+
         private Button mergeButton;
 
         private readonly VisualElement[] slots = new VisualElement[SideCount];
@@ -200,10 +204,7 @@ namespace UI
         /// </summary>
         public void SetOutcome(string headline, string detail, bool succeeded)
         {
-            outcomeTitle.style.color = succeeded ? SucceededAccent : FailedAccent;
-
-            SetText(outcomeTitle, headline);
-            SetText(outcomeDetail, detail);
+            outcome.Set(headline, detail, succeeded ? SucceededAccent : FailedAccent);
         }
 
         public void SetMergeEnabled(bool enabled)
@@ -490,21 +491,11 @@ namespace UI
         /// </summary>
         private void BuildOutcome()
         {
-            var block = new VisualElement { pickingMode = PickingMode.Ignore };
-            block.style.height = OutcomeHeight;
-            block.style.alignItems = Align.Center;
-            // Bottom-aligned: the two lines hang just over the card, so the taller of them grows
-            // away from it rather than pushing at it.
-            block.style.justifyContent = Justify.FlexEnd;
-            block.style.marginBottom = 10f;
-
-            outcomeTitle = Text(block, 46f, SucceededAccent);
-            outcomeTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
-
-            outcomeDetail = Text(block, 17f, CardStyle.Text);
-            outcomeDetail.style.marginTop = 2f;
-
-            overlay.Add(block);
+            // The height is reserved whether or not anything is said, which is what keeps the card
+            // below standing where it stood: the two lines hang from the bottom of that block, so
+            // the taller of them grows away from the card rather than pushing at it.
+            outcome = Banner.Create(overlay, reservedHeight: OutcomeHeight);
+            outcome.Root.style.marginBottom = 10f;
         }
 
         private void BuildCard()

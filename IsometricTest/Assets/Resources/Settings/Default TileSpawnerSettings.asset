@@ -16,6 +16,7 @@ MonoBehaviour:
   TileSize: 3.13
   HalfTileOffsetX: 0.5
   HalfTileOffsetY: 0.25
+  SurfaceOffset: 0.25
   StartPosition: {x: -8.19, y: -0.88, z: 0}
   GridSizeX: 24
   GridSizeY: 24

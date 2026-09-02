@@ -62,6 +62,11 @@ namespace Runtime.Gameplay.Global
                  "for how long it waits and how it is drawn.")]
         public bool ShowUnitCard = true;
 
+        [Tooltip("When on, the line where one zone of the map ends and the next begins is drawn " +
+                 "between the tiles it divides. What lies in which zone is unaffected - this is only " +
+                 "whether the border is shown.")]
+        public bool ShowZoneBorders = true;
+
         [Tooltip("When on, hovering an enemy tints every tile it could strike next turn - measured " +
                  "from the points it starts a turn with, not the ones it has left, so it reads the " +
                  "same on your turn as on its own. The tiles it could stand on stay marked over the " +

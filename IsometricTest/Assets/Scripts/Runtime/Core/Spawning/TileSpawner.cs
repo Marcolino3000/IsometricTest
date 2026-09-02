@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Data;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Entities;
@@ -272,12 +273,45 @@ namespace Runtime.Core.Spawning
         /// </summary>
         public float DistanceFromCenter(Tile tile)
         {
-            var radius = settings.GridRadius;
+            return tile != null ? DistanceFromCenter(tile.Position) : 0f;
+        }
 
-            if (tile == null || radius <= 0f)
-                return 0f;
+        /// <summary>The same for a grid position, which is what a placement asks before there is a tile in hand.</summary>
+        public float DistanceFromCenter(Vector2Int position)
+        {
+            return settings.DistanceFromCenter(position);
+        }
 
-            return Mathf.Clamp01(Vector2.Distance(tile.Position, settings.GridCenter) / radius);
+        /// <summary>
+        /// Half the width and half the height of a tile - the offset from its centre to the corner
+        /// on either side of it, so half of this reaches the middle of the edge towards a
+        /// neighbour. What anything drawn <em>between</em> two tiles is measured with, rather than
+        /// reading the grid's spacing off the settings a second time.
+        /// </summary>
+        public Vector2 HalfTileSize => new(settings.HalfTileOffsetX, settings.HalfTileOffsetY);
+
+        /// <summary>
+        /// How high a tile's surface lies above its grid position - see
+        /// <see cref="TileSpawnerSettings.SurfaceOffset"/>. What anything drawn flat on the board
+        /// is raised by, so it lies on the face rather than under it.
+        /// </summary>
+        public float SurfaceOffset => settings.SurfaceOffset;
+
+        /// <summary>
+        /// Where something belonging to <paramref name="zone"/> may go, best candidates first: the
+        /// ring's own ground in random order, then whatever lies nearest outside it. Ranked rather
+        /// than filtered for the same reason a spawn zone is - a ring can be walled off by mountains
+        /// or already full, and re-rolling inside it would spin forever.
+        /// </summary>
+        public List<Vector2Int> GetZonePositions(MapZone zone)
+        {
+            var index = ZoneRules.IndexOf(zone);
+
+            return Tiles
+                .Select(tile => tile.Position)
+                .OrderBy(position => ZoneRules.DistanceOutside(index, position))
+                .ThenBy(_ => Random.value)
+                .ToList();
         }
 
         /// <summary>

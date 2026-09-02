@@ -75,6 +75,15 @@ namespace Runtime.Core
         // world raycast and the item bar - so neither can undo what the other drew.
         private HoverTarget hoverTarget;
 
+        // The lines drawn where one ring of the map ends and the next begins. Built from code like
+        // the attack preview, and redrawn with the board: the rings are measured against the grid.
+        private ZoneBorder zoneBorder;
+
+        // What says a ring has been reached for the first time. On the Initiator's own object like
+        // the outcome watcher, and for the same reason: it is a question asked of where the
+        // character stands, so there is nothing on it to author and nothing in it to snapshot.
+        private ZoneWatcher zoneWatcher;
+
 
         private void Awake()
         {
@@ -83,6 +92,7 @@ namespace Runtime.Core
             CenterCameraOnPlayer();
             SetupUI();
             itemManager.Begin(unitSpawner.PlayerUnit);
+            zoneWatcher.Begin(unitSpawner.PlayerUnit);
             actionHistory.Begin();
             StartGame();
         }
@@ -105,6 +115,8 @@ namespace Runtime.Core
             // A restart replaces every unit: the ones the recorded snapshots refer to, and the
             // character the inventory belongs to. Both start over.
             itemManager.Begin(unitSpawner.PlayerUnit);
+            // And every ring is news again: a fresh character spawns somewhere else on a fresh map.
+            zoneWatcher.Begin(unitSpawner.PlayerUnit);
             actionHistory.Begin();
             StartGame();
         }
@@ -134,6 +146,26 @@ namespace Runtime.Core
             itemManager.Setup(itemBar, CreateItemPopup(), CreateMergeScreen(), gameRules, hoverTarget);
             CreateTooltipView();
             CreateGameOverScreen();
+            CreateZoneWatcher();
+        }
+
+        /// <summary>
+        /// What tells the player they have crossed into a new ring of the map, and the screen it
+        /// says it on. Both here rather than in <see cref="SetupReferences"/> because the
+        /// announcement is a view built on the HUD's panel; the watcher itself holds no match state
+        /// and is not rebuilt on a restart, only told to start over.
+        /// </summary>
+        private void CreateZoneWatcher()
+        {
+            var hud = itemBar.GetComponent<UIDocument>();
+
+            // Just above the bar and under every card: it is news read while playing on, so it
+            // must not cover a card the player opened - and it is dimmed along with the rest when
+            // the match ends. It blocks no input either, see AnnouncementScreen.
+            var announcements = AnnouncementScreen.Create(hud.panelSettings, hud.sortingOrder + 1);
+
+            zoneWatcher = gameObject.AddComponent<ZoneWatcher>();
+            zoneWatcher.Setup(unitSpawner, announcements);
         }
 
         /// <summary>
@@ -211,6 +243,10 @@ namespace Runtime.Core
             CombatRules.Setup(gameRules, tileSpawner);
             // Before anything asks what can be seen or shot at: the line is walked over the tiles.
             SightRules.Setup(tileSpawner);
+            // Before anything is spawned: which ring a tile lies in is what says who guards it and
+            // which kinds of box lie on it. The rings are loaded from Resources, so there is nothing
+            // to wire and a project without an asset simply has an undivided map.
+            ZoneRules.Setup(tileSpawner);
             CombatLog.Setup(gameRules);
             gameStateManager.Setup();
             // Before the spawner: every unit it puts on the board is handed to this to be tracked.
@@ -228,6 +264,7 @@ namespace Runtime.Core
             cameraController.Setup(inputHandler);
             outlineManager.Setup(selector);
             CreateAttackPreview();
+            zoneBorder = ZoneBorder.Create(tileSpawner, gameRules, fogOfWar);
             actionHistory.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, aiController, selector,
                 lootSpawner, itemManager);
             actionAssigner.Setup(selector, hoverTarget);
@@ -278,6 +315,9 @@ namespace Runtime.Core
         private void SpawnEntities()
         {
             tileSpawner.SpawnTiles();
+            // With the grid standing and before anything is put on it: the rings are measured
+            // against the board, so a restart that lays out fresh terrain redraws their borders.
+            zoneBorder.Rebuild();
             unitSpawner.SpawnUnits();
             lootSpawner.SpawnLootboxes();
         }

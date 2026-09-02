@@ -112,15 +112,33 @@ namespace Runtime.Core.Spawning
             unitStateManager.Track(unit);
         }
 
+        /// <summary>
+        /// Puts the opposition on the board: first what each ring of the map fields, inside that
+        /// ring, then whatever belongs to no ring at all, in the band along the rim as before.
+        ///
+        /// The two lists are not two ways of authoring one thing. A zone's roster is who guards that
+        /// distance - which is how an opponent gets stronger the further out it stands, since a ring
+        /// lists its own blueprints - while <see cref="UnitSpawnerSettings.OpponentUnits"/> is the
+        /// roster of a map that is not divided into rings at all. A match authoring zones leaves it
+        /// empty.
+        /// </summary>
         private void SpawnOpponentUnits()
         {
-            foreach (var unitAmount in settings.OpponentUnits)
+            var index = 0;
+
+            foreach (var zone in ZoneRules.Zones)
             {
-                for (int i = 0; i < unitAmount.Amount; i++)
-                {
-                    SpawnUnit(Team.Opponent, unitAmount.Blueprint, i);
-                }
+                if (zone?.Opponents == null)
+                    continue;
+
+                foreach (var unitAmount in zone.Opponents)
+                    for (int i = 0; i < unitAmount.Amount; i++)
+                        SpawnUnit(Team.Opponent, unitAmount.Blueprint, index++, zone);
             }
+
+            foreach (var unitAmount in settings.OpponentUnits)
+                for (int i = 0; i < unitAmount.Amount; i++)
+                    SpawnUnit(Team.Opponent, unitAmount.Blueprint, index++);
         }
 
         /// <summary>
@@ -129,7 +147,7 @@ namespace Runtime.Core.Spawning
         /// blueprint, exactly as a lootbox is one prefab dressed by its type. There is no
         /// prefab-per-kind to keep in step with the blueprint any more.
         /// </summary>
-        private Unit SpawnUnit(Team team, UnitBlueprint blueprint, int index)
+        private Unit SpawnUnit(Team team, UnitBlueprint blueprint, int index, MapZone zone = null)
         {
             if (blueprint == null)
             {
@@ -157,7 +175,7 @@ namespace Runtime.Core.Spawning
             unit.Init(tileSpawner, this, team, gameStateManager, fogOfWar, gameRules, animationSettings,
                 blueprint);
 
-            PlaceUnit(unit, team);
+            PlaceUnit(unit, team, zone);
 
             if(team == Team.Opponent)
             {
@@ -214,14 +232,20 @@ namespace Runtime.Core.Spawning
         }
 
         /// <summary>
-        /// Puts a freshly spawned unit on the first tile of its spawn zone that will take it. The zone is
-        /// ranked rather than rolled: it can be walled off by mountains or filled by the units placed before
-        /// it, and re-rolling inside it would spin forever - the tail of the list spills over its border
+        /// Puts a freshly spawned unit on the first tile that will take it, best candidates first: a
+        /// unit belonging to a ring of the map takes that ring's ground, and one belonging to none
+        /// takes its team's spawn zone. The list is ranked rather than rolled either way: a ring or
+        /// a zone can be walled off by mountains or filled by the units placed before it, and
+        /// re-rolling inside it would spin forever - the tail of the list spills over its border
         /// instead.
         /// </summary>
-        private void PlaceUnit(Unit unit, Team team)
+        private void PlaceUnit(Unit unit, Team team, MapZone zone = null)
         {
-            foreach (var gridPosition in tileSpawner.GetSpawnZonePositions(team))
+            var candidates = zone != null
+                ? tileSpawner.GetZonePositions(zone)
+                : tileSpawner.GetSpawnZonePositions(team);
+
+            foreach (var gridPosition in candidates)
             {
                 var tile = tileSpawner.GetTileAtPosition(gridPosition);
 

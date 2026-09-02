@@ -25,6 +25,11 @@ namespace Data
     /// One kind - in practice one tier - of lootbox: what it looks like, what it costs to take, where
     /// its boxes come from, how many of them a match contains and what share of them holds what.
     ///
+    /// It says nothing about *where* on the map its boxes lie either. That is a zone's
+    /// (<see cref="MapZone.Loot"/>): a ring lists the kinds found in it, so the distance a tier is
+    /// walked to and the distance its guards spawn at are one authored number rather than two that
+    /// can drift. A kind no zone lists lies anywhere.
+    ///
     /// It deliberately does **not** list what may be inside it. That is authored the other way round:
     /// every <see cref="Item"/> names the kind of box it turns up in on <see cref="Item.FoundIn"/>,
     /// so a new item is placed in the loot table by the same asset that defines it and no second
@@ -84,18 +89,6 @@ namespace Data
                  "a slot of its own. Each artefact is dealt once, so a kind asking for as many " +
                  "boxes as there are artefacts puts every one of them on the map.")]
         [Range(0, 100)] public int ArtefactPercent;
-
-        [Header("Where On The Map They Lie")]
-        [Tooltip("The innermost this kind's scattered boxes lie, as a fraction of the way from the " +
-                 "middle of the map to its furthest tile: 0 is the centre, 1 the rim. A fraction " +
-                 "rather than a number of tiles, so it means the same on any map size.")]
-        [Range(0f, 1f)] public float MinDistanceFromCenter;
-
-        [Tooltip("The outermost they lie, on the same scale. Together with the field above this is " +
-                 "the ring a tier is found in - a richer tier set further out is a longer walk for " +
-                 "a better find. A ring with no tile left to spare spills over its border rather " +
-                 "than losing its boxes, exactly as a spawn zone does.")]
-        [Range(0f, 1f)] public float MaxDistanceFromCenter = 1f;
 
         /// <summary>What to call this kind, falling back to the asset name while none is authored.</summary>
         public string Title => string.IsNullOrWhiteSpace(DisplayName) ? name : DisplayName;
@@ -179,26 +172,6 @@ namespace Data
             }
 
             return counts;
-        }
-
-        /// <summary>
-        /// How far a tile lying at <paramref name="distanceFromCenter"/> (0 in the middle of the map,
-        /// 1 at its furthest tile) falls outside this kind's ring; 0 inside it, which is what makes
-        /// the ring itself sort as one block for the shuffle behind it to scatter.
-        ///
-        /// The same shape as a spawn zone's miss distance, and for the same reason: the ring is
-        /// preferred rather than required, so a kind whose ring is walled off by mountains or already
-        /// taken up by the tiers before it takes the nearest ground outside it instead of not being
-        /// placed at all.
-        /// </summary>
-        public float DistanceOutsideRing(float distanceFromCenter)
-        {
-            // Authored the wrong way round is read as the ring between the two rather than as an
-            // empty one, which would push every box of the kind out to the rim.
-            var inner = Mathf.Min(MinDistanceFromCenter, MaxDistanceFromCenter);
-            var outer = Mathf.Max(MinDistanceFromCenter, MaxDistanceFromCenter);
-
-            return Mathf.Max(0f, Mathf.Max(inner - distanceFromCenter, distanceFromCenter - outer));
         }
 
         /// <summary>What share of this kind's boxes hold <paramref name="kind"/>. Zero for a non-category.</summary>

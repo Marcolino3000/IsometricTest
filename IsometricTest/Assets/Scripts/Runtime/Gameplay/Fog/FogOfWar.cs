@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Runtime.Core.Spawning;
 using Runtime.Core.State;
@@ -173,7 +174,16 @@ namespace Runtime.Gameplay.Fog
 
             ApplyTileVisibility(_shownPositions, ExploredFor(_shownTeam));
             ApplyUnitVisibility();
+
+            Recomputed?.Invoke();
         }
+
+        /// <summary>
+        /// The fog has been redrawn. For whatever is drawn on the board without belonging to a tile
+        /// or a unit - the zone borders today - since those two are pushed at directly and anything
+        /// else would otherwise have to watch for drift in <c>Update</c>.
+        /// </summary>
+        public event Action Recomputed;
 
         /// <summary>
         /// Whether the unit is on screen right now: it belongs to the viewing team, or it stands where

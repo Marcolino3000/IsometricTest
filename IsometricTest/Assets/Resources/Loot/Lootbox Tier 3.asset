@@ -23,5 +23,3 @@ MonoBehaviour:
   ActiveItemPercent: 20
   PassiveItemPercent: 40
   ArtefactPercent: 0
-  MinDistanceFromCenter: 0.65
-  MaxDistanceFromCenter: 1.0

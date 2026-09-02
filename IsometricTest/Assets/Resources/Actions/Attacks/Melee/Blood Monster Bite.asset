@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
-  m_Name: Blood Monster Attack
+  m_Name: Blood Monster Bite
   m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
   DisplayName: 
   Description: 
@@ -19,10 +19,20 @@ MonoBehaviour:
   condition:
     rid: -2
   Kind: 0
-  Traits: []
-  effects: []
+  Traits:
+  - {fileID: 0}
+  effects:
+  - rid: 4896932351812829250
   references:
     version: 2
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
+    - rid: 4896932351812829250
+      type: {class: AttackEffect, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Targets:
+          rid: -2
+        Requires: []
+        Damage: 8
+        Note: 

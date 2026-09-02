@@ -10,20 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbcaca3db3794b188c3bb2227ae55a0d, type: 3}
-  m_Name: Blood Monster Blueprint
+  m_Name: Demon Blueprint
   m_EditorClassIdentifier: Assembly-CSharp::Data.UnitBlueprint
   Sprite: {fileID: 0}
   Animations: {fileID: 0}
   defaultState:
     Team: 0
-    SightRange: 3
+    SightRange: 4
     MoveAction: {fileID: 0}
     Traits:
+    - {fileID: 11400000, guid: 1ca75753f20541bcb1ba80225cab6fc3, type: 2}
+    - {fileID: 11400000, guid: bb9b31f40b1746b292fc04c862cb3a22, type: 2}
     - {fileID: 11400000, guid: e39ef3961e384f18a5424164e0b6b823, type: 2}
-    - {fileID: 11400000, guid: 55535b6937f04d4f8a260b2cb21876e6, type: 2}
+    - {fileID: 11400000, guid: 2957bb0121ef48e882ba92e066aa719a, type: 2}
     health: 15
-    actionPoints: 3
+    actionPoints: 4
     hasActionsLeft: 0
     position: {fileID: 0}
-    attackAction: {fileID: 11400000, guid: 2a49e857560774cf49f87571b4a5d5ed, type: 2}
+    attackAction: {fileID: 11400000, guid: 7582357c675ac4c00b37c9537a368433, type: 2}
     statBonuses: 

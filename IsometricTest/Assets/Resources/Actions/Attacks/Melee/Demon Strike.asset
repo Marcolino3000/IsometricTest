@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fbfa45af9ef4158a485d5a595033934, type: 3}
+  m_Name: Demon Strike
+  m_EditorClassIdentifier: Assembly-CSharp::Actions.AttackActionData
+  DisplayName: 
+  Description: 
+  Symbol: {fileID: 0}
+  FoundIn: {fileID: 0}
+  condition:
+    rid: -2
+  Kind: 0
+  Traits: []
+  effects:
+  - rid: 4896932351812829251
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 4896932351812829251
+      type: {class: AttackEffect, ns: Actions, asm: Assembly-CSharp}
+      data:
+        Targets:
+          rid: -2
+        Requires: []
+        Damage: 7
+        Note: 
