@@ -49,7 +49,7 @@ namespace Runtime.Gameplay.Global
             // retaliation is a strike of its own with the roles swapped, so it draws itself for free.
             // The flinch is said with the swing rather than off the health, which moves for a heal
             // and for an undo as well - and does not move at all for a hit that was fully absorbed.
-            attacker.PlayAttackAnimation();
+            attacker.PlayAttackAnimation(target);
             target.PlayHitAnimation();
 
             // Whatever a trait had to say about this strike goes to the unit before the health does:

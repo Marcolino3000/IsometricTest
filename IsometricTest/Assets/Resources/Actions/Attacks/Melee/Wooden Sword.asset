@@ -40,19 +40,10 @@ MonoBehaviour:
       type: {class: AttackEffect, ns: Actions, asm: Assembly-CSharp}
       data:
         Targets:
-          rid: 7325566178907914309
+          rid: -2
         Requires: []
-        Damage: 6
-        Note: Splash
-    - rid: 7325566178907914309
-      type: {class: AreaSelector, ns: Actions, asm: Assembly-CSharp}
-      data:
-        Centre: 0
-        Radius: 1
-        Side: 0
-        IncludeTarget: 0
-        IncludeSource: 0
-        RequireLineOfFire: 1
+        Damage: 3
+        Note: 
     - rid: 7808921723625888601
       type: {class: AttackCondition, ns: Actions, asm: Assembly-CSharp}
       data:

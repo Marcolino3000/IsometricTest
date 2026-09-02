@@ -38,6 +38,13 @@ namespace Actions
             if(Cost > Context.ActionPoints)
                 return false;
 
+            // The same question the route was found by, so the path and the bill can never disagree
+            // about where a confined unit may set foot - see MovementRules.CanEnter.
+            if (!MovementRules.CanEnter(
+                    Context.TargetUnit != null ? Context.TargetUnit.CurrentState : null,
+                    Context.TargetTile))
+                return false;
+
             return true;
         }
 

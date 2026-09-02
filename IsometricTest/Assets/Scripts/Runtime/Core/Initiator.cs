@@ -248,6 +248,9 @@ namespace Runtime.Core
         private void SetupReferences()
         {
             CombatRules.Setup(gameRules, tileSpawner);
+            // The other half of a step: whether it may be taken at all - which is what confines an
+            // opponent to the ring it spawned in.
+            MovementRules.Setup(gameRules);
             // Before anything asks what can be seen or shot at: the line is walked over the tiles.
             SightRules.Setup(tileSpawner);
             // Before anything is spawned: which ring a tile lies in is what says who guards it and

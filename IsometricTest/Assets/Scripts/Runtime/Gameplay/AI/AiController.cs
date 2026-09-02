@@ -475,7 +475,7 @@ namespace Runtime.Gameplay.AI
                 // budgeted for. Price that path before committing to the tile and take the next best
                 // one when it does not fit - a plan the executor turns down would spend the
                 // activation standing still.
-                var path = tileSpawner.GetPath(from, tile);
+                var path = tileSpawner.GetPath(from, tile, mover: unit.CurrentState);
 
                 if (path.Count > 0 && MovementRules.GetPathCost(unit.CurrentState, path) <= budget)
                     return tile;
@@ -628,7 +628,8 @@ namespace Runtime.Gameplay.AI
         private Tile FurthestStepAlongPath(Unit unit, Tile target)
         {
             // Enemies and last-known tiles are occupied targets; path onto them and stop just short.
-            var path = tileSpawner.GetPath(unit.CurrentState.Position, target, ignoreGoalOccupied: true);
+            var path = tileSpawner.GetPath(unit.CurrentState.Position, target, ignoreGoalOccupied: true,
+                mover: unit.CurrentState);
 
             var budget = unit.CurrentState.ActionPoints;
 

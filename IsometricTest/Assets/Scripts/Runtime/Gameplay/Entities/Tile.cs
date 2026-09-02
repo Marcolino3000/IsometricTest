@@ -121,13 +121,21 @@ namespace Runtime.Gameplay.Entities
             // if (Elevation > 0)
             //     stats.Add($"Elevation {Elevation} - blocks the sight of anyone standing lower");
 
-            var entries = new List<Capability>();
-
+            // What the ground grants is printed the way the ground's own numbers are - one small
+            // line, the stat and the value - rather than as a named row: a terrain trait is a
+            // number, and its name above the line would say no more than the line does.
             foreach (var trait in Traits)
             {
-                if (trait != null)
-                    entries.Add(new Capability(trait.Icon, trait.name,""));
+                if (trait == null)
+                    continue;
+
+                var summary = trait.Summary;
+
+                if (!string.IsNullOrWhiteSpace(summary))
+                    stats.Add(summary);
             }
+
+            var entries = new List<Capability>();
 
             // The box is folded in rather than picked out of the world of its own: it does not occupy
             // its tile and has no collider, so the ground it lies on is what the cursor reaches.

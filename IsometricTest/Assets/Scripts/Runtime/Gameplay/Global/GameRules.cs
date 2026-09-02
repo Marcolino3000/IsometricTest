@@ -19,6 +19,13 @@ namespace Runtime.Gameplay.Global
                  "or forgo one while it is on. A counter-strike still has to reach the attacker.")]
         public bool RetaliationEnabled = true;
 
+        [Header("Zones")]
+        [Tooltip("When on, an opposing unit may only walk inside the ring of the map it spawned in - " +
+                 "it holds the distance it guards instead of following the character across the " +
+                 "board. Only its steps are confined: it still strikes across the border at anything " +
+                 "its weapon reaches. A map with no rings authored confines nobody.")]
+        public bool ConfineOpponentsToSpawnZone;
+
         [Header("Fog of war")]
         [Tooltip("When on, the map switches to the acting team's vision while an AI plays its turn, so you " +
                  "watch every move it makes. When off, the view stays with your own units and the AI's moves " +

@@ -7,9 +7,15 @@ using UnityEngine;
 namespace Runtime.Gameplay.Entities
 {
     /// <summary>
-    /// Draws a unit: the walk between two tiles, and which frames are showing while it walks, stands
-    /// or strikes. Purely presentational - the board has already moved on by the time any of this is
-    /// shown, so nothing here is ever asked a question about the game.
+    /// Draws a unit: the walk between two tiles, which frames are showing while it walks, stands or
+    /// strikes, and which way it is turned while doing so. Purely presentational - the board has
+    /// already moved on by the time any of this is shown, so nothing here is ever asked a question
+    /// about the game.
+    ///
+    /// It owns the facing for the same reason it owns the walk: turning has to be ordered against
+    /// both queues rather than done when a thing is said. A unit that walks into range says its
+    /// swing before it sets off, so a turn taken then would turn it out of the walk - the step is
+    /// turned into as it begins, and the strike as it begins.
     ///
     /// It owns the walk as well as the frames on purpose. A move is instant to the rules
     /// (<see cref="Unit.TryMoveToTile"/> claims the tile and the fog is recomputed in the same
@@ -66,10 +72,17 @@ namespace Runtime.Gameplay.Entities
             public readonly UnitAnimationSet.Clip Clip;
             public readonly Action Finished;
 
-            public OneShot(UnitAnimationSet.Clip clip, Action finished)
+            // Which way the unit is turned before this is drawn, as a world x to turn towards, and
+            // null for something that has no side to it. Carried with the clip rather than applied
+            // when the strike is said, for the same reason the clip is: a unit that walks into range
+            // says its swing before it sets off, and turning then would turn it out of the walk.
+            public readonly float? FaceTowardsX;
+
+            public OneShot(UnitAnimationSet.Clip clip, Action finished, float? faceTowardsX)
             {
                 Clip = clip;
                 Finished = finished;
+                FaceTowardsX = faceTowardsX;
             }
         }
 
@@ -150,10 +163,13 @@ namespace Runtime.Gameplay.Entities
         /// <summary>
         /// Draws a strike with <paramref name="kind"/>. Said once per blow, so a retaliation animates
         /// the unit that answers as surely as the first swing animates the one that started it.
+        ///
+        /// <paramref name="faceTowardsX"/> is where the blow is aimed - the unit is turned towards it
+        /// as the swing begins, which for a unit that walked into range is after it has arrived.
         /// </summary>
-        public void PlayAttack(WeaponKind kind)
+        public void PlayAttack(WeaponKind kind, float? faceTowardsX = null)
         {
-            Enqueue(set.AttackFor(kind));
+            Enqueue(set.AttackFor(kind), faceTowardsX: faceTowardsX);
         }
 
         /// <summary>
@@ -179,14 +195,14 @@ namespace Runtime.Gameplay.Entities
             return Enqueue(set.For(UnitAnimation.Death), finished);
         }
 
-        private bool Enqueue(UnitAnimationSet.Clip clip, Action finished = null)
+        private bool Enqueue(UnitAnimationSet.Clip clip, Action finished = null, float? faceTowardsX = null)
         {
             // Nothing authored, nothing queued - and nothing holding a callback that would never be
             // called, which is what a fall depends on being able to trust.
             if (clip == null)
                 return false;
 
-            oneShots.Enqueue(new OneShot(clip, finished));
+            oneShots.Enqueue(new OneShot(clip, finished, faceTowardsX));
 
             return true;
         }
@@ -208,23 +224,21 @@ namespace Runtime.Gameplay.Entities
                 if (steps.Count == 0)
                     return;
 
-                activeStep = steps.Dequeue();
-
-                // Timed per step rather than given a speed, so a step onto a hill - which is longer,
-                // being also a step upwards - takes as long as a step across flat ground.
-                stepSpeed = Vector3.Distance(transform.position, activeStep) / set.SecondsPerStep;
-                stepping = true;
+                BeginStep(steps.Dequeue());
             }
 
             // Nothing to show, so nothing to wait for: the whole remaining path is spent at once.
+            // Still one step at a time rather than straight to the last of them, so the unit is left
+            // facing the way its final step went rather than the way the whole path led.
             if (!IsVisible)
             {
-                var last = activeStep;
-
                 while (steps.Count > 0)
-                    last = steps.Dequeue();
+                {
+                    transform.position = activeStep;
+                    BeginStep(steps.Dequeue());
+                }
 
-                transform.position = last;
+                transform.position = activeStep;
                 stepping = false;
                 return;
             }
@@ -238,6 +252,45 @@ namespace Runtime.Gameplay.Entities
                 stepping = false;
         }
 
+        /// <summary>
+        /// Takes up <paramref name="step"/> as the one being walked now. Turned as the step is begun
+        /// rather than as the move is planned: a move is one action per tile stepped on, so a path
+        /// around a corner turns into each of its tiles instead of pointing at where it ends up.
+        /// </summary>
+        private void BeginStep(Vector3 step)
+        {
+            FaceTowards(step.x);
+
+            // Timed per step rather than given a speed, so a step onto a hill - which is longer,
+            // being also a step upwards - takes as long as a step across flat ground.
+            stepSpeed = Vector3.Distance(transform.position, step) / set.SecondsPerStep;
+            activeStep = step;
+            stepping = true;
+        }
+
+        /// <summary>
+        /// Turns the unit towards <paramref name="worldX"/>. Sprites are drawn facing right, so a
+        /// target to the left is the mirrored one - the same convention
+        /// <see cref="Feedback.AttackPreview"/> stands its ghost with.
+        ///
+        /// Only the width is asked, since that is all a mirrored sprite can say: on the isometric
+        /// grid every step changes it, so a walk always turns. Two tiles of equal width - straight up
+        /// or down the screen, which only a reach of more than one can span - have no side to them,
+        /// and the unit is left facing the way it already was.
+        /// </summary>
+        private void FaceTowards(float worldX)
+        {
+            if (spriteRenderer == null)
+                return;
+
+            var delta = worldX - transform.position.x;
+
+            if (Mathf.Approximately(delta, 0f))
+                return;
+
+            spriteRenderer.flipX = delta < 0f;
+        }
+
         private void Choose()
         {
             // What happened is shown once the walk is over. Held until then rather than dropped: a
@@ -245,6 +298,9 @@ namespace Runtime.Gameplay.Entities
             if (oneShots.Count > 0 && !IsWalking)
             {
                 var next = oneShots.Dequeue();
+
+                if (next.FaceTowardsX.HasValue)
+                    FaceTowards(next.FaceTowardsX.Value);
 
                 currentFinished = next.Finished;
                 Play(next.Clip, once: true);

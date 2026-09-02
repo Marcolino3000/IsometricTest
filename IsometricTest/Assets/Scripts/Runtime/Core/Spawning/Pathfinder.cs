@@ -66,6 +66,13 @@ namespace Runtime.Core.Spawning
                     if (!neighborTile.IsPassable)
                         continue;
 
+                    // Ground this particular unit is not allowed on - an opponent confined to the
+                    // ring it spawned in. Asked here rather than only where the step is charged, so
+                    // the route, the reachable-tile highlight and the threat overlay all show the
+                    // board it is actually allowed to walk instead of one it will be refused.
+                    if (!MovementRules.CanEnter(mover, neighborTile))
+                        continue;
+
                     if (!ignoreOccupied)
                     {
                         //do not traverse through occupied tiles
@@ -108,7 +115,8 @@ namespace Runtime.Core.Spawning
         public List<Tile> FindAttackApproachPath(Unit attacker, Tile target, bool ignoreOccupied = false)
         {
             var start = attacker != null ? attacker.CurrentState.Position : null;
-            var path = FindPath(start, target, ignoreOccupied, ignoreGoalOccupied: true, excludeGoal: true);
+            var path = FindPath(start, target, ignoreOccupied, ignoreGoalOccupied: true, excludeGoal: true,
+                mover: attacker != null ? attacker.CurrentState : null);
 
             var result = new List<Tile>();
 

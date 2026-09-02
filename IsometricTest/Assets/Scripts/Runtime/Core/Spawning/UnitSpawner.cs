@@ -299,6 +299,15 @@ namespace Runtime.Core.Spawning
                 if (!unit.TryPlaceAtTile(tile))
                     continue;
 
+                // Which ring it belongs to for the rest of the match. Read off the tile it actually
+                // landed on rather than off the roster entry that asked for it: a ring walled off by
+                // mountains or already full spills its units over its own border, and what confines
+                // a unit has to be where it is standing. Only opponents are ever confined, so only
+                // they are given one - the character is free to walk the whole map.
+                unit.CurrentState.HomeZone = team == Team.Player
+                    ? UnitState.NoZone
+                    : ZoneRules.IndexAt(tile);
+
                 // Placed, not moved: a fresh unit would otherwise be seen walking to its spawn tile
                 // from wherever the prefab was instantiated.
                 unit.SnapToCurrentTile();

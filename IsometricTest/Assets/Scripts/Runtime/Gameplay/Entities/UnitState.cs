@@ -130,6 +130,23 @@ namespace Runtime.Gameplay.Entities
         public int SightRange;
         public MoveActionData MoveAction;
 
+        /// <summary>A unit that belongs to no ring of the map, and so is confined by none.</summary>
+        public const int NoZone = -1;
+
+        /// <summary>
+        /// Which ring of the map the unit was put on the board in - what
+        /// <see cref="Global.MovementRules.CanEnter"/> confines it to while
+        /// <see cref="Global.GameRules.ConfineOpponentsToSpawnZone"/> is on. Read off the tile it
+        /// was actually placed on rather than off the roster entry that asked for it, since a ring
+        /// walled off by mountains spills its units over its own border.
+        ///
+        /// Runtime only, and deliberately outside <see cref="History.GameSnapshot"/>: it is written
+        /// once when the unit arrives and never moves again, so there is nothing for an undo to put
+        /// back. <see cref="NoZone"/> for the player's character and for every unit on a map with no
+        /// rings authored.
+        /// </summary>
+        [NonSerialized] public int HomeZone = NoZone;
+
         public List<UnitTrait> Traits = new();
 
         public bool HasActionsLeft => hasActionsLeft;
@@ -280,6 +297,10 @@ namespace Runtime.Gameplay.Entities
             ActionPoints = other.ActionPoints;
             Team = other.Team;
             SightRange = other.SightRange;
+            // Not copied: a blueprint belongs to no ring, and where a unit spawns is decided when it
+            // is placed. Set explicitly because a state read back off an asset never ran an
+            // initializer.
+            HomeZone = NoZone;
             // Copy into a fresh list so per-unit runtime state never aliases the blueprint's list.
             Traits = other.Traits != null ? new List<UnitTrait>(other.Traits) : new List<UnitTrait>();
             // Same reason: a bonus an item grants one unit must not be granted to every unit the

@@ -504,16 +504,22 @@ namespace Runtime.Gameplay.Entities
         }
 
         /// <summary>
-        /// Draws the unit striking - said once per blow by whoever resolves it, so a retaliation
-        /// animates the unit that answers as surely as the first swing animates the one that started
-        /// it. Which swing is drawn follows the weapon in hand, like everything else about a strike.
+        /// Draws the unit striking <paramref name="target"/> - said once per blow by whoever resolves
+        /// it, so a retaliation animates the unit that answers as surely as the first swing animates
+        /// the one that started it. Which swing is drawn follows the weapon in hand, like everything
+        /// else about a strike.
+        ///
+        /// The target is handed over so the unit turns to face it. Where it stands rather than which
+        /// tile it is on, since the animator turns the sprite and both ends are read in the same
+        /// world the sprite walks through.
         /// </summary>
-        public void PlayAttackAnimation()
+        public void PlayAttackAnimation(Unit target)
         {
             if (animator == null || currentState.AttackAction == null)
                 return;
 
-            animator.PlayAttack(currentState.AttackAction.Kind);
+            animator.PlayAttack(currentState.AttackAction.Kind,
+                target != null ? target.transform.position.x : null);
         }
 
         /// <summary>

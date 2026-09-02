@@ -38,9 +38,16 @@ namespace Runtime.Core.Spawning
             return tileA.DistanceTo(tileB);
         }
 
-        public List<Tile> GetPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false)
+        /// <summary>
+        /// The route from <paramref name="start"/> to <paramref name="goal"/>. Pass the
+        /// <paramref name="mover"/> whenever there is one: the route is then priced with its own
+        /// step costs and kept to ground it is allowed on - see <see cref="MovementRules.CanEnter"/>,
+        /// which is what confines an opponent to the ring it spawned in. Without one this is the
+        /// bare terrain route, which is what a caller sizing a path for nobody in particular wants.
+        /// </summary>
+        public List<Tile> GetPath(Tile start, Tile goal, bool ignoreOccupied = false, bool ignoreGoalOccupied = false, bool excludeGoal = false, UnitState mover = null)
         {
-            return _pathfinder.FindPath(start, goal, ignoreOccupied, ignoreGoalOccupied, excludeGoal);
+            return _pathfinder.FindPath(start, goal, ignoreOccupied, ignoreGoalOccupied, excludeGoal, mover);
         }
 
         /// <summary>

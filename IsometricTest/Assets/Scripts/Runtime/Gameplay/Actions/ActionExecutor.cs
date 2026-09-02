@@ -40,7 +40,10 @@ namespace Runtime.Gameplay.Actions
             if (unit == null || !unit.IsAlive)
                 return new ConditionTestResult(false, -1);
 
-            var path = tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile);
+            // The mover is handed over, so the route is the one this unit is priced for and allowed
+            // on - a step MoveAction would refuse is never planned in the first place.
+            var path = tileSpawner.GetPath(unit.CurrentState.Position, executeArgs.TargetTile,
+                mover: unit.CurrentState);
             
             PlanMoveActionsFromPath(path);
             var result = TestConditionsForPlannedActions();
