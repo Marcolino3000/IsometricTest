@@ -5,6 +5,7 @@ using Runtime.Gameplay.Actions;
 using Runtime.Gameplay.Controls;
 using Runtime.Gameplay.Fog;
 using Runtime.Gameplay.Global;
+using Runtime.Gameplay.Traits;
 using UI;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -139,9 +140,16 @@ namespace Runtime.Gameplay.Entities
             // commands one unit. Handed in rather than asked for, so nothing here has to know which
             // unit is the player's - the spawner that spawns it does.
             if (vitals != null)
+            {
                 healthBar.SetupIn(vitals.HealthRow, vitals.HealthBlob, MaxHealth);
+                // And what it carries, in the row above them. Said here for the same reason the
+                // bars are: this is where the one unit the HUD belongs to is known.
+                vitals.ShowTraitsOf(this);
+            }
             else
+            {
                 healthBar.Setup(MaxHealth);
+            }
 
             actionExecutor.Setup(this, tileSpawner, vitals);
 
@@ -273,6 +281,40 @@ namespace Runtime.Gameplay.Entities
         }
 
         /// <summary>
+        /// Health taken by something the unit is carrying rather than by a blow - a bleed ticking
+        /// over. Its own door beside the strike in <c>CombatRunner</c>, and deliberately not through
+        /// <c>CombatRules</c>: nobody is attacking, so there is no attacker whose traits could fold
+        /// into it and no defence to be shrugged off with.
+        ///
+        /// Never kills on the spot. Whoever ticked the status collects the units that fell and takes
+        /// them off the board afterwards, the way <c>CombatRunner</c> does - several statuses may
+        /// finish one unit, and each of them would otherwise announce its fall.
+        /// </summary>
+        public void TakeStatusDamage(int amount, string note = null)
+        {
+            if (amount <= 0 || !IsAlive)
+                return;
+
+            PlayHitAnimation(afterASwing: false);
+            NoteNextDamage(note);
+
+            currentState.Health -= amount;
+        }
+
+        /// <summary>
+        /// Puts a status on the unit - what a weapon that wounds or an item that curses does. The
+        /// state owns the list, so this is only the door a caller holding a <see cref="Unit"/> comes
+        /// in by, plus the one thing the state cannot know: a unit that is off the board takes none.
+        /// </summary>
+        public void ApplyStatus(StatusTrait status)
+        {
+            if (!IsAlive)
+                return;
+
+            currentState.ApplyStatus(status);
+        }
+
+        /// <summary>
         /// Brings the health bar in line with the unit's maximum, which an item can move. Sets the
         /// blobs shown as well as how many there are: the row is rebuilt from nothing, and a restore
         /// that changes the maximum without changing the health would otherwise leave it blank.
@@ -317,20 +359,37 @@ namespace Runtime.Gameplay.Entities
 
         /// <summary>
         /// The number over the unit's head, with whatever the strike had to say beside it. The note
-        /// is spent here, so a hit that has nothing to say cannot inherit the last one's word.
+        /// is spent here rather than where the number is drawn, so a hit that has nothing to say
+        /// cannot inherit the last one's word.
+        ///
+        /// Shown with the flinch rather than where the health moved, when there is a flinch waiting
+        /// to be drawn: the rules resolve a whole strike in one frame, so a number said there is
+        /// over before the unit is seen to take the blow - and a whole walk early for one that
+        /// stepped into range. Anything that moved health without a blow behind it - a heal, a
+        /// status ticking on a unit with no frames for it - has nothing to wait for and says it now.
         /// </summary>
         private void ShowHealthPopup(int delta)
         {
-            // Popups reuse the health bar's world-space panel settings so they render like the unit bars.
-            var panelSettings = healthBar.GetComponent<UIDocument>().panelSettings;
-
             var note = damageNote;
             damageNote = null;
 
-            if (delta > 0)
-                FloatingText.ShowHeal(delta, transform.position, panelSettings);
-            else
-                FloatingText.ShowDamage(delta, transform.position, panelSettings, note);
+            void Show()
+            {
+                // Popups reuse the health bar's world-space panel settings so they render like the
+                // unit bars. Read where the unit is now rather than where it was struck, so one that
+                // is still walking its last step carries its number with it.
+                var panelSettings = healthBar.GetComponent<UIDocument>().panelSettings;
+
+                if (delta > 0)
+                    FloatingText.ShowHeal(delta, transform.position, panelSettings);
+                else
+                    FloatingText.ShowDamage(delta, transform.position, panelSettings, note);
+            }
+
+            if (animator != null && animator.SayWithHit(Show))
+                return;
+
+            Show();
         }
         
         private void HandleActionPointsChanged(Runtime.Core.State.ChangeEvent<int> changeEvent)
@@ -412,7 +471,8 @@ namespace Runtime.Gameplay.Entities
         /// real action would trigger around it: no damage popup, and no fog recompute per unit - the
         /// caller does a single pass once every unit is back in place.
         /// </summary>
-        public void RestoreSnapshot(Tile tile, int health, int actionPoints, int[] statBonuses)
+        public void RestoreSnapshot(Tile tile, int health, int actionPoints, int[] statBonuses,
+            StatusRecord[] statuses)
         {
             restoringSnapshot = true;
 
@@ -421,18 +481,23 @@ namespace Runtime.Gameplay.Entities
             using var _ = currentState.Changing(ChangeReason.Restore);
 
             // A board is put back rather than played out again, the way the step onto a tile is put
-            // back rather than walked. A unit that should be down is simply down - a redone kill has
-            // queued its fall a moment ago, and this is what finishes it without it being watched.
+            // back rather than walked - so whatever the unit had left to show is dropped, the damage
+            // number waiting on a flinch with it: a hit taken back by an undo says nothing.
+            animator?.Cancel();
+
+            // A unit that should be down is simply down - a redone kill has queued its fall a moment
+            // ago, and this is what finishes it without it being watched.
             if (!IsAlive)
-            {
-                animator?.Cancel();
                 SetRevealed(false);
-            }
 
             // Before the vitals: both bars have to have room for the recorded values, and both
             // maxima are things an item moves. The wider sight a bonus may bring back needs no help -
             // the caller recomputes the fog once every unit is back in place.
             currentState.RestoreBonuses(statBonuses);
+            // Beside the bonuses because it is the same kind of thing: what the unit carries, put
+            // back rather than re-derived. Only the statuses are touched - the traits its blueprint
+            // grants and the ones a worn passive put on the list stay where they are.
+            currentState.RestoreStatuses(statuses);
             RefreshHealthBar();
             actionExecutor.RefreshActionPointsBar();
 
@@ -534,10 +599,12 @@ namespace Runtime.Gameplay.Entities
         /// <summary>
         /// Draws the unit taking a blow - said by whoever resolves the strike, like the swing that
         /// caused it, and for an absorbed hit too: a hit shrugged off still has to read as a hit.
+        /// <paramref name="afterASwing"/> false for damage no swing caused, which is drawn at once
+        /// rather than waiting out the beat a flinch owes the blow it answers.
         /// </summary>
-        public void PlayHitAnimation()
+        public void PlayHitAnimation(bool afterASwing = true)
         {
-            animator?.PlayHit();
+            animator?.PlayHit(afterASwing);
         }
 
         private void MoveTransformToTile(Tile tile)

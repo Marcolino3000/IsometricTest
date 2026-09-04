@@ -30,6 +30,7 @@ namespace UI
 
         private const float IconSize = 56f;
         private const int FontSize = 34;
+        private const int CountFontSize = 26;
 
         private Unit unit;
         private VisualElement root;
@@ -117,6 +118,12 @@ namespace UI
             else
                 badge.Add(BuildLabel(capability.Label));
 
+            // Beside whichever of the two was drawn: a symbol says what a status is and nothing
+            // about how deep it runs, and three identical badges said that worse than one and a
+            // number. Nothing at all where there is only one, which is most of them.
+            if (capability.Count > 1)
+                badge.Add(BuildCountLabel(capability.Count));
+
             return badge;
         }
 
@@ -131,6 +138,19 @@ namespace UI
                 new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat));
 
             return icon;
+        }
+
+        /// <summary>
+        /// How many of a capability the unit has, hung on its badge. Smaller than a badge that reads
+        /// as words, since this one is read off an icon rather than instead of it.
+        /// </summary>
+        private static Label BuildCountLabel(int count)
+        {
+            var label = BuildLabel($"×{count}");
+            label.style.fontSize = CountFontSize;
+            label.style.marginLeft = 4f;
+
+            return label;
         }
 
         private static Label BuildLabel(string text)

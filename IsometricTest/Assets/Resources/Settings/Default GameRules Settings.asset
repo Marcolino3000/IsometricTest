@@ -17,6 +17,7 @@ MonoBehaviour:
   ShowEnemyTurns: 0
   HideUnexploredTerrain: 1
   StackDuplicateActiveItems: 1
+  StackDuplicatePassiveItems: 0
   AutoCollectLootboxes: 1
   ShowMovementRange: 0
   ShowUnitBadges: 0

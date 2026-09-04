@@ -1,3 +1,4 @@
+using Runtime.Gameplay.Entities;
 using Runtime.Gameplay.Global;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -26,8 +27,10 @@ namespace UI
     /// built rather than by asking them to build again: a size is written onto a blob, so moving one
     /// in the inspector needs no rebuild and no bar has to remember what it was last shown.
     ///
-    /// It picks nothing: the rows say what the character has, and a click on them is meant for the
-    /// board behind.
+    /// <b>The rows pick nothing; the trait symbols above them do.</b> A blob says what the character
+    /// has and a click on it is meant for the board behind, but a symbol is a picture until
+    /// something says what it means - so <see cref="TraitBar"/> takes the pointer on each one and
+    /// nothing else here does.
     /// </summary>
     public class PlayerVitals
     {
@@ -42,12 +45,26 @@ namespace UI
 
         private readonly PlayerVitalsSettings settings;
 
-        public PlayerVitals()
+        /// <summary>
+        /// The symbols above the health - what the character carries and what has been put on it.
+        /// Owned here rather than by the unit, like the two rows: it is a piece of the HUD block,
+        /// and the unit only says which traits to draw.
+        /// </summary>
+        private readonly TraitBar traits;
+
+        public PlayerVitals(HoverTarget hoverTarget)
         {
             settings = PlayerVitalsSettings.Load();
 
             Root = new VisualElement { name = "playerVitals", pickingMode = PickingMode.Ignore };
             Root.style.alignItems = Align.Center;
+
+            // Above the health, so the block reads downwards from what the character is to what it
+            // has left. It brings its own row rather than being handed a track: unlike a row of
+            // blobs it draws nothing when there is nothing, and an empty framed strip over the
+            // health would be worse than no row.
+            traits = new TraitBar(hoverTarget, settings);
+            Root.Add(traits.Root);
 
             HealthRow = AddTrack("healthRow");
             // Under the health and nearest the slots: what a point is about to be spent on is
@@ -61,6 +78,12 @@ namespace UI
             // RuntimeSettings.
             Root.RegisterCallback<DetachFromPanelEvent>(_ => settings.Changed -= ApplyLook);
         }
+
+        /// <summary>
+        /// Draws the traits of <paramref name="unit"/> in the row above the health. Said by the unit
+        /// being built, the same moment its bars are mounted here.
+        /// </summary>
+        public void ShowTraitsOf(Unit unit) => traits.Show(unit);
 
         /// <summary>
         /// One health blob. The name is the template's own and is ignored - a health row has one
@@ -85,6 +108,9 @@ namespace UI
         private void ApplyLook()
         {
             Root.style.marginBottom = settings.BottomGap;
+
+            traits.Root.style.marginBottom = settings.TraitRowGap;
+            traits.ApplyLook();
 
             StyleTrack(HealthRow, settings.RowGap);
             StyleTrack(ActionPointRow, 0f);

@@ -9,15 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ceeaf83b68c74566b93e46996ded0353, type: 3}
-  m_Name: Hunter's Focus
+  m_Script: {fileID: 11500000, guid: cb7a6f4755c54eb3a6578c1b8216f26d, type: 3}
+  m_Name: Crippled
   m_EditorClassIdentifier: 
   iconSheet: {fileID: 2800000, guid: a9790877294e9475fb7bf25cb05eb034, type: 3}
-  iconCell: {x: 6, y: 1}
+  iconCell: {x: 6, y: 10}
   iconCellSize: 16
   icon: {fileID: 0}
-  Description: Extra damage and reach, but only with a ranged weapon drawn.
-  DamageBonus: 2
-  DefenseBonus: 0
-  RangeBonus: 1
-  RequiresWeapon: 2
+  Description: A hurt leg: every step costs more until it mends.
+  Duration: 2
+  Stackable: 0
+  ExtraMoveCost: 1

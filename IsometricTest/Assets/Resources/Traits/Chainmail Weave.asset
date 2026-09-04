@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: Chainmail Weave
   m_EditorClassIdentifier: 
   Description: Increase Def by 2
-  Icon: {fileID: 0}
+  iconSheet: {fileID: 2800000, guid: a9790877294e9475fb7bf25cb05eb034, type: 3}
+  iconCell: {x: 3, y: 4}
+  iconCellSize: 16
+  icon: {fileID: 0}
   DamageBonus: 0
   DefenseBonus: 2
   RangeBonus: 0

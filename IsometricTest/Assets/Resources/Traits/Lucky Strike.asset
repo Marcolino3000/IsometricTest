@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78e8a4168d6a4e4aae498c8013c22aa9, type: 3}
   m_Name: Lucky Strike
   m_EditorClassIdentifier: 
+  iconSheet: {fileID: 2800000, guid: a9790877294e9475fb7bf25cb05eb034, type: 3}
+  iconCell: {x: 10, y: 7}
+  iconCellSize: 16
+  icon: {fileID: 0}
   Description: A far better chance of landing a critical hit.
   CritChance: 0.4
   CritMultiplier: 2

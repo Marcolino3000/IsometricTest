@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: Extended Reach
   m_EditorClassIdentifier: 
   Description: Strikes one tile further.
-  Icon: {fileID: 0}
+  iconSheet: {fileID: 2800000, guid: a9790877294e9475fb7bf25cb05eb034, type: 3}
+  iconCell: {x: 5, y: 2}
+  iconCellSize: 16
+  icon: {fileID: 0}
   DamageBonus: 0
   DefenseBonus: 0
   RangeBonus: 1

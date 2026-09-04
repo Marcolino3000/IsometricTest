@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c35599c62d654d8eaa7c4cbf6cf65a09, type: 3}
   m_Name: Hill Sight
   m_EditorClassIdentifier:
+  iconSheet: {fileID: 2800000, guid: a9790877294e9475fb7bf25cb05eb034, type: 3}
+  iconCell: {x: 9, y: 8}
+  iconCellSize: 16
+  icon: {fileID: 0}
   Description: Units on this terrain see one tile further.
-  Icon: {fileID: 0}
   SightBonus: 1

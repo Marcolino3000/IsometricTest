@@ -40,11 +40,16 @@ namespace Runtime.Gameplay.Global
 
         [Header("Items and loot")]
         [Tooltip("When on, the same active item may be carried more than once - three Healing Draughts " +
-                 "fill the three active slots. Only active items can stack: a weapon or a passive is " +
-                 "identified by its asset and shares one slot with its whole category, so a second " +
-                 "copy would have nowhere of its own to be and would do nothing besides. When off, a " +
-                 "lootbox holding something already carried is left where it lies.")]
+                 "fill the three active slots, since each active item has a slot to itself. When off, " +
+                 "a lootbox holding something already carried is left where it lies.")]
         public bool StackDuplicateActiveItems = true;
+
+        [Tooltip("When on, the same passive item may be carried more than once. Only one of them is " +
+                 "ever worn - the whole category shares a single slot - so a second copy grants no " +
+                 "further bonus and is worth owning only as merge material, which is exactly what it " +
+                 "is for. Off by default, so a box holding a passive already carried is left where " +
+                 "it lies.")]
+        public bool StackDuplicatePassiveItems;
 
         [Tooltip("When on, walking onto a lootbox takes it - for free, and every box the path crosses " +
                  "rather than only the one it ends on. Off, a box is taken by standing on it and " +

@@ -223,6 +223,186 @@ namespace Runtime.Gameplay.Entities
             LoadoutChanged?.Invoke();
         }
 
+        /// <summary>
+        /// Puts a status on the unit. What an attack effect or an item hands over is the <b>asset</b>;
+        /// what goes on the list is a copy of it with a countdown of its own - see
+        /// <see cref="StatusTrait"/>.
+        ///
+        /// <b>It always renews, and deepens only if the status says it may.</b> Being afflicted again
+        /// puts every copy carried back to full - so a stack runs out as one thing rather than
+        /// fraying - and adds a further copy when <see cref="StatusTrait.Stackable"/> is set. The two
+        /// halves do not interact: <i>how long</i> is the renewal, <i>whether it deepens</i> is the
+        /// switch, and a status that does not stack behaves exactly as it did before any could.
+        ///
+        /// Deepening is copies rather than a counter for a reason: every rule query is already a
+        /// fold over <see cref="Traits"/>, so a second copy doubles the bleed, the slow and anything
+        /// a later status does <b>without a single subclass multiplying by anything</b>. What it
+        /// costs instead is the badge row, which counts them rather than drawing each - see
+        /// <c>UnitRules.GetCapabilities</c>.
+        ///
+        /// Two <i>different</i> statuses stack as any two traits do, whatever their limits say.
+        /// </summary>
+        public void ApplyStatus(StatusTrait status)
+        {
+            if (status == null)
+                return;
+
+            var source = status.Source;
+            var carried = 0;
+
+            foreach (var trait in Traits)
+            {
+                if (trait is not StatusTrait afflicted || afflicted.Source != source)
+                    continue;
+
+                afflicted.Refresh();
+                carried++;
+            }
+
+            // Nothing carried means the first copy whatever the switch says; a further one only
+            // where deepening is authored.
+            if (carried == 0 || status.Stackable)
+                Traits.Add(status.CreateInstance());
+
+            LoadoutChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Takes a status off - what a cure does. Named by the asset rather than the copy, since that
+        /// is the only thing an item or an effect can author. Answers whether anything came off, so a
+        /// cure that found nothing can say so.
+        ///
+        /// <b>Every copy of it</b>, however deep it was stacked: a remedy lifts the affliction, not
+        /// one layer of it, and one that had to be drunk three times over would be a different item.
+        /// </summary>
+        public bool CureStatus(StatusTrait status)
+        {
+            if (status == null)
+                return false;
+
+            var source = status.Source;
+
+            if (Traits.RemoveAll(trait => trait is StatusTrait afflicted && afflicted.Source == source) == 0)
+                return false;
+
+            LoadoutChanged?.Invoke();
+
+            return true;
+        }
+
+        /// <summary>Takes every status off, whatever it is - what a full cure does.</summary>
+        public bool CureAllStatuses()
+        {
+            if (Traits.RemoveAll(trait => trait is StatusTrait) == 0)
+                return false;
+
+            LoadoutChanged?.Invoke();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Counts one of the unit's turns off every status it carries and drops the ones that have
+        /// run out. Called once per turn by <c>StatusRunner</c>, after the turn's hooks have run - so
+        /// a status authored to last one turn is felt on the turn it was put on.
+        /// </summary>
+        public void AgeStatuses()
+        {
+            var aged = false;
+            var expired = false;
+
+            foreach (var trait in Traits)
+            {
+                if (trait is not StatusTrait status)
+                    continue;
+
+                status.Age();
+                aged = true;
+                expired |= status.HasExpired;
+            }
+
+            if (expired)
+                Traits.RemoveAll(trait => trait is StatusTrait status && status.HasExpired);
+
+            // Said for a countdown that merely moved, not only for one that ran out: what a status
+            // is worth is partly how long it has left, so a view holding that line - the HUD's trait
+            // row captures it rather than re-reading it - would go on showing the turn before.
+            if (aged)
+                LoadoutChanged?.Invoke();
+        }
+
+        /// <summary>Whether the unit carries this status, named by the asset it was applied from.</summary>
+        public bool HasStatus(StatusTrait status) => StacksOf(status) > 0;
+
+        /// <summary>
+        /// How many copies of a status the unit carries - what it is worth, since every copy is
+        /// folded. Zero for one it does not have.
+        /// </summary>
+        public int StacksOf(StatusTrait status)
+        {
+            if (status == null)
+                return 0;
+
+            var source = status.Source;
+            var stacks = 0;
+
+            foreach (var trait in Traits)
+                if (trait is StatusTrait afflicted && afflicted.Source == source)
+                    stacks++;
+
+            return stacks;
+        }
+
+        /// <summary>
+        /// Every status carried and how long each has left, for a history snapshot. World state
+        /// rather than loadout, exactly like <see cref="CaptureBonuses"/>: a status cost whoever
+        /// applied it an action and cannot be shrugged off by choosing differently, so it can only
+        /// come back by having been written down.
+        ///
+        /// The instances themselves are recorded, not the assets they came from - the same reason
+        /// the snapshot holds units and lootboxes rather than ids. They are never destroyed.
+        /// </summary>
+        public StatusRecord[] CaptureStatuses()
+        {
+            var captured = new List<StatusRecord>();
+
+            foreach (var trait in Traits)
+                if (trait is StatusTrait status)
+                    captured.Add(new StatusRecord(status, status.TurnsLeft));
+
+            return captured.ToArray();
+        }
+
+        /// <summary>
+        /// Puts the recorded statuses back. Only the statuses: what the blueprint grants and what a
+        /// worn passive item put on the list are not recorded and must survive untouched - the
+        /// passive's traits are re-derived from the restored inventory a moment later, and taking
+        /// them off here would have them added twice.
+        /// </summary>
+        public void RestoreStatuses(StatusRecord[] records)
+        {
+            var removed = Traits.RemoveAll(trait => trait is StatusTrait);
+            var restored = 0;
+
+            if (records != null)
+            {
+                foreach (var record in records)
+                {
+                    if (record.Status == null)
+                        continue;
+
+                    record.Status.RestoreTurnsLeft(record.TurnsLeft);
+                    Traits.Add(record.Status);
+                    restored++;
+                }
+            }
+
+            // Said only when the list actually moved: this runs on every unit for every undo, and a
+            // unit that carried nothing and carries nothing has no badge row to rebuild.
+            if (removed > 0 || restored > 0)
+                LoadoutChanged?.Invoke();
+        }
+
         /// <summary>What has been permanently added to <paramref name="stat"/>, zero until something has.</summary>
         public int GetBonus(UnitStat stat)
         {
@@ -302,7 +482,14 @@ namespace Runtime.Gameplay.Entities
             // initializer.
             HomeZone = NoZone;
             // Copy into a fresh list so per-unit runtime state never aliases the blueprint's list.
-            Traits = other.Traits != null ? new List<UnitTrait>(other.Traits) : new List<UnitTrait>();
+            // A status authored straight onto a blueprint is copied one step further, into an
+            // instance of its own: the asset carries no countdown, so shared it would run out on the
+            // first turn of the first unit to be asked and vanish off all of them.
+            Traits = new List<UnitTrait>();
+
+            if (other.Traits != null)
+                foreach (var trait in other.Traits)
+                    Traits.Add(trait is StatusTrait status ? status.CreateInstance() : trait);
             // Same reason: a bonus an item grants one unit must not be granted to every unit the
             // blueprint spawns after it.
             RestoreBonuses(other.statBonuses);
@@ -310,4 +497,21 @@ namespace Runtime.Gameplay.Entities
     }
 
     
+
+    /// <summary>
+    /// One status a unit carried at the moment a snapshot was taken, and how long it had left. The
+    /// instance is held rather than the asset it came from: instances are per-unit and are never
+    /// destroyed, so putting one back is putting back the very status that was taken off.
+    /// </summary>
+    public readonly struct StatusRecord
+    {
+        public readonly StatusTrait Status;
+        public readonly int TurnsLeft;
+
+        public StatusRecord(StatusTrait status, int turnsLeft)
+        {
+            Status = status;
+            TurnsLeft = turnsLeft;
+        }
+    }
 }

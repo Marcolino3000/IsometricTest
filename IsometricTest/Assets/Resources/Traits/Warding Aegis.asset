@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ceeaf83b68c74566b93e46996ded0353, type: 3}
   m_Name: Warding Aegis
   m_EditorClassIdentifier: 
+  iconSheet: {fileID: 2800000, guid: a9790877294e9475fb7bf25cb05eb034, type: 3}
+  iconCell: {x: 1, y: 6}
+  iconCellSize: 16
+  icon: {fileID: 0}
   Description: Turns aside part of every hit taken.
   DamageBonus: 0
   DefenseBonus: 3

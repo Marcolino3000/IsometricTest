@@ -60,8 +60,10 @@ namespace Actions
 
                 // Anything the swing does beyond the blow says so in its own words: the effect knows
                 // who it reaches and under what conditions, so nothing here has to take it apart.
+                // An effect aimed at nothing in particular is already counted in the damage above,
+                // so it earns a line only when it does something besides deal it.
                 foreach (var effect in effects)
-                    if (effect != null && effect.HasOwnTargets)
+                    if (effect != null && (effect.HasOwnTargets || effect.HasStatuses))
                         stats.Add(effect.Summary);
 
                 // Reported here rather than badged separately: a weapon's traits belong to the

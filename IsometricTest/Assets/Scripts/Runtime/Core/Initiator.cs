@@ -71,6 +71,10 @@ namespace Runtime.Core
         // no copy of anything and there is nothing on it to author or to restore.
         private UnitStateManager unitStateManager;
 
+        // What gives a status its turn. Created here like the other queries-over-the-board: it
+        // holds nothing, and a restart replaces the units it walks rather than it.
+        private StatusRunner statusRunner;
+
         // The one owner of what the cursor is over. Both roads into the game report to it - the
         // world raycast and the item bar - so neither can undo what the other drew.
         private HoverTarget hoverTarget;
@@ -280,7 +284,9 @@ namespace Runtime.Core
             // over its head, so they have to exist by the time it is built. Where they hang is
             // settled later, in SetupUI - a row is built detached and mounted when there is
             // something to mount it in.
-            playerVitals = new PlayerVitals();
+            // After the hover target: the trait symbols in it are the one thing on this block that
+            // takes the pointer, and they report what they are to the same owner the bar does.
+            playerVitals = new PlayerVitals(hoverTarget);
             unitSpawner.Setup(gameStateManager, selector, fogOfWar, gameRules, animationSettings,
                 unitStateManager, playerVitals);
             tileSpawner.Setup(selector, gameRules);
@@ -290,6 +296,9 @@ namespace Runtime.Core
             outlineManager.Setup(selector);
             CreateAttackPreview();
             zoneBorder = ZoneBorder.Create(tileSpawner, gameRules, fogOfWar);
+            // Before the history subscribes to TurnStarted: what a status takes at the start of a
+            // turn belongs in that turn change's own snapshot rather than to whatever is done next.
+            CreateStatusRunner();
             actionHistory.Setup(gameStateManager, unitSpawner, tileSpawner, fogOfWar, aiController, selector,
                 lootSpawner, itemManager);
             actionAssigner.Setup(selector, hoverTarget);
@@ -308,6 +317,17 @@ namespace Runtime.Core
         {
             unitStateManager = gameObject.AddComponent<UnitStateManager>();
             unitStateManager.Setup(gameStateManager);
+        }
+
+        /// <summary>
+        /// What ticks the statuses a unit is carrying at the start of its turn. On the Initiator's
+        /// own object like the outcome watcher, and for the same reason: it is a pass over the live
+        /// units, so there is nothing to author on it and nothing in it to snapshot.
+        /// </summary>
+        private void CreateStatusRunner()
+        {
+            statusRunner = gameObject.AddComponent<StatusRunner>();
+            statusRunner.Setup(gameStateManager, unitSpawner);
         }
 
         /// <summary>

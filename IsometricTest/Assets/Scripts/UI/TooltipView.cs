@@ -235,7 +235,7 @@ namespace UI
             row.style.marginTop = 8f;
 
             var label = TextLabel(row, 15f, CardStyle.Text);
-            label.text = entry.Label;
+            label.text = entry.Title;
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
 
             if (!string.IsNullOrWhiteSpace(entry.Detail) && entry.Detail != entry.Label)

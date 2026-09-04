@@ -72,10 +72,20 @@ namespace Runtime.Gameplay.Entities
         // out its beat here rather than being said late by whoever struck.
         private float waited;
 
-        private readonly struct OneShot
+        // The flinch queued and not yet given the number that belongs to it. A strike says the
+        // flinch and moves the health in the same frame, so the number is known a moment after the
+        // flinch is queued and has to be hung on it rather than passed in with it.
+        private OneShot pendingHit;
+
+        private sealed class OneShot
         {
             public readonly UnitAnimationSet.Clip Clip;
             public readonly Action Finished;
+
+            // What this has to say the moment it begins to be drawn - the damage number, which
+            // belongs to the blow rather than to the health that moved a beat earlier. Settable
+            // after the fact, which is the whole reason a one-shot is an object and not a value.
+            public Action Drawn;
 
             // Which way the unit is turned before this is drawn, as a world x to turn towards, and
             // null for something that has no side to it. Carried with the clip rather than applied
@@ -175,6 +185,7 @@ namespace Runtime.Gameplay.Entities
             currentFinished = null;
             playingOnce = false;
             waited = 0f;
+            pendingHit = null;
         }
 
         /// <summary>
@@ -197,10 +208,33 @@ namespace Runtime.Gameplay.Entities
         /// The one animation that is not drawn the moment it is said: the swing that caused it is
         /// announced in the same frame and drawn by another animator, so the flinch waits out
         /// <see cref="AnimationSettings.HitDelay"/> and lands during the blow rather than before it.
+        /// <paramref name="afterASwing"/> is what that beat is for, so anything hurting a unit
+        /// without one - a bleed ticking over - passes false and is drawn at once.
         /// </summary>
-        public void PlayHit()
+        public void PlayHit(bool afterASwing = true)
         {
-            Enqueue(set.For(UnitAnimation.Hit), delay: HitDelay);
+            pendingHit = Enqueue(set.For(UnitAnimation.Hit), delay: afterASwing ? HitDelay : 0f);
+        }
+
+        /// <summary>
+        /// Says <paramref name="said"/> when the flinch just queued is drawn rather than now - what
+        /// the damage number is handed over with, so it appears with the blow instead of when the
+        /// rules resolved it, which is a beat earlier and a whole walk earlier for a unit that
+        /// stepped into range.
+        ///
+        /// False when there is no flinch to hang it on - no frames authored, or nothing struck - and
+        /// then the caller says it at once. Spent on the one flinch, so the next number said without
+        /// a blow behind it is not hung on the same one.
+        /// </summary>
+        public bool SayWithHit(Action said)
+        {
+            if (pendingHit == null || said == null)
+                return false;
+
+            pendingHit.Drawn += said;
+            pendingHit = null;
+
+            return true;
         }
 
         /// <summary>
@@ -213,20 +247,25 @@ namespace Runtime.Gameplay.Entities
         /// </summary>
         public bool PlayDeath(Action finished)
         {
-            return Enqueue(set.For(UnitAnimation.Death), finished);
+            return Enqueue(set.For(UnitAnimation.Death), finished) != null;
         }
 
-        private bool Enqueue(UnitAnimationSet.Clip clip, Action finished = null, float? faceTowardsX = null,
+        /// <summary>
+        /// Queues <paramref name="clip"/>, and hands it back so a word that is only known afterwards
+        /// can still be hung on it. Null when nothing is authored - and then nothing is queued
+        /// either, so nothing holds a callback that would never be called, which is what a fall
+        /// depends on being able to trust.
+        /// </summary>
+        private OneShot Enqueue(UnitAnimationSet.Clip clip, Action finished = null, float? faceTowardsX = null,
             float delay = 0f)
         {
-            // Nothing authored, nothing queued - and nothing holding a callback that would never be
-            // called, which is what a fall depends on being able to trust.
             if (clip == null)
-                return false;
+                return null;
 
-            oneShots.Enqueue(new OneShot(clip, finished, faceTowardsX, delay));
+            var oneShot = new OneShot(clip, finished, faceTowardsX, delay);
+            oneShots.Enqueue(oneShot);
 
-            return true;
+            return oneShot;
         }
 
         private void Update()
@@ -334,11 +373,19 @@ namespace Runtime.Gameplay.Entities
                     oneShots.Dequeue();
                     waited = 0f;
 
+                    // Its number is no longer waiting for it, whether one was ever hung on it.
+                    if (next == pendingHit)
+                        pendingHit = null;
+
                     if (next.FaceTowardsX.HasValue)
                         FaceTowards(next.FaceTowardsX.Value);
 
                     currentFinished = next.Finished;
                     Play(next.Clip, once: true);
+
+                    // Last, so what it says is said over the frame it is said with - the damage
+                    // number over the flinch it belongs to rather than over the frame before it.
+                    next.Drawn?.Invoke();
 
                     return;
                 }

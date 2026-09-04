@@ -43,6 +43,11 @@ namespace Runtime.Gameplay.Items
         private const string NoRoomNotice = "No free item slot";
         private const string AlreadyCarriedNotice = "Already carried";
 
+        /// <summary>A further copy of something already announced - see <see cref="Pickup"/>. The
+        /// popup only ever says a find once, so a repeat still needs this over the character's head
+        /// or a stacked pickup would vanish the box and say nothing at all.</summary>
+        private const string PickedUpAgainNotice = "+1 {0}";
+
         /// <summary>
         /// How a merge went, announced over the card rather than on a line inside it: the word the
         /// banner carries, and the sentence under it saying what actually changed hands. The
@@ -213,21 +218,34 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
-        /// Whether a category may hold the same item more than once, which the player switches with
-        /// <see cref="GameRules.StackDuplicateActiveItems"/>. Only active items can, switch or no
-        /// switch, and the reason is what a second copy would be *for*: everywhere else the whole
-        /// category shares a single slot, so it would have nowhere of its own to be and would do
-        /// nothing while it sat there - a second identical sword is not a sword to swing, and a second
-        /// amulet grants no more traits. A copy is only worth owning where owning it means a further
-        /// use in hand.
+        /// Whether a category may hold the same item more than once, and which switch says so. Two
+        /// categories can, and <b>what a second copy is for differs between them</b>:
         ///
-        /// Which is why this names the category rather than asking <see cref="HoldsOneItem"/>: an
-        /// artefact has a slot of its own too, but it is a unique find and there is never a second of
-        /// it to own.
+        /// <list type="bullet">
+        /// <item><see cref="SlotKind.Active"/> - a further use in hand. Each active item has a slot
+        /// of its own, so a second draught is a second draught to drink.</item>
+        /// <item><see cref="SlotKind.Passive"/> - merge material. The whole category shares one slot,
+        /// so only one copy is ever worn and a second grants no further bonus; what it is good for is
+        /// being spent on the merge bench while the one being worn stays worn.</item>
+        /// </list>
+        ///
+        /// A weapon has neither use - it shares its slot like a passive, and a weapon fed to the
+        /// bench is one that was not being swung anyway, so a duplicate buys nothing a first copy did
+        /// not already. An artefact has a slot of its own but is a unique find, so there is never a
+        /// second of it to own. Which is why this names the categories rather than asking
+        /// <see cref="HoldsOneItem"/>.
         /// </summary>
         private bool CanStack(SlotKind kind)
         {
-            return kind == SlotKind.Active && gameRules != null && gameRules.StackDuplicateActiveItems;
+            if (gameRules == null)
+                return false;
+
+            return kind switch
+            {
+                SlotKind.Active => gameRules.StackDuplicateActiveItems,
+                SlotKind.Passive => gameRules.StackDuplicatePassiveItems,
+                _ => false
+            };
         }
 
         /// <summary>
@@ -245,9 +263,12 @@ namespace Runtime.Gameplay.Items
             ShowSlots();
 
             // After the slots, not before: the card says where the item went, so it has to have gone
-            // there. Only the first find of a thing is announced - see <see cref="announced"/>.
+            // there. Only the first find of a thing is announced - see <see cref="announced"/>. A
+            // repeat still gets the short notice, or a stacked pickup would say nothing at all.
             if (announced.Add(item))
                 Announce(item);
+            else if (playerUnit != null)
+                playerUnit.ShowNotice(string.Format(PickedUpAgainNotice, item.Title));
         }
 
         /// <summary>
@@ -683,11 +704,12 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
-        /// Everything owned that <paramref name="slot"/> offers - its whole category. Only a category
-        /// sharing one slot is ever picked from, and those are exactly the ones that cannot hold the
-        /// same asset twice (<see cref="CanStack"/>), so no entry here is ever a duplicate of another.
-        /// Which slot an item ends up *sitting* in is not this question - that is
-        /// <see cref="FirstUnshown"/>, which has to count copies.
+        /// Everything owned that <paramref name="slot"/> offers - its whole category, <b>each asset
+        /// once</b>. Only a category sharing one slot is ever picked from, and such a category has
+        /// one thing in effect at a time however many copies are owned: two identical amulets are one
+        /// choice, and offering both would be two rows that do the same thing. Which slot an item
+        /// ends up *sitting* in is not this question - that is <see cref="FirstUnshown"/>, which has
+        /// to count copies.
         /// </summary>
         private List<Item> ItemsForSlot(int slot)
         {
@@ -697,7 +719,7 @@ namespace Runtime.Gameplay.Items
                 return slotItems;
 
             foreach (var item in items)
-                if (item != null && item.Slot == kind)
+                if (item != null && item.Slot == kind && !slotItems.Contains(item))
                     slotItems.Add(item);
 
             return slotItems;
@@ -853,9 +875,12 @@ namespace Runtime.Gameplay.Items
         }
 
         /// <summary>
-        /// Everything owned that may stand on <paramref name="side"/>, minus whatever the other side
-        /// is holding - an item cannot be merged into itself, and offering it on both sides only
-        /// invites that. No entry is ever a duplicate of another: neither category stacks.
+        /// Everything owned that may stand on <paramref name="side"/>, <b>each asset once</b>, minus
+        /// whatever the other side is holding - an item cannot be merged into itself, and offering it
+        /// on both sides only invites that. Once rather than per copy because a slot holds a
+        /// reference: two rows for one asset would set the same <see cref="mergeRight"/> and read as
+        /// a choice that is not one. Which copy of it is spent is the inventory's business - see
+        /// <see cref="DropUnownedWeapon"/> and the single <c>Remove</c> a merge does.
         /// </summary>
         private List<Item> MergeCandidates(int side)
         {
@@ -864,7 +889,7 @@ namespace Runtime.Gameplay.Items
 
             foreach (var item in items)
             {
-                if (item == null || item == other)
+                if (item == null || item == other || candidates.Contains(item))
                     continue;
 
                 bool fits = side == MergeScreen.LeftSide

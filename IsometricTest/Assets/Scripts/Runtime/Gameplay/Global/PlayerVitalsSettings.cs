@@ -51,6 +51,13 @@ namespace Runtime.Gameplay.Global
         [Tooltip("A point already gone.")]
         [SerializeField] private Color spentColor = new(0.878f, 0.878f, 0.878f);
 
+        [Header("Traits")]
+        [Tooltip("Width and height of one trait symbol in the row above the health - they are square.")]
+        [Min(1f)] [SerializeField] private float traitIconSize = 26f;
+
+        [Tooltip("Space between the trait row and the health row under it.")]
+        [Min(0f)] [SerializeField] private float traitRowGap = 4f;
+
         [Header("Rows")]
         [Tooltip("Space either side of a blob, so the gap between two of them is twice this.")]
         [Min(0f)] [SerializeField] private float blobGap = 3f;
@@ -87,6 +94,14 @@ namespace Runtime.Gameplay.Global
         public Color ActionPointColor => actionPointColor;
         public Color PreviewColor => previewColor;
         public Color SpentColor => spentColor;
+
+        /// <summary>
+        /// How big a trait symbol is drawn. Read rather than the field so an asset saved before the
+        /// trait row existed - which deserializes to zero - still draws something.
+        /// </summary>
+        public float TraitIconSize => traitIconSize > 0f ? traitIconSize : 26f;
+
+        public float TraitRowGap => traitRowGap;
 
         public float BlobGap => blobGap;
         public float RowGap => rowGap;

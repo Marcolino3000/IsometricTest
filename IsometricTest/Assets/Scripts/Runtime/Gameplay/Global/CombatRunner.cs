@@ -45,6 +45,11 @@ namespace Runtime.Gameplay.Global
             // damaged beforehand rather than damaged by this very strike. The pairs are carried below.
             var areaHits = CombatRules.PlanAreaEffects(attacker, target, isRetaliation);
 
+            // For the same reason and at the same moment: a status gated on "already hurt" asks the
+            // board the swing started against, not the one it leaves behind. Spent once the damage
+            // is in, so a unit the blow felled is not wounded on its way off the board.
+            var statusHits = CombatRules.PlanStatuses(attacker, target, isRetaliation);
+
             // Here rather than at the action, because this is the one place a blow is struck: a
             // retaliation is a strike of its own with the roles swapped, so it draws itself for free.
             // The flinch is said with the swing rather than off the health, which moves for a heal
@@ -73,6 +78,10 @@ namespace Runtime.Gameplay.Global
                 fallen.Add(target);
 
             ApplyAreaEffects(attacker, areaHits, isRetaliation, fallen);
+
+            // Last, with every unit this strike could fell already in the list: a status is something
+            // that goes on happening, and there is nothing to go on happening to a unit that is down.
+            ApplyStatuses(statusHits, fallen);
 
             return died;
         }
@@ -119,6 +128,28 @@ namespace Runtime.Gameplay.Global
 
                 if (victim.CurrentState.Health <= 0 && !fallen.Contains(victim))
                     fallen.Add(victim);
+            }
+        }
+
+        /// <summary>
+        /// Puts the swing's statuses on the units it caught. Skips anyone who fell to it: a wound on
+        /// a unit that is already off the board would be carried back onto it by an undo.
+        /// </summary>
+        private static void ApplyStatuses(List<StatusHit> hits, List<Unit> fallen)
+        {
+            if (hits.Count == 0)
+                return;
+
+            foreach (var hit in hits)
+            {
+                var victim = hit.Victim;
+
+                if (victim == null || !victim.IsAlive || fallen.Contains(victim))
+                    continue;
+
+                CombatLog.Note($"{victim.name} is afflicted with {hit.Status.name}");
+
+                victim.ApplyStatus(hit.Status);
             }
         }
     }

@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ceeaf83b68c74566b93e46996ded0353, type: 3}
   m_Name: Shield Wall
   m_EditorClassIdentifier: 
+  iconSheet: {fileID: 2800000, guid: a9790877294e9475fb7bf25cb05eb034, type: 3}
+  iconCell: {x: 3, y: 13}
+  iconCellSize: 16
+  icon: {fileID: 0}
   Description: Higd Def bonus but malus on Dmg
-  Icon: {fileID: 0}
   DamageBonus: -2
   DefenseBonus: 4
   RangeBonus: 0

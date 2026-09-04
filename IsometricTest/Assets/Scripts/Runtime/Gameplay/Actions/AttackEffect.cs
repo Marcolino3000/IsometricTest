@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using Runtime.Gameplay.Traits;
 using UnityEngine;
 
 namespace Actions
@@ -16,12 +19,35 @@ namespace Actions
                  "their say.")]
         public int Damage;
 
+        [Tooltip("Statuses put on every unit this effect reaches - a bleed, a crippled leg. Applied " +
+                 "to whoever survives the blow, and through the effect's own targeting and " +
+                 "conditions, so a weapon can wound only what it has already hurt.")]
+        public List<StatusTrait> Applies = new();
+
         [Tooltip("Shown beside the damage number over a unit this effect hit - worth setting on one " +
                  "that names an area, since a number appearing on somebody who was never attacked " +
                  "does not explain itself. Empty shows nothing.")]
         public string Note;
 
+        /// <summary>Whether this effect does anything besides its damage.</summary>
+        public bool HasStatuses => Applies != null && Applies.Any(status => status != null);
+
         /// <summary>One short line for the weapon card and its tooltip.</summary>
-        public string Summary => $"{Damage} damage{TargetSummary}";
+        public string Summary
+        {
+            get
+            {
+                var line = $"{Damage} damage";
+
+                if (HasStatuses)
+                {
+                    var names = Applies.Where(status => status != null).Select(status => status.name);
+
+                    line += $", inflicts {string.Join(", ", names)}";
+                }
+
+                return line + TargetSummary;
+            }
+        }
     }
 }

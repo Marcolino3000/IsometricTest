@@ -126,6 +126,13 @@ namespace Runtime.Gameplay.History
         // back by choosing differently is world state, so it can only come back by being written down.
         public readonly int[] StatBonuses;
 
+        // What has been put on the unit and how long each has left. Recorded for exactly the reason
+        // the bonuses are: a status cost whoever applied it an action and cannot be shrugged off by
+        // choosing differently, so unlike the weapon in hand it cannot be re-derived. Only the
+        // statuses - the traits the blueprint grants and the ones a worn passive puts on the list
+        // come back with the loadout.
+        public readonly StatusRecord[] Statuses;
+
         // The equipped weapon and the worn passive are deliberately not recorded: they are the
         // player's loadout rather than world state - free to swap, costing no turn and reported as no
         // action - and the item bar owns which of them is in use. Both are re-derived from the
@@ -140,11 +147,12 @@ namespace Runtime.Gameplay.History
             Health = unit.CurrentState.Health;
             ActionPoints = unit.CurrentState.ActionPoints;
             StatBonuses = unit.CurrentState.CaptureBonuses();
+            Statuses = unit.CurrentState.CaptureStatuses();
         }
 
         public void ApplyTo()
         {
-            Unit.RestoreSnapshot(Position, Health, ActionPoints, StatBonuses);
+            Unit.RestoreSnapshot(Position, Health, ActionPoints, StatBonuses, Statuses);
         }
     }
 

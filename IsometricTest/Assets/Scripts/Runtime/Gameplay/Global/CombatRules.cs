@@ -337,6 +337,45 @@ namespace Runtime.Gameplay.Global
         }
 
         /// <summary>
+        /// Which statuses a swing would put on which units. Asked of <b>every</b> effect the weapon
+        /// carries, not only the ones naming an area: an effect with no targeting reaches the unit
+        /// being struck, so a plain sword that wounds is one status on the one effect it already has.
+        /// The effect's own conditions apply per candidate, which is what lets a weapon wound only
+        /// what it has already hurt.
+        ///
+        /// A pure query over the board as it stands, like <see cref="PlanAreaEffects"/> - and asked
+        /// at the same moment and for the same reason, before the blow lands, so a condition reads
+        /// the board the swing started against. Whoever asked applies them, once the dead are known.
+        /// </summary>
+        public static List<StatusHit> PlanStatuses(Unit attacker, Unit defender, bool isRetaliation)
+        {
+            var hits = new List<StatusHit>();
+
+            if (attacker == null || !attacker.IsAlive || defender == null || !defender.IsAlive)
+                return hits;
+
+            var weapon = attacker.CurrentState.AttackAction;
+
+            if (weapon?.Effects == null)
+                return hits;
+
+            var context = new EffectContext(attacker, defender, null, null, isRetaliation);
+
+            foreach (var effect in weapon.Effects)
+            {
+                if (effect == null || !effect.HasStatuses)
+                    continue;
+
+                foreach (var victim in effect.ResolveTargets(context))
+                foreach (var status in effect.Applies)
+                    if (status != null)
+                        hits.Add(new StatusHit(status, victim));
+            }
+
+            return hits;
+        }
+
+        /// <summary>
         /// What one caught unit takes: the effect's own damage, folded through
         /// <see cref="CalculateDamage"/> so defence, terrain and the weapon's traits all still apply.
         ///
@@ -406,6 +445,23 @@ namespace Runtime.Gameplay.Global
     /// before the blow lands and applied after, so the pair has to be carried rather than re-derived
     /// from a board that has meanwhile changed.
     /// </summary>
+    /// <summary>
+    /// One status a swing would put on one unit. The <b>asset</b> rather than an instance of it -
+    /// making the copy is the unit's business, since re-applying a status somebody already carries
+    /// refreshes it rather than adding a second.
+    /// </summary>
+    public readonly struct StatusHit
+    {
+        public readonly StatusTrait Status;
+        public readonly Unit Victim;
+
+        public StatusHit(StatusTrait status, Unit victim)
+        {
+            Status = status;
+            Victim = victim;
+        }
+    }
+
     public readonly struct EffectHit
     {
         public readonly AttackEffect Effect;

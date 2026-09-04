@@ -21,6 +21,8 @@ MonoBehaviour:
   actionPointColor: {r: 0.886, g: 0.694, b: 0.055, a: 1}
   previewColor: {r: 0.745, g: 0.682, b: 0.467, a: 1}
   spentColor: {r: 0.878, g: 0.878, b: 0.878, a: 1}
+  traitIconSize: 26
+  traitRowGap: 4
   blobGap: 3
   rowGap: 4
   bottomGap: 6

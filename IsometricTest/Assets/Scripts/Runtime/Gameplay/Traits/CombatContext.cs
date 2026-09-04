@@ -86,4 +86,21 @@ namespace Runtime.Gameplay.Traits
             IsRanged = baseRange > 1;
         }
     }
+
+    /// <summary>
+    /// A unit's turn beginning, on the tile it stands on - what <see cref="Trait.OnTurnBegan"/> is
+    /// handed. The one context that carries no second party: nothing is being aimed at, the turn has
+    /// simply come round to whoever carries the trait.
+    /// </summary>
+    public readonly struct TurnContext
+    {
+        public readonly Unit Unit;
+        public readonly Tile Tile;
+
+        public TurnContext(Unit unit, Tile tile)
+        {
+            Unit = unit;
+            Tile = tile;
+        }
+    }
 }
